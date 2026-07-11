@@ -1,0 +1,13 @@
+{
+  "_kommentar": "Garmin-banenavn -> Golfbox (klubb/bane/tee). Fylles ut AUTOMATISK når du retter en bane manuelt i nettleseren (auto-læring), men du kan også redigere selv. Tomme felt hoppes over. Nøkler som starter med _ ignoreres.",
+  "Aas Gård Golfpark": {
+    "club": "Hakadal Golfklubb",
+    "course": "Aas Gaard Golfpark Hakadal",
+    "tee": "57"
+  },
+  "Mørk Golfklubb ~ Hovedbanen": {
+    "club": "Mørk Golfklubb",
+    "course": "Mørk GK 18-hulls banen",
+    "tee": "Gul"
+  }
+}

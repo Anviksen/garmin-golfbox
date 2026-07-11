@@ -1,0 +1,18 @@
+# Hemmeligheter – skal aldri deles
+.env
+.garmintokens/
+tokens/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Uthentet data (kan være mye – ta stilling til om du vil versjonere den).
+# Alt i data/ ignoreres UNNTATT posted.json (som auto-sync lagrer tilbake til repoet).
+data/*
+!data/posted.json
+
+# Golfbox-økt og nettleserprofil – ALDRI del disse (inneholder innlogging)
+data/golfbox_state.json
+data/golfbox_profile/

@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>⛳ Golf-dashboard</title>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <style>
+    :root {
+      --green: #1b7a3d; --green-dark: #14602f; --bg: #f4f6f4; --card: #ffffff;
+      --ink: #1c2b22; --muted: #6b7c72; --line: #e3e8e4;
+      --birdie: #2e86de; --par: #2d3436; --bogey: #e17055; --double: #c0392b; --eagle: #8e44ad;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg); color: var(--ink); }
+    header { background: var(--green); color: #fff; padding: 16px 24px; display: flex;
+      align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+    header h1 { font-size: 20px; margin: 0; font-weight: 650; }
+    .btn { background: #fff; color: var(--green-dark); border: none; border-radius: 8px;
+      padding: 9px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .btn:hover { background: #eef5ef; }
+    .btn:disabled { opacity: .6; cursor: default; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .mini-btn { border: none; background: #eef1ef; color: var(--muted); width: 24px; height: 24px;
+      border-radius: 6px; cursor: pointer; font-size: 14px; line-height: 1; flex-shrink: 0; }
+    .mini-btn:hover { background: #e07a5a; color: #fff; }
+    .round-item.excluded .course { text-decoration: line-through; opacity: .5; }
+    .round-item.excluded .meta { opacity: .5; }
+    .round-item.excluded .mini-btn:hover { background: #27ae60; }
+    .mini-btn.golfbox:hover { background: var(--green); color: #fff; }
+    .btn-golfbox { border: none; background: var(--green); color: #fff; border-radius: 8px;
+      padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-golfbox:hover { background: var(--green-dark); }
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+    .card .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    .card .value { font-size: 26px; font-weight: 700; margin-top: 4px; }
+    .layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
+    .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .panel h2 { font-size: 14px; margin: 0; padding: 14px 16px; border-bottom: 1px solid var(--line);
+      text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    .round-item { padding: 12px 16px; border-bottom: 1px solid var(--line); cursor: pointer; }
+    .round-item:hover { background: #f0f5f1; }
+    .round-item.active { background: #e7f2ea; border-left: 3px solid var(--green); }
+    .round-item .course { font-weight: 600; font-size: 14px; }
+    .round-item .meta { font-size: 12px; color: var(--muted); margin-top: 3px;
+      display: flex; justify-content: space-between; }
+    .to-par { font-weight: 700; }
+    .pos { color: var(--bogey); } .neg { color: var(--birdie); } .zero { color: var(--par); }
+    .body { padding: 18px; }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    th, td { text-align: center; padding: 7px 6px; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); font-weight: 600; }
+    td.hole-num { color: var(--muted); }
+    .score-cell { display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 50%; font-weight: 700; }
+    .s-eagle { background: #f0e6f7; color: var(--eagle); border: 2px solid var(--eagle); }
+    .s-birdie { background: #e4f0fb; color: var(--birdie); border: 2px solid var(--birdie); }
+    .s-par { color: var(--par); }
+    .s-bogey { background: #fbeae2; color: var(--bogey); }
+    .s-double { background: #f7dedb; color: var(--double); border: 1px solid var(--double); }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab { padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;
+      background: #e8ece9; color: var(--muted); }
+    .tab.active { background: var(--green); color: #fff; }
+    .muted { color: var(--muted); }
+    .sync-log { background: #12241a; color: #a9e7bf; font-family: ui-monospace, monospace;
+      font-size: 12px; padding: 12px; border-radius: 8px; white-space: pre-wrap; margin-top: 12px; max-height: 220px; overflow: auto; }
+    .row-summary td { font-weight: 700; background: #f6f9f7; }
+    .insight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    #map { height: 380px; border-radius: 10px; z-index: 0; }
+    .hm-course { margin-bottom: 18px; }
+    .hm-course h3 { font-size: 14px; margin: 0 0 8px; }
+    .hm-row { display: grid; grid-template-columns: 42px repeat(18, 1fr) 46px; gap: 3px; align-items: center; }
+    .hm-row .lbl { font-size: 11px; color: var(--muted); }
+    .hm-cell { text-align: center; font-size: 11px; padding: 5px 0; border-radius: 4px; color: #12241a; }
+    .hm-cell small { display: block; font-size: 9px; opacity: .7; }
+    .dna-bar { display: flex; height: 34px; border-radius: 8px; overflow: hidden; margin: 10px 0 14px; }
+    .dna-seg { display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 700; }
+    .dna-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; }
+    .dna-dot { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
+    .disp-bar { display: flex; height: 40px; border-radius: 8px; overflow: hidden; margin: 12px 0; }
+    .disp-seg { display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 13px; }
+    @media (max-width: 900px) { .insight-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 780px) { .layout { grid-template-columns: 1fr; } .cards { grid-template-columns: repeat(2,1fr); } }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const fmtDate = (iso) => {
+      if (!iso) return "";
+      const d = new Date(iso);
+      return d.toLocaleDateString("no-NO", { day: "2-digit", month: "short", year: "numeric" });
+    };
+    const toParStr = (n) => (n == null ? "–" : n === 0 ? "E" : n > 0 ? `+${n}` : `${n}`);
+    const toParClass = (n) => (n == null ? "zero" : n > 0 ? "pos" : n < 0 ? "neg" : "zero");
+
+    function scoreClass(toPar) {
+      if (toPar == null) return "s-par";
+      if (toPar <= -2) return "s-eagle";
+      if (toPar === -1) return "s-birdie";
+      if (toPar === 0) return "s-par";
+      if (toPar === 1) return "s-bogey";
+      return "s-double";
+    }
+
+    function StatCards({ stats }) {
+      if (!stats) return null;
+      const items = [
+        ["Runder", stats.totalRounds],
+        ["Snitt mot par (18)", toParStr(stats.avgToPar18)],
+        ["Beste runde", toParStr(stats.bestToPar)],
+        ["Fairway-treff", stats.avgFairwayPct != null ? `${stats.avgFairwayPct}%` : "–"],
+      ];
+      return (
+        <div className="cards">
+          {items.map(([label, value]) => (
+            <div className="card" key={label}>
+              <div className="label">{label}</div>
+              <div className="value">{value}</div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function TrendChart({ trend }) {
+      const ref = useRef(null);
+      const chartRef = useRef(null);
+      useEffect(() => {
+        if (!ref.current || !trend || !trend.length) return;
+        if (chartRef.current) chartRef.current.destroy();
+        chartRef.current = new Chart(ref.current, {
+          type: "line",
+          data: {
+            labels: trend.map((t) => fmtDate(t.date)),
+            datasets: [
+              {
+                label: "Mot par",
+                data: trend.map((t) => t.toPar),
+                borderColor: "#1b7a3d",
+                backgroundColor: "rgba(27,122,61,.12)",
+                tension: 0.25, fill: true, pointRadius: 4, pointHoverRadius: 6,
+              },
+            ],
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false },
+              tooltip: { callbacks: { title: (c) => trend[c[0].dataIndex].course,
+                label: (c) => `Mot par: ${toParStr(c.parsed.y)}` } } },
+            scales: { y: { title: { display: true, text: "Slag mot par" } } },
+          },
+        });
+        return () => chartRef.current && chartRef.current.destroy();
+      }, [trend]);
+      if (!trend || !trend.length) return <p className="muted">Ingen 18-hulls runder å vise trend for ennå.</p>;
+      return <div style={{ height: 320 }}><canvas ref={ref}></canvas></div>;
+    }
+
+    function HandicapChart({ trend }) {
+      const ref = useRef(null);
+      const chartRef = useRef(null);
+      const pts = (trend || []).filter((t) => t.index != null);
+      useEffect(() => {
+        if (!ref.current || !pts.length) return;
+        if (chartRef.current) chartRef.current.destroy();
+        chartRef.current = new Chart(ref.current, {
+          type: "line",
+          data: {
+            labels: pts.map((t) => fmtDate(t.date)),
+            datasets: [{
+              label: "HCP-indeks", data: pts.map((t) => t.index),
+              borderColor: "#8e44ad", backgroundColor: "rgba(142,68,173,.12)",
+              tension: 0.25, fill: true, pointRadius: 3, pointHoverRadius: 6,
+            }],
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false },
+              tooltip: { callbacks: { title: (c) => pts[c[0].dataIndex].course,
+                label: (c) => `Indeks: ${c.parsed.y}` } } },
+            scales: { y: { title: { display: true, text: "Estimert indeks (lavere = bedre)" } } },
+          },
+        });
+        return () => chartRef.current && chartRef.current.destroy();
+      }, [trend]);
+      if (!pts.length) return <p className="muted">Ikke nok 18-hulls runder for handicap ennå.</p>;
+      return <div style={{ height: 260 }}><canvas ref={ref}></canvas></div>;
+    }
+
+    function Overview({ stats, insights, handicap }) {
+      const val = (v) => (v == null ? "–" : v);
+      return (
+        <div>
+          <div className="panel">
+            <h2>📉 Handicap-utvikling (estimert)</h2>
+            <div className="body">
+              <div style={{ display: "flex", gap: 28, marginBottom: 14, flexWrap: "wrap" }}>
+                <div><div className="label muted">Estimert indeks nå</div>
+                  <div style={{ fontSize: 28, fontWeight: 700 }}>{val(handicap && handicap.currentIndex)}</div></div>
+                <div><div className="label muted">Runder brukt</div>
+                  <div style={{ fontSize: 28, fontWeight: 700 }}>{val(handicap && handicap.roundsUsed)}</div></div>
+                <div><div className="label muted">Beste differanse</div>
+                  <div style={{ fontSize: 28, fontWeight: 700 }}>{val(handicap && handicap.bestDifferential)}</div></div>
+              </div>
+              <HandicapChart trend={handicap ? handicap.trend : []} />
+              <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
+                Estimat fra Garmin-data (8 beste av siste 20 runder). Offisiell handicap ligger i
+                Golfbox – hentes i Fase 3.
+              </p>
+            </div>
+          </div>
+
+          <div className="panel" style={{ marginTop: 20 }}>
+            <h2>Trend – score mot par (18 hull, eldst → nyest)</h2>
+            <div className="body">
+              <TrendChart trend={stats ? stats.trend : []} />
+              <p className="muted" style={{ marginTop: 14, fontSize: 13 }}>
+                Putts og slag-for-slag vises ikke – Approach S50 registrerer ikke dette.
+              </p>
+            </div>
+          </div>
+
+          <div className="insight-grid" style={{ marginTop: 20 }}>
+            <div className="panel">
+              <h2>🗺️ Golf-reisekart</h2>
+              <div className="body"><GolfMap points={insights ? insights.map : []} /></div>
+            </div>
+            <div className="panel">
+              <h2>🧬 Scoring-DNA</h2>
+              <div className="body"><ScoringDNA scoring={insights ? insights.scoring : null} /></div>
+            </div>
+          </div>
+
+          <div className="panel" style={{ marginTop: 20 }}>
+            <h2>🎯 Fairway-dispersjon</h2>
+            <div className="body"><Dispersion disp={insights ? insights.dispersion : null} /></div>
+          </div>
+
+          <div className="panel" style={{ marginTop: 20 }}>
+            <h2>🔥 Hull-heatmap (baner spilt flere ganger)</h2>
+            <div className="body"><Heatmap heatmaps={insights ? insights.heatmaps : []} /></div>
+          </div>
+        </div>
+      );
+    }
+
+    function Scorecard({ round, onSend }) {
+      if (!round) return null;
+      const holes = round.holes || [];
+      const front = holes.filter((h) => h.number <= 9);
+      const back = holes.filter((h) => h.number > 9);
+      const sum = (arr, key) => arr.reduce((a, h) => a + (h[key] || 0), 0);
+
+      const Nine = ({ label, hs }) => (
+        <table style={{ marginBottom: 18 }}>
+          <thead>
+            <tr>
+              <th style={{ textAlign: "left" }}>{label}</th>
+              {hs.map((h) => <th key={h.number}>{h.number}</th>)}
+              <th>Sum</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={{ textAlign: "left" }} className="muted">Par</td>
+              {hs.map((h) => <td key={h.number} className="muted">{h.par ?? "–"}</td>)}
+              <td className="muted">{sum(hs, "par")}</td>
+            </tr>
+            <tr>
+              <td style={{ textAlign: "left" }} className="muted">Slag</td>
+              {hs.map((h) => (
+                <td key={h.number}>
+                  <span className={"score-cell " + scoreClass(h.toPar)}>{h.strokes ?? "–"}</span>
+                </td>
+              ))}
+              <td><strong>{sum(hs, "strokes")}</strong></td>
+            </tr>
+            <tr>
+              <td style={{ textAlign: "left" }} className="muted">Fairway</td>
+              {hs.map((h) => (
+                <td key={h.number} style={{ fontSize: 11 }} className="muted">
+                  {h.fairway === "HIT" ? "✓" : h.fairway === "LEFT" ? "◄" : h.fairway === "RIGHT" ? "►" : ""}
+                </td>
+              ))}
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      );
+
+      return (
+        <div className="panel">
+          <h2 style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span>{round.course} · {fmtDate(round.date)}</span>
+            <button className="btn-golfbox" onClick={() => onSend && onSend(round.id)}>⛳ Send til Golfbox</button>
+          </h2>
+          <div className="body">
+            <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginBottom: 18 }}>
+              <div><div className="label muted">Total</div><div style={{ fontSize: 22, fontWeight: 700 }}>{round.strokes} slag</div></div>
+              <div><div className="label muted">Mot par</div><div style={{ fontSize: 22, fontWeight: 700 }} className={toParClass(round.toPar)}>{toParStr(round.toPar)}</div></div>
+              <div><div className="label muted">Par</div><div style={{ fontSize: 22, fontWeight: 700 }}>{round.par ?? "–"}</div></div>
+              <div><div className="label muted">Fairway</div><div style={{ fontSize: 22, fontWeight: 700 }}>{round.fairwayPct != null ? round.fairwayPct + "%" : "–"}</div></div>
+              {round.playerHandicap != null && <div><div className="label muted">Handicap</div><div style={{ fontSize: 22, fontWeight: 700 }}>{round.playerHandicap}</div></div>}
+            </div>
+            {front.length > 0 && <Nine label="Ut" hs={front} />}
+            {back.length > 0 && <Nine label="Inn" hs={back} />}
+          </div>
+        </div>
+      );
+    }
+
+    // ---- Innsikt: Kart ----
+    function GolfMap({ points }) {
+      const ref = useRef(null);
+      const mapRef = useRef(null);
+      useEffect(() => {
+        if (!ref.current || !points || !points.length) return;
+        if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
+        const map = L.map(ref.current, { scrollWheelZoom: false });
+        mapRef.current = map;
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap", maxZoom: 18,
+        }).addTo(map);
+        const latlngs = [];
+        points.forEach((p) => {
+          const t = p.bestToPar;
+          const color = t == null ? "#6b7c72" : t <= 0 ? "#1b7a3d" : t <= 5 ? "#e0a800" : "#e17055";
+          const m = L.circleMarker([p.lat, p.lon], {
+            radius: 7 + Math.min(p.rounds, 8), color: "#fff", weight: 2,
+            fillColor: color, fillOpacity: 0.9,
+          }).addTo(map);
+          m.bindPopup(
+            `<b>${p.course}</b><br>${p.rounds} runde(r)<br>Beste: ${
+              p.bestToPar == null ? "–" : toParStr(p.bestToPar)
+            } · Snitt: ${p.avgToPar == null ? "–" : toParStr(p.avgToPar)}`
+          );
+          latlngs.push([p.lat, p.lon]);
+        });
+        map.fitBounds(latlngs, { padding: [40, 40] });
+        setTimeout(() => map.invalidateSize(), 100);
+        return () => { map.remove(); mapRef.current = null; };
+      }, [points]);
+      if (!points || !points.length) return <p className="muted">Ingen banekoordinater tilgjengelig.</p>;
+      return <div ref={ref} id="map"></div>;
+    }
+
+    // ---- Innsikt: Hull-heatmap ----
+    function hmColor(toPar) {
+      if (toPar == null) return "#eef1ef";
+      if (toPar <= -0.15) return "#8fd19e";
+      if (toPar < 0.35) return "#d7ead9";
+      if (toPar < 0.85) return "#f6d98a";
+      if (toPar < 1.35) return "#f0a875";
+      return "#e07a5a";
+    }
+    function Heatmap({ heatmaps }) {
+      if (!heatmaps || !heatmaps.length)
+        return <p className="muted">Ingen baner spilt 2+ ganger (18 hull) ennå.</p>;
+      return (
+        <div>
+          {heatmaps.map((hm) => (
+            <div className="hm-course" key={hm.course}>
+              <h3>{hm.course} <span className="muted" style={{ fontWeight: 400 }}>· {hm.roundsCount} runder</span></h3>
+              <div className="hm-row">
+                <span className="lbl">Hull</span>
+                {hm.holes.map((h) => <span key={h.number} className="lbl" style={{ textAlign: "center" }}>{h.number}</span>)}
+                <span className="lbl" style={{ textAlign: "center" }}>Snitt</span>
+              </div>
+              <div className="hm-row">
+                <span className="lbl">Snitt</span>
+                {hm.holes.map((h) => (
+                  <span key={h.number} className="hm-cell" style={{ background: hmColor(h.avgToPar) }}
+                    title={`Hull ${h.number} · par ${h.par} · snitt ${h.avgStrokes}`}>
+                    {h.avgStrokes}
+                    <small>par {h.par}</small>
+                  </span>
+                ))}
+                <span className="hm-cell" style={{ background: "#12241a", color: "#fff" }}>
+                  {(hm.holes.reduce((a, h) => a + h.avgStrokes, 0)).toFixed(0)}
+                </span>
+              </div>
+            </div>
+          ))}
+          <p className="muted" style={{ fontSize: 12 }}>Grønt = under snitt-par (dine venner), rødt = hullene som koster deg slag.</p>
+        </div>
+      );
+    }
+
+    // ---- Innsikt: Scoring-DNA ----
+    function ScoringDNA({ scoring }) {
+      if (!scoring) return null;
+      const cats = [
+        ["Eagle+", scoring.eagle, "#8e44ad"],
+        ["Birdie", scoring.birdie, "#2e86de"],
+        ["Par", scoring.par, "#27ae60"],
+        ["Bogey", scoring.bogey, "#e0a800"],
+        ["Dobbel+", scoring.double, "#c0392b"],
+      ];
+      const total = cats.reduce((a, c) => a + c[1], 0) || 1;
+      return (
+        <div>
+          <div className="dna-bar">
+            {cats.map(([name, n, col]) =>
+              n > 0 ? (
+                <div className="dna-seg" key={name} style={{ width: (100 * n) / total + "%", background: col }}
+                  title={`${name}: ${n}`}>
+                  {(100 * n) / total >= 7 ? Math.round((100 * n) / total) + "%" : ""}
+                </div>
+              ) : null
+            )}
+          </div>
+          <div className="dna-legend">
+            {cats.map(([name, n, col]) => (
+              <span key={name}><span className="dna-dot" style={{ background: col }}></span>{name}: <strong>{n}</strong></span>
+            ))}
+          </div>
+          <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
+            Totalt {total} hull spilt. Andelen par-eller-bedre er {Math.round((100 * (scoring.eagle + scoring.birdie + scoring.par)) / total)}%.
+          </p>
+        </div>
+      );
+    }
+
+    // ---- Innsikt: Fairway-dispersjon ----
+    function Dispersion({ disp }) {
+      if (!disp || !disp.recorded) return <p className="muted">Ingen fairway-data registrert.</p>;
+      const rec = disp.recorded;
+      const seg = [
+        ["◄ Venstre", disp.left, "#e17055"],
+        ["✓ Truffet", disp.hit, "#27ae60"],
+        ["Høyre ►", disp.right, "#e0a800"],
+      ];
+      const pct = (n) => Math.round((100 * n) / rec);
+      const miss = disp.left + disp.right;
+      const tendency = miss === 0 ? "" : disp.left > disp.right
+        ? `Du bommer oftere til venstre (${pct(disp.left)}% vs ${pct(disp.right)}%).`
+        : disp.right > disp.left
+        ? `Du bommer oftere til høyre (${pct(disp.right)}% vs ${pct(disp.left)}%).`
+        : "Bommene fordeler seg jevnt venstre/høyre.";
+      return (
+        <div>
+          <div className="disp-bar">
+            {seg.map(([name, n, col]) =>
+              n > 0 ? (
+                <div className="disp-seg" key={name} style={{ width: (100 * n) / rec + "%", background: col }}>
+                  {pct(n) >= 8 ? `${pct(n)}%` : ""}
+                </div>
+              ) : null
+            )}
+          </div>
+          <div className="dna-legend">
+            {seg.map(([name, n, col]) => (
+              <span key={name}><span className="dna-dot" style={{ background: col }}></span>{name}: <strong>{n}</strong> ({pct(n)}%)</span>
+            ))}
+          </div>
+          <p className="muted" style={{ fontSize: 13, marginTop: 12 }}>
+            Fairway-treff totalt: <strong>{pct(disp.hit)}%</strong> ({disp.hit}/{rec}). {tendency}
+          </p>
+        </div>
+      );
+    }
+
+    function Insights({ insights }) {
+      if (!insights) return <p className="muted">Laster innsikt …</p>;
+      return (
+        <div>
+          <div className="insight-grid">
+            <div className="panel">
+              <h2>🗺️ Golf-reisekart</h2>
+              <div className="body"><GolfMap points={insights.map} /></div>
+            </div>
+            <div className="panel">
+              <h2>🧬 Scoring-DNA</h2>
+              <div className="body"><ScoringDNA scoring={insights.scoring} /></div>
+            </div>
+          </div>
+          <div className="panel" style={{ marginTop: 20 }}>
+            <h2>🎯 Fairway-dispersjon</h2>
+            <div className="body"><Dispersion disp={insights.dispersion} /></div>
+          </div>
+          <div className="panel" style={{ marginTop: 20 }}>
+            <h2>🔥 Hull-heatmap (baner spilt flere ganger)</h2>
+            <div className="body"><Heatmap heatmaps={insights.heatmaps} /></div>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [rounds, setRounds] = useState([]);
+      const [stats, setStats] = useState(null);
+      const [insights, setInsights] = useState(null);
+      const [handicap, setHandicap] = useState(null);
+      const [selected, setSelected] = useState(null);
+      const [tab, setTab] = useState("overview");
+      const [syncing, setSyncing] = useState(false);
+      const [syncLog, setSyncLog] = useState(null);
+
+      const load = () => {
+        fetch("/api/rounds").then((r) => r.json()).then((d) => setRounds(d.rounds || []));
+        fetch("/api/stats").then((r) => r.json()).then(setStats);
+        fetch("/api/insights").then((r) => r.json()).then(setInsights);
+        fetch("/api/handicap").then((r) => r.json()).then(setHandicap);
+      };
+      useEffect(load, []);
+
+      const openRound = (id) => {
+        fetch(`/api/rounds/${id}`).then((r) => r.json()).then((d) => { setSelected(d); setTab("round"); });
+      };
+
+      const toggleExclude = (r) => {
+        const action = r.excluded ? "include" : "exclude";
+        fetch(`/api/rounds/${r.id}/${action}`, { method: "POST" }).then(() => load());
+      };
+
+      const sendToGolfbox = (id) => {
+        setSyncLog("⛳ Åpner Golfbox i nettleseren – vent litt …");
+        fetch(`/api/golfbox/${id}`, { method: "POST" })
+          .then((r) => r.json())
+          .then((d) => setSyncLog(d.message || "Golfbox åpnet."))
+          .catch((e) => setSyncLog("Feil: " + e));
+      };
+
+      const sync = () => {
+        setSyncing(true); setSyncLog("Henter nye runder fra Garmin …");
+        fetch("/api/sync", { method: "POST" }).then((r) => r.json()).then((d) => {
+          setSyncLog(d.output || (d.ok ? "Ferdig." : "Noe gikk galt."));
+          setSyncing(false); load();
+        }).catch((e) => { setSyncLog("Feil: " + e); setSyncing(false); });
+      };
+
+      return (
+        <div>
+          <header>
+            <h1>⛳ Golf-dashboard</h1>
+            <button className="btn" onClick={sync} disabled={syncing}>
+              {syncing ? "Synker …" : "↻ Sync fra Garmin"}
+            </button>
+          </header>
+          <div className="wrap">
+            <StatCards stats={stats} />
+            {syncLog && <div className="sync-log">{syncLog}</div>}
+            <div className="tabs">
+              <div className={"tab " + (tab === "overview" ? "active" : "")} onClick={() => setTab("overview")}>Oversikt</div>
+              {selected && <div className={"tab " + (tab === "round" ? "active" : "")} onClick={() => setTab("round")}>Valgt runde</div>}
+            </div>
+            <div className="layout">
+              <div className="panel">
+                <h2>Runder ({rounds.filter((r) => !r.excluded).length})</h2>
+                <div style={{ maxHeight: 720, overflow: "auto" }}>
+                  {rounds.map((r) => (
+                    <div key={r.id}
+                      className={"round-item " + (selected && selected.id === r.id ? "active " : "") + (r.excluded ? "excluded" : "")}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                        <div style={{ flex: 1, cursor: "pointer" }} onClick={() => openRound(r.id)}>
+                          <div className="course">{r.course}</div>
+                          <div className="meta">
+                            <span>{fmtDate(r.date)} · {r.holesCompleted} hull</span>
+                            <span className={"to-par " + toParClass(r.toPar)}>{toParStr(r.toPar)} · {r.strokes}</span>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          <button className="mini-btn golfbox" title="Send til Golfbox"
+                            onClick={() => sendToGolfbox(r.id)}>⛳</button>
+                          <button className="mini-btn" title={r.excluded ? "Ta runden tilbake" : "Skjul runde (f.eks. scramble)"}
+                            onClick={() => toggleExclude(r)}>
+                            {r.excluded ? "↺" : "×"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {!rounds.length && <div className="body muted">Ingen runder ennå. Trykk «Sync fra Garmin».</div>}
+                </div>
+              </div>
+              <div>
+                {tab === "overview"
+                  ? <Overview stats={stats} insights={insights} handicap={handicap} />
+                  : <Scorecard round={selected} onSend={sendToGolfbox} />}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

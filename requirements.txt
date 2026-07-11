@@ -1,0 +1,11 @@
+# Fase 1 – henting av golfdata fra Garmin Connect
+garminconnect>=0.2.20
+curl_cffi
+python-dotenv
+
+# Fase 2 – dashboard (backend)
+fastapi
+uvicorn
+
+# Fase 3 – auto-posting til Golfbox
+playwright

@@ -1,0 +1,70 @@
+name: Auto-sync Garmin til Golfbox
+
+# Kjøres av:
+#  - workflow_dispatch: trigges av cron-job.org hvert ~5. min (rask, presis)
+#  - schedule: reserve hvert 15. min hvis cron-job.org skulle svikte (kan være forsinket)
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"   # UTC
+
+permissions:
+  contents: write            # for å lagre posted.json tilbake til repoet
+
+concurrency:
+  group: auto-sync           # aldri to kjøringer samtidig
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      GARMINTOKENS: /home/runner/.garminconnect
+      GOLFBOX_AUTO: "1"
+      GOLFBOX_AUTO_SUBMIT: "1"   # sett til "0" for å fylle ut uten å lagre
+      GOLFBOX_MARKER_MEMBERNO: ${{ secrets.GOLFBOX_MARKER_MEMBERNO }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+    steps:
+      - name: Hent koden
+        uses: actions/checkout@v4
+
+      - name: Sett opp Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer avhengigheter
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+          sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Gjenopprett Garmin-token (fra secret)
+        run: |
+          echo "${{ secrets.GARMIN_TOKENS_B64 }}" | base64 -d | tar xzf - -C "$HOME"
+
+      - name: Gjenopprett Golfbox-økt (fra secret)
+        run: |
+          mkdir -p data
+          echo "${{ secrets.GOLFBOX_STATE_B64 }}" | base64 -d > data/golfbox_state.json
+
+      - name: Synk sentralbasen ned (delt bane-database)
+        run: python sync_registry.py || echo "sentralbase ikke satt opp – hopper over"
+
+      - name: Kjør auto-sync (synlig nettleser under virtuell skjerm)
+        run: xvfb-run -a python auto_sync.py
+
+      - name: Lagre state tilbake til repoet
+        if: always()
+        run: |
+          git config user.name "auto-sync"
+          git config user.email "auto-sync@users.noreply.github.com"
+          git add data/posted.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "Ingen endringer i state."
+          else
+            git commit -m "auto-sync state $(date -u +%FT%TZ)"
+            git push
+          fi

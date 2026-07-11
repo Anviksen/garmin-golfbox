@@ -1,0 +1,4250 @@
+{
+  "clubs": [
+    {
+      "club": "Alsten Golfklubb",
+      "guid": "d03cdaaa-4df5-4e8f-98d9-fa409e700957",
+      "courses": []
+    },
+    {
+      "club": "Alta Golfklubb",
+      "guid": "2619c4ba-569e-42b2-9753-449f0eef0a57",
+      "courses": [
+        {
+          "course": "Alta Golfpark",
+          "tees": [
+            "Klubb-tee",
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 64.3960083,
+      "lon": 27.8720734,
+      "osm_name": "Paltamo Golf"
+    },
+    {
+      "club": "Arendal og Omegn Golfklubb",
+      "guid": "cee0006a-553b-4e1e-8297-7e12050e5a7d",
+      "courses": [
+        {
+          "course": "Arendal & Omegn GK",
+          "tees": [
+            "40",
+            "47",
+            "50",
+            "55",
+            "58"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Asker Golfklubb",
+      "guid": "38219782-908c-4602-87d5-282049eb5a09",
+      "courses": [
+        {
+          "course": "Asker Golfbane",
+          "tees": [
+            "33",
+            "39",
+            "43",
+            "47",
+            "51"
+          ]
+        }
+      ],
+      "lat": 59.8342576,
+      "lon": 10.3954222,
+      "osm_name": "Asker Golfklubb"
+    },
+    {
+      "club": "Askim Golfklubb",
+      "guid": "d61b48da-b190-4a8d-ab88-ec820ee03536",
+      "courses": [
+        {
+          "course": "Askim Hovedbane",
+          "tees": [
+            "32",
+            "39",
+            "48"
+          ]
+        }
+      ],
+      "lat": 59.596801,
+      "lon": 11.1718124,
+      "osm_name": "Askim golfklubb"
+    },
+    {
+      "club": "Atlungstad Golfklubb",
+      "guid": "4e52aeb8-da53-4727-9027-7c8aeb93ea02",
+      "courses": [
+        {
+          "course": "Atlungstad GK",
+          "tees": [
+            "48",
+            "52",
+            "56",
+            "60",
+            "64"
+          ]
+        }
+      ],
+      "lat": 60.7550062,
+      "lon": 11.0881619,
+      "osm_name": "Atlungstad golf"
+    },
+    {
+      "club": "Austrått Golfklubb",
+      "guid": "e64bafef-9bed-415b-8648-f0e82100279e",
+      "courses": [
+        {
+          "course": "Austrått Golfklubb",
+          "tees": [
+            "Grønn",
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 63.7034205,
+      "lon": 9.7365655,
+      "osm_name": "Austrått Golfklubb"
+    },
+    {
+      "club": "Ballerud Golfklubb",
+      "guid": "fd174477-19bd-4120-bd4f-df422371c961",
+      "courses": [
+        {
+          "course": "Ballerud Golf 9 hull",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.9073636,
+      "lon": 10.5819733,
+      "osm_name": "Ballerud golfbane"
+    },
+    {
+      "club": "Bamble Golfklubb",
+      "guid": "5af5b850-7fd3-46c7-a6a9-536509e1edf1",
+      "courses": [
+        {
+          "course": "Alenda Golf",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Alicante Golf",
+          "tees": [
+            "Gul",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Bamble Golfpark",
+          "tees": [
+            "24",
+            "39",
+            "44"
+          ]
+        },
+        {
+          "course": "Korineum Golf Cyprus",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        },
+        {
+          "course": "La Cala Asia",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "La Cala Europa",
+          "tees": [
+            "Rød",
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Oliva Nova Golf Club Spania",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Putting bane",
+          "tees": [
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Villaitana Golf - LEVANTE",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Villaitana Golf - Poniente",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul",
+            "Hvit"
+          ]
+        }
+      ],
+      "lat": 58.9552273,
+      "lon": 9.5953893,
+      "osm_name": "Bamble Golfpark"
+    },
+    {
+      "club": "Bergen Golfklubb",
+      "guid": "52e58038-502c-4339-90ce-b7180fd198f0",
+      "courses": [
+        {
+          "course": "Bergen Golfklubb",
+          "tees": [
+            "22",
+            "38",
+            "46"
+          ]
+        }
+      ],
+      "lat": 60.4473234,
+      "lon": 5.3152368,
+      "osm_name": "Bergen golfklubb"
+    },
+    {
+      "club": "Bjørnefjorden Golfklubb",
+      "guid": "18b3f71f-3731-44c3-80e3-d7948c6f51fb",
+      "courses": [
+        {
+          "course": "Bjørnefjorden Golfbane",
+          "tees": [
+            "27",
+            "41",
+            "44"
+          ]
+        },
+        {
+          "course": "Simulator I",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Simulator II",
+          "tees": [
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 60.1916853,
+      "lon": 5.4784044,
+      "osm_name": "Bjørnefjorden Golfklubb"
+    },
+    {
+      "club": "Bjaavann Golfklubb-Kristiansand",
+      "guid": "dbd49c71-412d-4451-8bbe-36021349f14b",
+      "courses": [
+        {
+          "course": "Bjaavann Golfklubb - 18 hull - 2025",
+          "tees": [
+            "13",
+            "34",
+            "44",
+            "50",
+            "56",
+            "61",
+            "64"
+          ]
+        },
+        {
+          "course": "Bjaavann Vinterbane",
+          "tees": [
+            "Vinter"
+          ]
+        }
+      ],
+      "lat": 57.8515387,
+      "lon": 14.0383603,
+      "osm_name": "Sand Golf Club"
+    },
+    {
+      "club": "Bleik Golfklubb",
+      "guid": "35f1afa7-e215-4a14-aeac-3228c63b9e6f",
+      "courses": [
+        {
+          "course": "Bleik Golfstrømsbane",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 69.2820189,
+      "lon": 15.9804074,
+      "osm_name": "Bleik Golfstrømbane"
+    },
+    {
+      "club": "Bodø Golfklubb",
+      "guid": "7606c64b-e8fc-4c22-ac63-74008dd1d067",
+      "courses": [
+        {
+          "course": "Bodø Golfbane - Ilstad",
+          "tees": [
+            "Oransj",
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Par3 bane Ilstad",
+          "tees": [
+            "Par3tee"
+          ]
+        }
+      ],
+      "lat": 67.3452024,
+      "lon": 14.5341008,
+      "osm_name": "Bodø golfpark"
+    },
+    {
+      "club": "Borre Golfklubb",
+      "guid": "353891c0-dea9-4afb-b35b-e4da63c20b44",
+      "courses": [
+        {
+          "course": "Borre Golfbane 2026",
+          "tees": [
+            "49",
+            "54",
+            "58",
+            "62",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.3996806,
+      "lon": 10.4505246,
+      "osm_name": "Borre Golfbane"
+    },
+    {
+      "club": "Borregaard Golfklubb",
+      "guid": "12c3a03e-951b-4bbc-9a6c-b2fef75d6d05",
+      "courses": [
+        {
+          "course": "Borregaard GK",
+          "tees": [
+            "GRØNN 34",
+            "RØD 39",
+            "GUL 43"
+          ]
+        },
+        {
+          "course": "PAR 3 JUNIORTRENING",
+          "tees": [
+            "63"
+          ]
+        }
+      ],
+      "lat": 59.2965961,
+      "lon": 11.133997,
+      "osm_name": "Borregaard Golfbane"
+    },
+    {
+      "club": "Byneset Golfklubb",
+      "guid": "d03a2e53-90e4-42d7-8ad9-2d1761629d41",
+      "courses": [
+        {
+          "course": "Byneset North - 18 holes",
+          "tees": [
+            "44",
+            "49",
+            "54",
+            "57",
+            "63"
+          ]
+        },
+        {
+          "course": "Byneset South",
+          "tees": [
+            "34",
+            "38"
+          ]
+        }
+      ],
+      "lat": 63.3570528,
+      "lon": 10.1488657,
+      "osm_name": "Byneset Golfklubb"
+    },
+    {
+      "club": "Bærum Golfklubb",
+      "guid": "340de8dc-d776-475e-ab12-32c742e70b49",
+      "courses": [
+        {
+          "course": "Bærum Golfklubb 18",
+          "tees": [
+            "Grønn",
+            "Rød",
+            "Blå",
+            "Gul",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Costa Ballena (Las Palmeras+Los Ficus)",
+          "tees": [
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Costa Ballena (Olivos+Palmeras)",
+          "tees": [
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Korthullsbanen",
+          "tees": [
+            "Hvit"
+          ]
+        }
+      ],
+      "lat": 59.9613191,
+      "lon": 10.4949738,
+      "osm_name": "Bærum Golfklubb"
+    },
+    {
+      "club": "Dalane Golfklubb",
+      "guid": "f01d222f-3f50-4bfc-a47a-147f460b149f",
+      "courses": [
+        {
+          "course": "Kjelland Golfbane",
+          "tees": [
+            "Oransje",
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 58.3271227,
+      "lon": 6.2916528,
+      "osm_name": "Dalane golfklubb"
+    },
+    {
+      "club": "Drammen Golfklubb",
+      "guid": "6f1aa74a-4a68-4605-9316-3a8e16b7985c",
+      "courses": [
+        {
+          "course": "Drammen Golfbane",
+          "tees": [
+            "47",
+            "54",
+            "58"
+          ]
+        }
+      ],
+      "lat": 59.6721906,
+      "lon": 10.2153133,
+      "osm_name": "Drammen Golfklubb"
+    },
+    {
+      "club": "Drøbak Golfklubb",
+      "guid": "608e1a63-a10e-4c54-b3c8-d53fa9a087f4",
+      "courses": [
+        {
+          "course": "Åpen Ballrenne morgen",
+          "tees": [
+            "51",
+            "47"
+          ]
+        },
+        {
+          "course": "Drøbak GK 18 hull",
+          "tees": [
+            "51",
+            "47"
+          ]
+        },
+        {
+          "course": "Drøbak GK 9 hull back 2020",
+          "tees": [
+            "47",
+            "51"
+          ]
+        },
+        {
+          "course": "Drøbak GK 9 hull front 2020",
+          "tees": [
+            "47",
+            "51"
+          ]
+        }
+      ],
+      "lat": 59.6746192,
+      "lon": 10.6503748,
+      "osm_name": "Drøbak Golfklubb"
+    },
+    {
+      "club": "Egersund Golfklubb",
+      "guid": "c39fe5d5-bed7-4c5a-bbba-efea489889ab",
+      "courses": [
+        {
+          "course": "Maurholen golfpark",
+          "tees": [
+            "Rød",
+            "Gul",
+            "Hvit"
+          ]
+        }
+      ],
+      "lat": 58.4856811,
+      "lon": 5.9200045,
+      "osm_name": "Egersund golfklubb"
+    },
+    {
+      "club": "Eiker Golfklubb",
+      "guid": "af6bfe9e-1a76-4f1f-aa51-c00dd18cee0f",
+      "courses": [
+        {
+          "course": "Portåsen 2018",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.7362953,
+      "lon": 10.0054138,
+      "osm_name": "Eiker Golfklubb"
+    },
+    {
+      "club": "Ekholtbruket Golfklubb",
+      "guid": "bd54e51f-e933-4331-8fa1-5146ed5249ab",
+      "courses": [
+        {
+          "course": "Ekholt golfbane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.4072799,
+      "lon": 10.6833033,
+      "osm_name": "Ekholt Golfpark"
+    },
+    {
+      "club": "Elverum Golfklubb",
+      "guid": "873b2601-6d7c-418f-bda8-3d6eb0a8307e",
+      "courses": [
+        {
+          "course": "Elverum Golfbane",
+          "tees": [
+            "45",
+            "50",
+            "54",
+            "58",
+            "63"
+          ]
+        }
+      ],
+      "lat": 60.8730667,
+      "lon": 11.6736497,
+      "osm_name": "Elverum Golf"
+    },
+    {
+      "club": "Fana Golfklubb",
+      "guid": "ebeca4d8-12e6-4432-9cd2-38c2d485ee8e",
+      "courses": [
+        {
+          "course": "Fana Golfklubb",
+          "tees": [
+            "V",
+            "IV",
+            "III",
+            "II",
+            "I"
+          ]
+        }
+      ],
+      "lat": 60.2916662,
+      "lon": 5.3037368,
+      "osm_name": "Fana Golfklubb"
+    },
+    {
+      "club": "Fet Golfklubb",
+      "guid": "2a2ab5cd-3cd4-4b9f-b2ed-6d0b701f19c9",
+      "courses": [
+        {
+          "course": "Fet GK Leikvin 2019-2028",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.9166888,
+      "lon": 11.1746093,
+      "osm_name": "Fet Golfklubb"
+    },
+    {
+      "club": "Florø Golfklubb",
+      "guid": "3a899645-2df5-4e8e-bc4d-f931b2114d78",
+      "courses": [
+        {
+          "course": "Florø Golfklubb, Brandsøy",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Frosta Golfklubb",
+      "guid": "f3e02ff1-5a08-4316-aaf6-85849f8dc569",
+      "courses": [
+        {
+          "course": "Frosta Golfklubb",
+          "tees": [
+            "25",
+            "30",
+            "33"
+          ]
+        }
+      ],
+      "lat": 63.582239,
+      "lon": 10.8032219
+    },
+    {
+      "club": "Gamle Fredrikstad Golfklubb",
+      "guid": "7907b657-e733-48df-b4d1-73029dbff8a0",
+      "courses": [
+        {
+          "course": "Gamle Fredrikstad Golfklubb Pay & Play",
+          "tees": [
+            "74",
+            "98"
+          ]
+        },
+        {
+          "course": "Hovedbane Gamle Fredrikstad GK",
+          "tees": [
+            "41",
+            "46",
+            "50",
+            "55",
+            "59"
+          ]
+        },
+        {
+          "course": "Hovedbanen TEE 36 og TEE  63",
+          "tees": [
+            "36",
+            "63"
+          ]
+        }
+      ],
+      "lat": 59.2034924,
+      "lon": 10.9779858,
+      "osm_name": "Gamle Fredrikstad Golfklubb"
+    },
+    {
+      "club": "Geilo IL",
+      "guid": "b1e5244d-d070-46d4-a9a6-7c1a211fed2e",
+      "courses": [
+        {
+          "course": "Vestlia Golfbane Geilo",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Giske Golfklubb",
+      "guid": "1b5e4a66-615b-4864-9831-d854a1ce63c0",
+      "courses": [
+        {
+          "course": "Giske Golfbane 9 hull",
+          "tees": [
+            "34",
+            "36",
+            "37",
+            "39",
+            "41"
+          ]
+        },
+        {
+          "course": "Gjøsund simulator",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul",
+            "Hvit"
+          ]
+        }
+      ],
+      "lat": 62.5310991,
+      "lon": 6.1341119
+    },
+    {
+      "club": "Gjerdrum Golfklubb",
+      "guid": "eb55c85d-fe14-45d5-bfed-8fe9af14e688",
+      "courses": [
+        {
+          "course": "Gjerdrum Golfbane",
+          "tees": [
+            "Orange",
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Hvam Golfbane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 60.064571,
+      "lon": 11.028942,
+      "osm_name": "Gjerdrum golfklubb"
+    },
+    {
+      "club": "Gjersjøen Golfklubb",
+      "guid": "1e4427c3-5055-45a3-b147-046189fc61e5",
+      "courses": [
+        {
+          "course": "Gjersjøen Golfbane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.7715306,
+      "lon": 10.7776937,
+      "osm_name": "Gjersjøen golfbane"
+    },
+    {
+      "club": "Gjøvik og Toten Golfklubb",
+      "guid": "9801a076-cbac-4024-9d12-49fa6b291da2",
+      "courses": [
+        {
+          "course": "Gjøvik & Toten Golfklubb",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Grenland og Omegn Golfklubb",
+      "guid": "e107ef6a-b3e0-486f-9bc7-5e21108dc3a8",
+      "courses": [
+        {
+          "course": "Grenland og Omegn Golfklubb",
+          "tees": [
+            "31",
+            "48",
+            "53",
+            "57",
+            "59"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Grimstad Golfklubb",
+      "guid": "51b73ff2-7ef4-491f-aae2-2c5b1b64bea6",
+      "courses": [
+        {
+          "course": "Grimstad Golfklubb",
+          "tees": [
+            "29",
+            "49",
+            "47",
+            "42"
+          ]
+        }
+      ],
+      "lat": 58.3587295,
+      "lon": 8.638612,
+      "osm_name": "Grimstad golfbane"
+    },
+    {
+      "club": "Grini Golfklubb",
+      "guid": "ee00c492-7f02-4c2c-851b-8cddc89181db",
+      "courses": [
+        {
+          "course": "Grini Golfbane",
+          "tees": [
+            "23",
+            "31",
+            "45",
+            "52"
+          ]
+        }
+      ],
+      "lat": 59.9527522,
+      "lon": 10.6214984,
+      "osm_name": "Grini Golfklubb"
+    },
+    {
+      "club": "Groruddalen Golfklubb",
+      "guid": "90db15a5-1265-4c5d-bd34-4414259d98bd",
+      "courses": [
+        {
+          "course": "Groruddalen Golfklubb",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Ola's Par 72",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Saurines",
+          "tees": [
+            "Rød",
+            "Gul",
+            "Hvit"
+          ]
+        }
+      ],
+      "lat": 59.9703643,
+      "lon": 10.9169656,
+      "osm_name": "Groruddalen Golfklubb"
+    },
+    {
+      "club": "Grønmo Golfklubb",
+      "guid": "b13984b1-de27-4dce-968c-f850c890c427",
+      "courses": [
+        {
+          "course": "Grønmo Golfbane",
+          "tees": [
+            "34",
+            "51",
+            "54",
+            "57",
+            "61"
+          ]
+        }
+      ],
+      "lat": 59.8449474,
+      "lon": 10.8539141,
+      "osm_name": "Grønmo Golfklubb"
+    },
+    {
+      "club": "Hafjell Golfklubb",
+      "guid": "f19a7749-ab09-498a-8330-2b3080fa8b66",
+      "courses": [
+        {
+          "course": "Hafjell golfbane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 61.2466551,
+      "lon": 10.4561383,
+      "osm_name": "Hafjell Golf"
+    },
+    {
+      "club": "Haga Golfklubb",
+      "guid": "e0105cd4-744f-4323-9b70-426e833e2ee6",
+      "courses": [
+        {
+          "course": "Haga BLÅ+BLÅ",
+          "tees": [
+            "30",
+            "46",
+            "50",
+            "56",
+            "61"
+          ]
+        },
+        {
+          "course": "Haga BLÅ+GUL",
+          "tees": [
+            "30",
+            "46",
+            "50",
+            "56",
+            "61"
+          ]
+        },
+        {
+          "course": "Haga BLÅ+RØD",
+          "tees": [
+            "30",
+            "46",
+            "50",
+            "56",
+            "61"
+          ]
+        },
+        {
+          "course": "Haga GUL+GUL",
+          "tees": [
+            "30",
+            "46",
+            "50",
+            "56",
+            "61"
+          ]
+        },
+        {
+          "course": "Haga GUL+RØD",
+          "tees": [
+            "30",
+            "46",
+            "50",
+            "56",
+            "61"
+          ]
+        },
+        {
+          "course": "Haga RØD+RØD",
+          "tees": [
+            "46",
+            "50",
+            "56",
+            "61"
+          ]
+        },
+        {
+          "course": "Haga Young Course (BLÅ+GUL)",
+          "tees": [
+            "30"
+          ]
+        },
+        {
+          "course": "Haga Young Course (RØD)",
+          "tees": [
+            "30"
+          ]
+        }
+      ],
+      "lat": 59.9440265,
+      "lon": 10.5760295,
+      "osm_name": "Haga golfklubb"
+    },
+    {
+      "club": "Hakadal Golfklubb",
+      "guid": "68717111-45d3-40cf-bbc2-527de9749984",
+      "courses": [
+        {
+          "course": "Aas Gaard Golfpark Hakadal",
+          "tees": [
+            "28",
+            "47",
+            "51",
+            "57",
+            "61"
+          ]
+        }
+      ],
+      "lat": 60.1316236,
+      "lon": 10.8331566,
+      "osm_name": "Hakadal golfklubb"
+    },
+    {
+      "club": "Halden Golfklubb",
+      "guid": "6be4bc90-b057-4776-9497-bb65216c1c54",
+      "courses": [
+        {
+          "course": "Halden GK",
+          "tees": [
+            "oransj",
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Hallingdal Golfklubb",
+      "guid": "1d5ab8c1-b258-442a-ba17-24add487b080",
+      "courses": [
+        {
+          "course": "GOLFALPIN GOLFBANE HEMSEDAL",
+          "tees": [
+            "36",
+            "46",
+            "56"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Hammerfest Golfklubb",
+      "guid": "65752d66-4bd2-4e88-9e0f-05ef94516424",
+      "courses": [
+        {
+          "course": "Hammerfest og Kvalsund",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Hardanger Golfklubb",
+      "guid": "71cdcd50-5488-4d12-a59c-7f04360739b4",
+      "courses": [
+        {
+          "course": "Hardanger Golfklubb",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 60.3758328,
+      "lon": 6.1800127,
+      "osm_name": "Hardanger Golfklubb"
+    },
+    {
+      "club": "Harstad Golfklubb",
+      "guid": "9ebabf21-50e2-4786-8266-6a85cf483dac",
+      "courses": [
+        {
+          "course": "Harstad Golfbane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 68.8352787,
+      "lon": 16.4860509,
+      "osm_name": "Harstad Golfklubb"
+    },
+    {
+      "club": "Haugaland Golfklubb",
+      "guid": "e43bc88b-4f10-4b17-aab2-b99fd70e2e3f",
+      "courses": [
+        {
+          "course": "9 hullsbane",
+          "tees": [
+            "Blå",
+            "Gul",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "9+9",
+          "tees": [
+            "56+Gul"
+          ]
+        },
+        {
+          "course": "Haugaland Golfbane Sveio",
+          "tees": [
+            "47",
+            "51",
+            "56",
+            "61"
+          ]
+        }
+      ],
+      "lat": 59.5590361,
+      "lon": 5.3706885,
+      "osm_name": "Haugaland Golfbane Sveio"
+    },
+    {
+      "club": "Hauger Golfklubb",
+      "guid": "fee57961-2559-4e30-bdb6-7c9b8367ca5f",
+      "courses": [
+        {
+          "course": "Hauger Golfbane AS",
+          "tees": [
+            "KM",
+            "35",
+            "47",
+            "49",
+            "54",
+            "59",
+            "63"
+          ]
+        }
+      ],
+      "lat": 60.0006198,
+      "lon": 10.9793015,
+      "osm_name": "Hauger Golfklubb"
+    },
+    {
+      "club": "Haugesund Golfklubb",
+      "guid": "3648ed5a-312c-4aae-9e80-255bb785d81c",
+      "courses": [
+        {
+          "course": "Haugesund Golfpark, Kolnes",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Helgeland Golfklubb",
+      "guid": "f878c303-e142-4e0e-a8d7-a183c85fa9d4",
+      "courses": [
+        {
+          "course": "Helgeland Golfklubb 2023",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 65.9261152,
+      "lon": 13.3157283
+    },
+    {
+      "club": "Hemsedal Golfklubb",
+      "guid": "47d57fa9-e117-4973-9db0-739c6eab32b7",
+      "courses": [
+        {
+          "course": "Hemsedal golfbane 2014",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Turneringsbane Grøndalen",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Turneringsbane Ole Johans 2011",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 60.92529,
+      "lon": 8.42876
+    },
+    {
+      "club": "Herdla Golfklubb",
+      "guid": "c69849f1-246f-470b-9704-eeda7f9bafff",
+      "courses": [
+        {
+          "course": "Herdla Golfbane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Herdla Golfbane 9 hull",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 60.5667258,
+      "lon": 4.9520413,
+      "osm_name": "Herdla golfklubb"
+    },
+    {
+      "club": "Hinnøy Golfklubb",
+      "guid": "c4b47d82-9cd5-479e-b0ee-411877eef0d2",
+      "courses": []
+    },
+    {
+      "club": "Hitra Frøya Golfklubb",
+      "guid": "400fca00-81bf-4a2e-8943-5cacfeda7d72",
+      "courses": [
+        {
+          "course": "Hitra Golfbane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 63.5090299,
+      "lon": 9.0212076,
+      "osm_name": "Hitra Golfklubb"
+    },
+    {
+      "club": "Hof Golfklubb",
+      "guid": "db5188be-2fd7-48ec-8f7a-59adba25e6b0",
+      "courses": [
+        {
+          "course": "Hof 9 hull",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Simulator Golf",
+          "tees": [
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.5370432,
+      "lon": 10.0852262,
+      "osm_name": "Hof Golfbane"
+    },
+    {
+      "club": "Holeværingen IL – Golfgruppe",
+      "guid": "e69da9eb-d352-44a9-b2df-2abb5a035bbd",
+      "courses": []
+    },
+    {
+      "club": "Holtsmark Golfklubb",
+      "guid": "d78ea093-4543-4cd5-ba4e-f6c80c1fef67",
+      "courses": [
+        {
+          "course": "18 hull Hovedbane fra 2022",
+          "tees": [
+            "40",
+            "47",
+            "52",
+            "58",
+            "63"
+          ]
+        },
+        {
+          "course": "Eplehagen 9hullsbane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.8659298,
+      "lon": 10.2673775,
+      "osm_name": "Holtsmark Golf"
+    },
+    {
+      "club": "Hovden Golfklubb",
+      "guid": "2e24dc2d-20ef-455f-874d-97e32c819fd4",
+      "courses": [
+        {
+          "course": "Hovden Golfklubb",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.4896389,
+      "lon": 7.3963737
+    },
+    {
+      "club": "Huseby & Hankø Golfklubb",
+      "guid": "a47d8ce0-5f2c-43d5-9421-8bf0fe5fa412",
+      "courses": [
+        {
+          "course": "ALENDA GOLF",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        },
+        {
+          "course": "ALICANTE GOLF",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "ALTEA GOLF DON CAYO",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "EL PLANTIO",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "FONT DEL LLOP GOLF RESORT",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "GOLF BONALBA",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Huseby & Hankø Golfbane",
+          "tees": [
+            "40",
+            "47",
+            "Orange"
+          ]
+        },
+        {
+          "course": "Kongsvinger Golfbane",
+          "tees": [
+            "Rød"
+          ]
+        },
+        {
+          "course": "Mjølkerød",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "PUIG CAMPANA GOLF",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Quinta Da Marinha Golf",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Villaitana Levante Course",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Villaitana Poniente Course",
+          "tees": [
+            "Rød",
+            "Gul",
+            "Hvit"
+          ]
+        }
+      ],
+      "lat": 59.2690029,
+      "lon": 10.8020916,
+      "osm_name": "Huseby & Hankø Golfklubb"
+    },
+    {
+      "club": "Husøy Golfklubb",
+      "guid": "c8b220b3-8bec-4fa9-a159-eda240132c36",
+      "courses": [
+        {
+          "course": "Pitch and put - kan ikke regules på",
+          "tees": [
+            "Blå"
+          ]
+        }
+      ],
+      "lat": null,
+      "lon": null
+    },
+    {
+      "club": "Hvaler Golfklubb",
+      "guid": "9a0f3b73-e7f8-4467-9b62-af4e58e136af",
+      "courses": [
+        {
+          "course": "Hvaler Golfbane - Hovedbanen 9 hull.",
+          "tees": [
+            "34",
+            "40",
+            "45"
+          ]
+        },
+        {
+          "course": "Korthullbanen 6 hull",
+          "tees": [
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.0540722,
+      "lon": 11.0228889
+    },
+    {
+      "club": "Hvam Golfklubb",
+      "guid": "19c80cc2-5902-456e-aa8b-497fc7293b4c",
+      "courses": [
+        {
+          "course": "E6 Atunyote Golf Club",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "E6 Barton Creek",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "E6 Belfry",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "E6 Dorado Beach -East Course",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "E6 Frankfurter Golf Club",
+          "tees": [
+            "Blå",
+            "Gul"
+          ]
+        },
+        {
+          "course": "E6 Harbour Town",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "E6 Holtsmark",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "E6 Kapalua Bay",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "E6 Latrobe Country Club - Fall",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "E6 Losby",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "E6 Oakland Hills Country Club",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "E6 Pinhurst nr. 2",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "E6 Prairie Dunes Country Club",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "E6 St. Andrews Links New Course",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "E6 Torrey Pines -South Course",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "E6 Valderama Golf Club",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Hvam Golfbane",
+          "tees": [
+            "61",
+            "57",
+            "53",
+            "47",
+            "38"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Ibestad Golfklubb",
+      "guid": "965e16ed-7828-471f-83e6-5f59fcbcf8cb",
+      "courses": []
+    },
+    {
+      "club": "IL Tempo Golfklubb",
+      "guid": "7521a736-e9ef-4033-8483-c29556e472e4",
+      "courses": []
+    },
+    {
+      "club": "Jæren Golfklubb",
+      "guid": "b3a1e386-2672-4252-a220-6092cd677d81",
+      "courses": [
+        {
+          "course": "Jæren GK - 06.07.2020",
+          "tees": [
+            "38",
+            "49",
+            "52",
+            "56",
+            "58"
+          ]
+        },
+        {
+          "course": "Jæren GK 18 hull - kombinerte utslag",
+          "tees": [
+            "52/49",
+            "56/52",
+            "58/56"
+          ]
+        },
+        {
+          "course": "Korthullsbanen Jæren GK",
+          "tees": [
+            "Blå"
+          ]
+        },
+        {
+          "course": "Pitch & Put Bryne Kro & Hotel",
+          "tees": [
+            "Hvit"
+          ]
+        }
+      ],
+      "lat": 58.699552,
+      "lon": 5.6943241,
+      "osm_name": "Jæren Golfklubb"
+    },
+    {
+      "club": "Karasjoga golfsearvi/Karasjok Golfklubb",
+      "guid": "13b356b3-e57b-4b56-9f96-a42bc01a2c21",
+      "courses": [
+        {
+          "course": "Sápmi Golfpark i Karasjok",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.6520789,
+      "lon": 12.7786676,
+      "osm_name": "Arvika Golfklubb"
+    },
+    {
+      "club": "Karmøy Golfklubb",
+      "guid": "6510b224-68de-46ca-989a-da4821720aad",
+      "courses": [
+        {
+          "course": "Karmøy Golfklubb",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "KGK 9hull S15",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.1571495,
+      "lon": 5.2482008,
+      "osm_name": "Karmøy Golfklubb"
+    },
+    {
+      "club": "Kjekstad Golfklubb",
+      "guid": "d4b4a59b-5b80-441a-ad09-f2bb56e305f0",
+      "courses": [
+        {
+          "course": "Kjekstad (9)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Kjekstad gk (18)",
+          "tees": [
+            "34",
+            "40",
+            "44",
+            "49"
+          ]
+        },
+        {
+          "course": "Kjekstad Pitch & Putt",
+          "tees": [
+            "Hvit"
+          ]
+        }
+      ],
+      "lat": 59.7562219,
+      "lon": 10.3788592,
+      "osm_name": "Kjekstad Golfklubb"
+    },
+    {
+      "club": "Klæbu Golfklubb",
+      "guid": "c3df5521-84be-4138-a277-c5176156400a",
+      "courses": [
+        {
+          "course": "Klæbu Golfbane (9-hull)",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 63.3250661,
+      "lon": 10.4770007,
+      "osm_name": "Klæbu Golfklubb"
+    },
+    {
+      "club": "Kongsberg Golfklubb",
+      "guid": "370101f2-e253-4d63-a8cd-0cfe25e3f31b",
+      "courses": [
+        {
+          "course": "Kongsberg Golfbane",
+          "tees": [
+            "30",
+            "43",
+            "48",
+            "56",
+            "60"
+          ]
+        }
+      ],
+      "lat": 59.6100616,
+      "lon": 9.7111654,
+      "osm_name": "Kongsberg Golfbane"
+    },
+    {
+      "club": "Kongsvingers Golfklubb",
+      "guid": "24e3ca88-c232-44ac-ab4c-004271dbe0ff",
+      "courses": [
+        {
+          "course": "Kongsvingers Golfbane",
+          "tees": [
+            "Orange",
+            "Grønn",
+            "Rød",
+            "Blå",
+            "Gul",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Montgomery Maxx Royal GC",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Pasha",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Sueno Pines",
+          "tees": [
+            "Gul",
+            "Hvit"
+          ]
+        }
+      ],
+      "lat": 60.1334322,
+      "lon": 12.0516043,
+      "osm_name": "Kongsvinger golfklubb"
+    },
+    {
+      "club": "Konnerud IL Golf",
+      "guid": "a509d3f0-3b08-438d-bc63-a649c656573d",
+      "courses": []
+    },
+    {
+      "club": "Kragerø Golfklubb",
+      "guid": "25581fe9-ce98-4fb4-98cb-4c83a0f85458",
+      "courses": [
+        {
+          "course": "KRAGERØ GOLFPARK",
+          "tees": [
+            "38",
+            "43",
+            "51",
+            "54"
+          ]
+        }
+      ],
+      "lat": 58.8435913,
+      "lon": 9.3978214,
+      "osm_name": "Kragerø Golfklubb"
+    },
+    {
+      "club": "Kristiansand Golfklubb",
+      "guid": "3913d4b4-c0ae-4f32-a85c-471d4e273903",
+      "courses": [
+        {
+          "course": "Kortbane",
+          "tees": [
+            "Grønt",
+            "Blå"
+          ]
+        },
+        {
+          "course": "Kristiansand GK - 18 utslag",
+          "tees": [
+            "37",
+            "42",
+            "49"
+          ]
+        },
+        {
+          "course": "Kristiansand GK - 18 utslag - 2026",
+          "tees": [
+            "37",
+            "42",
+            "49"
+          ]
+        }
+      ],
+      "lat": 58.1434247,
+      "lon": 8.0849696,
+      "osm_name": "Kristiansand Golfklubb"
+    },
+    {
+      "club": "Kristiansund og Omegn Golfklubb",
+      "guid": "75128b90-9564-41b6-8e05-a862d58b86db",
+      "courses": [
+        {
+          "course": "Kr.sund golfpark",
+          "tees": [
+            "31",
+            "38"
+          ]
+        }
+      ],
+      "lat": 63.1120593,
+      "lon": 7.8610513,
+      "osm_name": "Kristiansund og Omegn golfklubb"
+    },
+    {
+      "club": "Krokhol Golfklubb",
+      "guid": "386afaaf-7190-4345-9b25-e95301c9f1a3",
+      "courses": [
+        {
+          "course": "Krokhol Golfbane 2025",
+          "tees": [
+            "52",
+            "47",
+            "42",
+            "35"
+          ]
+        }
+      ],
+      "lat": 59.8050609,
+      "lon": 10.9274671,
+      "osm_name": "Krokhol Golfklubb"
+    },
+    {
+      "club": "Kvinnherad Golfklubb",
+      "guid": "4ba4ebec-c576-4a71-aa51-737d25364696",
+      "courses": [
+        {
+          "course": "Kvinnherad GK",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.8663018,
+      "lon": 5.764697,
+      "osm_name": "Kvinnherad Golfklubb (Underheim Golfbane)"
+    },
+    {
+      "club": "Larvik Golfklubb",
+      "guid": "c85b2b36-bec3-473d-ae20-745f700c175b",
+      "courses": [
+        {
+          "course": "Fritzøe Gård Golfbane",
+          "tees": [
+            "33",
+            "45",
+            "51",
+            "54",
+            "58",
+            "63"
+          ]
+        },
+        {
+          "course": "Fritzøe Gård korthullsbanen",
+          "tees": [
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Lillestrøm Golfklubb",
+      "guid": "cf850f07-82df-4813-ad31-291a44a6b121",
+      "courses": [
+        {
+          "course": "LILLESTRØM GOLFKLUBB 9-hull",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": null,
+      "lon": null
+    },
+    {
+      "club": "Lindesnes Golfklubb",
+      "guid": "9611e742-740f-4e5e-9df5-f068829646f8",
+      "courses": [],
+      "lat": 58.0436174,
+      "lon": 7.1342185,
+      "osm_name": "Lindesnes Golfklubb"
+    },
+    {
+      "club": "Lofoten Golfklubb",
+      "guid": "47512c68-8ef9-462b-bc2a-9c4ae2a39625",
+      "courses": [
+        {
+          "course": "Nye 18-hull Lofoten Links",
+          "tees": [
+            "Tee 42",
+            "Tee 48",
+            "Tee 55",
+            "Tee 61"
+          ]
+        }
+      ],
+      "lat": 68.3405009,
+      "lon": 14.1355629,
+      "osm_name": "Lofoten Golf Links"
+    },
+    {
+      "club": "Lommedalen Golfklubb",
+      "guid": "fc9b4bd0-e2b2-4fb7-9faf-7aa25cd2328f",
+      "courses": [
+        {
+          "course": "Bærum Fottballgolf",
+          "tees": [
+            "klubbtee",
+            "Blå"
+          ]
+        },
+        {
+          "course": "Lommedalen Golfbane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.9688604,
+      "lon": 10.4656851,
+      "osm_name": "Lommedalen Golfklubb"
+    },
+    {
+      "club": "Longyearbyen Golfklubb",
+      "guid": "af51012c-dc49-4c46-9296-6655e320ec46",
+      "courses": []
+    },
+    {
+      "club": "Losby Golfklubb",
+      "guid": "90fa30d3-ff9d-4c3e-92c9-115b01a8d7bd",
+      "courses": [
+        {
+          "course": "Footgolf",
+          "tees": [
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Østmork",
+          "tees": [
+            "35",
+            "48",
+            "54",
+            "59",
+            "64"
+          ]
+        },
+        {
+          "course": "Østmork 2026 (9-hull)",
+          "tees": [
+            "35",
+            "48",
+            "54",
+            "59",
+            "64"
+          ]
+        },
+        {
+          "course": "Vest-Øst-9+9 (2026)",
+          "tees": [
+            "54/44"
+          ]
+        },
+        {
+          "course": "Vestmork",
+          "tees": [
+            "28",
+            "36",
+            "44"
+          ]
+        }
+      ],
+      "lat": 59.8898937,
+      "lon": 10.9867538,
+      "osm_name": "Losby Golfklubb"
+    },
+    {
+      "club": "Lærdal Golfklubb",
+      "guid": "b89c0586-fb17-4c92-bf90-5c59e8cb9017",
+      "courses": [
+        {
+          "course": "Lærdal",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Lærdal 12-hol",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Mandal Golfklubb",
+      "guid": "f7eb3452-53d4-4213-8482-c42e3b1d3252",
+      "courses": [
+        {
+          "course": "Mandal Golfbane",
+          "tees": [
+            "33",
+            "40",
+            "44",
+            "48",
+            "50",
+            "52"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Meland Golfklubb",
+      "guid": "9b11ee3a-d40c-40f1-b38b-1299306347e8",
+      "courses": [
+        {
+          "course": "Meland Golfklubb 36",
+          "tees": [
+            "36"
+          ]
+        },
+        {
+          "course": "Meland Golfklubb par 73",
+          "tees": [
+            "4800",
+            "5200",
+            "5500",
+            "5900",
+            "6200",
+            "Hvit"
+          ]
+        }
+      ],
+      "lat": 60.5418373,
+      "lon": 5.0742612,
+      "osm_name": "Meland golf"
+    },
+    {
+      "club": "Midt-Troms Golfklubb",
+      "guid": "08b7447a-a289-4f80-8ca5-bdaa51e3014d",
+      "courses": [
+        {
+          "course": "Finnkroken Golfpark",
+          "tees": [
+            "33",
+            "45",
+            "55"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Miklagard Golf",
+      "guid": "fcc6ed17-8747-4269-bb8f-0682f0a3efa3",
+      "courses": [
+        {
+          "course": "Miklagard Golf - 18 hull",
+          "tees": [
+            "V",
+            "IV",
+            "III",
+            "II",
+            "I"
+          ]
+        }
+      ],
+      "lat": 60.0734056,
+      "lon": 11.1657314,
+      "osm_name": "Miklagard Golf"
+    },
+    {
+      "club": "Miklagard Golfklubb Ullensaker",
+      "guid": "e26f8bf9-1d66-4a2a-a6ea-65763e379da9",
+      "courses": [
+        {
+          "course": "Miklagard Golf - 18hull - april 2026",
+          "tees": [
+            "V",
+            "IV",
+            "III",
+            "II",
+            "I"
+          ]
+        }
+      ],
+      "lat": 60.0734056,
+      "lon": 11.1657314,
+      "osm_name": "Miklagard Golf"
+    },
+    {
+      "club": "Mjøsen Golfklubb",
+      "guid": "0abfb429-c64e-4fdd-8e37-42e39abca3b7",
+      "courses": [
+        {
+          "course": "Mjøsen GK",
+          "tees": [
+            "40",
+            "49",
+            "51",
+            "55"
+          ]
+        },
+        {
+          "course": "OBS    Mjøsen GK 2 g 9 1 - 9 for turnering",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Tidsbestilling",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul",
+            "Hvit"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Molde Golfklubb",
+      "guid": "6e1f1787-8f1f-45be-b117-664946aebb85",
+      "courses": [
+        {
+          "course": "Eikrem",
+          "tees": [
+            "27",
+            "Rød",
+            "Gul",
+            "Hvit"
+          ]
+        }
+      ],
+      "lat": 62.7529508,
+      "lon": 7.2604079
+    },
+    {
+      "club": "Moss & Rygge Golfklubb",
+      "guid": "d7c2237c-50b2-47e7-a3fb-1e860d3d37ec",
+      "courses": [
+        {
+          "course": "Evje golfpark 2011",
+          "tees": [
+            "39",
+            "44",
+            "48",
+            "53",
+            "57",
+            "61",
+            "64"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Mørk Golfklubb",
+      "guid": "3e31c9c1-dd77-4b65-a722-26cbb7fe6315",
+      "courses": [
+        {
+          "course": "Mørk 9-hulls banen",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Mørk GK 18-hulls banen",
+          "tees": [
+            "Brun",
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.5309735,
+      "lon": 10.9997512,
+      "osm_name": "Mørk golfbane"
+    },
+    {
+      "club": "Namdal Golfklubb",
+      "guid": "ff7a5322-3588-43d2-82ce-d7005ff7f9db",
+      "courses": [
+        {
+          "course": "Namsen Golfbane",
+          "tees": [
+            "GRØNN TEE",
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Namsos Golfklubb",
+      "guid": "a6e9a19c-9f7c-4c6d-984a-22898b115548",
+      "courses": [
+        {
+          "course": "Sævik Golfbane 9 sløyfe - 18 hull",
+          "tees": [
+            "Tee-33",
+            "Tee-38",
+            "Tee-43"
+          ]
+        }
+      ],
+      "lat": 64.4273651,
+      "lon": 11.4964645,
+      "osm_name": "Namsos Golfbane"
+    },
+    {
+      "club": "Narvik Golfklubb",
+      "guid": "1b34bc64-6f7a-48c0-86ed-48a8870cba84",
+      "courses": [
+        {
+          "course": "9 Hulls sløyfe (1-4, 14-18)",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Narvik Golfklubb",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 68.2406482,
+      "lon": 17.4129625
+    },
+    {
+      "club": "Nes Golfklubb",
+      "guid": "2d7ec013-4f33-4c8c-8221-999236c83206",
+      "courses": [
+        {
+          "course": "Rommen Cross Country 2016",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Rommen Golfpark 2018",
+          "tees": [
+            "28",
+            "48",
+            "54",
+            "59",
+            "63"
+          ]
+        },
+        {
+          "course": "Rommen Revers to Green 2025",
+          "tees": [
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 60.1630507,
+      "lon": 11.4301489,
+      "osm_name": "Nes Golfklubb"
+    },
+    {
+      "club": "Nesbyen Golfklubb",
+      "guid": "627fe3be-451f-48d7-bde5-04ae9f8bdc16",
+      "courses": [
+        {
+          "course": "Nesfjellet golf",
+          "tees": [
+            "49",
+            "51",
+            "56",
+            "58",
+            "61",
+            "Blå"
+          ]
+        }
+      ],
+      "lat": 60.562412,
+      "lon": 9.1001684
+    },
+    {
+      "club": "Nordfjord Golfklubb",
+      "guid": "e269fe00-1aa4-4047-995c-65733ba2dd08",
+      "courses": [
+        {
+          "course": "Nordfjord Golfklubb",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Nordhaug Golfklubb",
+      "guid": "cdfd268d-015c-4fc6-ab5c-7c4e04c634b3",
+      "courses": [
+        {
+          "course": "American Dunes, Michigan (FullSwing)",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Aviara (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Banff Springs (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Barton Creek (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Bay Hill (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Bighorn Canyons Course (ToppGolf simulator)",
+          "tees": [
+            "Rød",
+            "Gul",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Bighorn Mountains Course (ToppGolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Bountiful Ridge (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Castle Pines (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Chateau Wistler (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Cog Hill (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Colonial CC (FullSwing)",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Covered Bridge (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Dorado Beach (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "El Cardonal at Diamante, Mexico (FullSwing)",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Emerald Dunes (ToppGolf Simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Entrada (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Fields Ranch East (FullSwing)",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Fields Ranch West (FullSwing)",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Firestone C.C. South Course (ToppGolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "FOTBALLGOLF bane",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Gleneagles (ToppGolf Simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Hapuna (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Harbour Town (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Holtsmark GK (ToppGolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Innisbrook Coppenhead (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Kapalua Bay (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Kapalua Plantation (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Kapalua Village (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Latrobe Country Club Fall (ToppGolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Latrobe Country Club Summer (ToppGolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Losby (ToppGolf Simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Mauna Kea (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Mauna Lani (E6 Simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Montecito GK, Santa Barbara (FullSwing)",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Nordhaug Golfbane",
+          "tees": [
+            "Rød",
+            "Gul",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Oakmont CC (ToppGolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Oslo GK (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Pebble Beach (ToppGolf Simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Pelican Hill (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "PGA National",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Phoenix Country Club (ToppGolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Pinehurst #2 (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Pinehurst #8 (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Prairie Dunes (FullSwing)",
+          "tees": [
+            "Rød",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Princeville Resort (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Quivira, Cabo (FullSwing)",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Royal Melbourne (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "RTJ Links (Toppgolf Simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "RTJ The Judge (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Sea Island (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Sebonack, New York (FullSwing)",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Spanish Bay (FullSwing)",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Spyglass Hill",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "St Andrews - New course (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Thanksgiving Point (Toppgolf Simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "The Bears Club",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "The Belfry (ToppGolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "The Farms (FullSwing)",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "The Links at Spanish Bay, California (FullSwing)",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Torrey Pines (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Torrey Pines South",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "TPC Potomac (FullSwing)",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "TPC Summerlin (FullSwing)",
+          "tees": [
+            "Rød",
+            "Rød",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Tribute at the Otsego Golf Club (ToppGolf Simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Troon North (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Valderama (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Valley of the Eagles (FullSwing)",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Westfields (Toppgolf simulator)",
+          "tees": [
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Nordvegen Golfklubb",
+      "guid": "9e9c265f-7222-46ac-b8e1-fa522ff08afc",
+      "courses": [
+        {
+          "course": "Nordvegen Golfbane",
+          "tees": [
+            "Rød",
+            "Gul",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Nordvegen Vinterbane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.3972247,
+      "lon": 5.2476481,
+      "osm_name": "Nordvegen Golfklubb"
+    },
+    {
+      "club": "Norefjell Golfklubb",
+      "guid": "bebcdb66-3cc3-4ad4-a7f1-815383133ff0",
+      "courses": [
+        {
+          "course": "Norefjell Golfklubb",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 60.1913078,
+      "lon": 9.6052683,
+      "osm_name": "Norefjell Golf"
+    },
+    {
+      "club": "Norsjø Golfklubb",
+      "guid": "aa1c150e-fb9a-484f-8e19-989260cc1438",
+      "courses": [
+        {
+          "course": "NORSJØ GOLFPARK",
+          "tees": [
+            "32",
+            "48",
+            "52",
+            "57",
+            "62"
+          ]
+        },
+        {
+          "course": "Pitch' putt",
+          "tees": [
+            "Hvit"
+          ]
+        }
+      ],
+      "lat": 59.3053387,
+      "lon": 9.2704195,
+      "osm_name": "Norsjø Golfpark"
+    },
+    {
+      "club": "North Cape Golf Club",
+      "guid": "ddd0f7cd-85a3-44a4-9408-fd258bf112df",
+      "courses": [
+        {
+          "course": "Banak Links Golfpark",
+          "tees": [
+            "Blå/rød",
+            "Gul/blå",
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Nærøysund Golfklubb",
+      "guid": "6d836374-bbe5-4108-ad9b-08d262ebd6f8",
+      "courses": [
+        {
+          "course": "Nærøysund Golfbane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Nøtterøy Golfklubb",
+      "guid": "d6c93387-6d38-4eda-a937-e995adf6776d",
+      "courses": [
+        {
+          "course": "Nøtterøy GK -23",
+          "tees": [
+            "30",
+            "40",
+            "46",
+            "49",
+            "53",
+            "57",
+            "62"
+          ]
+        }
+      ],
+      "lat": 59.225714,
+      "lon": 10.397265,
+      "osm_name": "Nøtterøy golfklubb"
+    },
+    {
+      "club": "Odda Golfklubb",
+      "guid": "b3fa2d58-98ee-4a36-8f78-6f23d10514b7",
+      "courses": [
+        {
+          "course": "Odda Golfklubb",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Ogna Golfklubb",
+      "guid": "a110e37f-8b7c-4672-acf9-d8422b70e8cf",
+      "courses": [
+        {
+          "course": "Bane 9+9 Ogna Golf",
+          "tees": [
+            "32/blå",
+            "39/sor",
+            "48/grn"
+          ]
+        }
+      ],
+      "lat": 58.5249162,
+      "lon": 5.7977666,
+      "osm_name": "Ogna golfklubb"
+    },
+    {
+      "club": "Onsøy Golfklubb",
+      "guid": "a85da1e0-b469-4702-bdbc-4e8972ec50a9",
+      "courses": [
+        {
+          "course": "Onsøy Golfbane",
+          "tees": [
+            "34",
+            "48",
+            "52",
+            "56",
+            "59"
+          ]
+        }
+      ],
+      "lat": 59.2753212,
+      "lon": 10.7955347,
+      "osm_name": "Onsøy Golfbane"
+    },
+    {
+      "club": "Oppdal Golfklubb",
+      "guid": "051a5314-14eb-4056-bf1c-06ff81c9c817",
+      "courses": [
+        {
+          "course": "Oppdal Golfklubb",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 62.5935249,
+      "lon": 9.7053075,
+      "osm_name": "Oppdal Golfbane"
+    },
+    {
+      "club": "Oppegård Golfklubb",
+      "guid": "10fd393e-4608-4cca-825d-e41245efa260",
+      "courses": [
+        {
+          "course": "Oppegård",
+          "tees": [
+            "44",
+            "50",
+            "53",
+            "56"
+          ]
+        }
+      ],
+      "lat": 59.7767016,
+      "lon": 10.8152736,
+      "osm_name": "Oppegård Golfklubb"
+    },
+    {
+      "club": "Oslo Golfklubb",
+      "guid": "5c6bdc3c-3d0a-43d0-b4a7-dcc2e9f8b454",
+      "courses": [
+        {
+          "course": "Oslo Golf Klubb, Bogstad Par 72  2024",
+          "tees": [
+            "41",
+            "45",
+            "49",
+            "54",
+            "58",
+            "61",
+            "63"
+          ]
+        }
+      ],
+      "lat": 59.920897,
+      "lon": 10.732555,
+      "osm_name": "Oslo Golfsimulator"
+    },
+    {
+      "club": "Polarsirkelen Golf",
+      "guid": "68bbd42a-a9e7-4962-b94b-1894384901ff",
+      "courses": [
+        {
+          "course": "Nybanen par 72",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 66.3114719,
+      "lon": 13.9837849,
+      "osm_name": "Polarsirkelen Golf"
+    },
+    {
+      "club": "Preikestolen Golfklubb",
+      "guid": "cabc5dcb-3402-4232-bb55-11967969ecc4",
+      "courses": [
+        {
+          "course": "Preikestolen GK 2019",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 58.9903571,
+      "lon": 6.1089766,
+      "osm_name": "Preikestolen Golfklubb"
+    },
+    {
+      "club": "Randaberg golfklubb",
+      "guid": "86690a95-f88a-41a0-aa12-52dbaec465ca",
+      "courses": [
+        {
+          "course": "Korthullsbane (6hull)",
+          "tees": [
+            "Rød"
+          ]
+        },
+        {
+          "course": "Tungenes Golfbane",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.0271676,
+      "lon": 5.5885636,
+      "osm_name": "Randaberg Golfklubb"
+    },
+    {
+      "club": "Randsfjorden Golfklubb",
+      "guid": "ebf73fae-f801-470a-a02c-ede1d95fafb4",
+      "courses": [
+        {
+          "course": "Land GK - 12 første",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "LAND GK 9 HULL x2",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Randsfjorden Golfklubb 18 hull",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "RANDSFJORDEN GOLFPARK",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "RANDSFJORDEN GOLFPARK (NY)",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Rauma Golfklubb",
+      "guid": "06dd95b0-7967-47a2-b637-9c8458b8309f",
+      "courses": [
+        {
+          "course": "Rauma Golfbane",
+          "tees": [
+            "37",
+            "42"
+          ]
+        }
+      ],
+      "lat": 61.1401276,
+      "lon": 21.5678503,
+      "osm_name": "Rauma Golf"
+    },
+    {
+      "club": "Ringerike Golfklubb",
+      "guid": "80440cfa-7fdf-47f5-83b6-b8740f22b106",
+      "courses": [
+        {
+          "course": "Ringerike Golfklubb",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 60.3488608,
+      "lon": 10.1004392,
+      "osm_name": "Ringerike Golfklubb"
+    },
+    {
+      "club": "Rjukan Golfklubb",
+      "guid": "d865039c-e6df-4fea-b6f5-0d4dec34d813",
+      "courses": [
+        {
+          "course": "Rjukan Golfbane",
+          "tees": [
+            "38",
+            "31"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Romerike Golfklubb",
+      "guid": "75fa83cd-c838-42e6-8898-10a7363524b1",
+      "courses": [
+        {
+          "course": "Aurskog Golfpark - Romerike GK Par 72",
+          "tees": [
+            "30",
+            "45",
+            "49",
+            "54"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Rygge Flystasjon Golf Club",
+      "guid": "25706454-cb30-4748-bc4e-b9344d440780",
+      "courses": [
+        {
+          "course": "Dynekilen",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Holma Stangenås Golf ( tidl Lysekil Holma) v2",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Mjølkerød Golf",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Rygge Flystasjon Golfbane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Sankt Jørgen Park Golf",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Strømstad Golf",
+          "tees": [
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Røros Golfklubb",
+      "guid": "35d2ef93-bef2-41fc-8329-c6555ed4dc9d",
+      "courses": [
+        {
+          "course": "Røros Golfpark",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 62.5916896,
+      "lon": 11.3574303,
+      "osm_name": "Røros golfpark"
+    },
+    {
+      "club": "Salten Golfklubb",
+      "guid": "8944f478-06ae-4bf9-b34f-eabf2951fe2b",
+      "courses": [
+        {
+          "course": "Salten Golfklubb TM",
+          "tees": [
+            "Grønn",
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Sandane Golfklubb",
+      "guid": "bb7308f6-39f3-4e35-9f45-35b50cde1955",
+      "courses": [
+        {
+          "course": "Sandane Golfklubb 2019",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 57.8515387,
+      "lon": 14.0383603,
+      "osm_name": "Sand Golf Club"
+    },
+    {
+      "club": "Sande Golfklubb",
+      "guid": "a5340014-24d7-4115-b5ee-8915d0de9a5e",
+      "courses": [
+        {
+          "course": "Sande GK Holsrud",
+          "tees": [
+            "Bane 60",
+            "Bane 56",
+            "Bane 53",
+            "Bane 48",
+            "Bane 44"
+          ]
+        },
+        {
+          "course": "test",
+          "tees": [
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.6117988,
+      "lon": 10.2168697,
+      "osm_name": "Sande Golfbane"
+    },
+    {
+      "club": "Sandefjord Golfklubb",
+      "guid": "3e0c1d24-61fc-4528-af75-55b35582049b",
+      "courses": [
+        {
+          "course": "SANDEFJORD GOLF 18 HULL",
+          "tees": [
+            "55",
+            "50",
+            "47",
+            "40",
+            "32"
+          ]
+        }
+      ],
+      "lat": 59.1053907,
+      "lon": 10.1838638,
+      "osm_name": "Sandefjord Golfklubb"
+    },
+    {
+      "club": "Sandnes Golfklubb",
+      "guid": "2c9e6d07-946b-4cad-bc10-b27b30bb9e72",
+      "courses": [
+        {
+          "course": "Sandnes Golfklubb",
+          "tees": [
+            "58",
+            "57",
+            "54",
+            "45",
+            "42",
+            "Rød"
+          ]
+        }
+      ],
+      "lat": 57.8515387,
+      "lon": 14.0383603,
+      "osm_name": "Sand Golf Club"
+    },
+    {
+      "club": "Sauda Golfklubb",
+      "guid": "9779bc0d-b08a-4d61-916e-1e096eb1814b",
+      "courses": [
+        {
+          "course": "Sauda Golfbane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.6467353,
+      "lon": 6.3230066,
+      "osm_name": "Sauda Golfklubb"
+    },
+    {
+      "club": "Selbu Golfklubb",
+      "guid": "cc478a40-3960-4f93-9c84-95f00fb6583a",
+      "courses": [
+        {
+          "course": "Selbutunet golfpark",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Selje Golfklubb",
+      "guid": "98c050ea-6807-4055-b6b1-e83cf87477d2",
+      "courses": [
+        {
+          "course": "Selje Golfklubb - 2025",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Sirdal Fjellgolf Klubb",
+      "guid": "a7ae5881-a7b2-45ab-858a-788ecd9f9c67",
+      "courses": [
+        {
+          "course": "Sirdal Fjellgolf Klubb",
+          "tees": [
+            "46",
+            "43",
+            "38",
+            "Grønn"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Skei Golfklubb",
+      "guid": "648e9830-fb81-411e-8cbb-7b097a9682a5",
+      "courses": [
+        {
+          "course": "Skei Golfbane 2021  --",
+          "tees": [
+            "Nybegynner",
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Ski Golfklubb",
+      "guid": "ca2748c6-7fde-4e57-88c2-b4ca726ffdea",
+      "courses": [
+        {
+          "course": "D´Este course",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Pitch & Putt",
+          "tees": [
+            "Grønn",
+            "Rosa"
+          ]
+        },
+        {
+          "course": "Putting Klubbmesterskapet",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Radescky Course",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Ski Golfbane",
+          "tees": [
+            "Oransje",
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Ski golfbane Nattgolf - Korteste hull",
+          "tees": [
+            "Rød"
+          ]
+        }
+      ],
+      "lat": 59.596801,
+      "lon": 11.1718124,
+      "osm_name": "Askim golfklubb"
+    },
+    {
+      "club": "Skjeberg Golfklubb",
+      "guid": "3f0ac41b-ba14-49bf-9f68-a7470e3dc04f",
+      "courses": [
+        {
+          "course": "Skjeberg Golfklubb 2026",
+          "tees": [
+            "33",
+            "46",
+            "49",
+            "55",
+            "57"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Sleneset Golfklubb",
+      "guid": "1ecfa42b-48d8-47df-b3dd-66df64fd0811",
+      "courses": [
+        {
+          "course": "Sleneset Golfpark",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Smøla Golfklubb",
+      "guid": "ed8f1dd6-7090-4ac7-bef5-9affcd1dbb53",
+      "courses": [
+        {
+          "course": "Dyrnesdalen Golfbane",
+          "tees": [
+            "Gul Blå",
+            "Rød Blå",
+            "Gul Rød",
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 63.4210434,
+      "lon": 7.861813,
+      "osm_name": "Smøla Golfklubb"
+    },
+    {
+      "club": "Sola Golfklubb",
+      "guid": "9aae464e-a084-4747-81af-096a66f409ed",
+      "courses": [
+        {
+          "course": "Sola Gk - Forus",
+          "tees": [
+            "35",
+            "48",
+            "51",
+            "55",
+            "58",
+            "63"
+          ]
+        },
+        {
+          "course": "Sola Gk - Golfparken",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Sola Gk - Solastranden",
+          "tees": [
+            "30",
+            "42",
+            "50"
+          ]
+        }
+      ],
+      "lat": 58.8896936,
+      "lon": 5.6832082,
+      "osm_name": "Sola golfklubb"
+    },
+    {
+      "club": "Solum golfklubb",
+      "guid": "d53087d9-7088-485e-b4b9-890198e4588b",
+      "courses": [
+        {
+          "course": "Solum Golfbane",
+          "tees": [
+            "Junior knøtt",
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.4612446,
+      "lon": 10.3094857,
+      "osm_name": "Solum Golfbane"
+    },
+    {
+      "club": "Soon Golfklubb",
+      "guid": "1bb2d9b9-9d09-42ee-b96e-18e7358bb25c",
+      "courses": [
+        {
+          "course": "Soon Golfbane",
+          "tees": [
+            "50",
+            "42",
+            "52",
+            "56"
+          ]
+        },
+        {
+          "course": "Soon Golfbane; Korthullsbane",
+          "tees": [
+            "Rød"
+          ]
+        },
+        {
+          "course": "Soon; Nattgolf",
+          "tees": [
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.5363484,
+      "lon": 10.6827746,
+      "osm_name": "Soon Golfbane"
+    },
+    {
+      "club": "Sorknes Golfklubb",
+      "guid": "e62c35c5-9cbe-480d-9ccd-ae3b5c4cc1e7",
+      "courses": [
+        {
+          "course": "Sorknes GK",
+          "tees": [
+            "39",
+            "47",
+            "51",
+            "56",
+            "61"
+          ]
+        }
+      ],
+      "lat": 61.1783809,
+      "lon": 11.3333568,
+      "osm_name": "Sorknes Golf"
+    },
+    {
+      "club": "Sotra Golfklubb",
+      "guid": "5a12147c-c0f1-4616-a63a-e6e24afe2316",
+      "courses": [
+        {
+          "course": "Evanger's Spesial",
+          "tees": [
+            "2000"
+          ]
+        },
+        {
+          "course": "Pitch & Put banen",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Sotra Golfpark",
+          "tees": [
+            "2900"
+          ]
+        }
+      ],
+      "lat": 60.3512742,
+      "lon": 5.0841287,
+      "osm_name": "Sotra Golfklubb"
+    },
+    {
+      "club": "Stavanger Golfklubb",
+      "guid": "9c059746-b2be-470d-9bc5-0020720f2f6f",
+      "courses": [
+        {
+          "course": "Stavanger Golfklubb 24",
+          "tees": [
+            "35",
+            "46",
+            "52",
+            "56",
+            "58"
+          ]
+        }
+      ],
+      "lat": 58.9574714,
+      "lon": 5.6604344,
+      "osm_name": "Stavanger golfklubb"
+    },
+    {
+      "club": "Steinkjer Golfklubb",
+      "guid": "817ba0bd-3b79-4def-a756-407ad5c24d93",
+      "courses": [
+        {
+          "course": "Midjo Golfbane",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Stiklestad Golfklubb",
+      "guid": "fc5a7b78-2f3f-4b96-be02-e313ec12c9f8",
+      "courses": [
+        {
+          "course": "Stiklestad golfklubb 18 hullsbanen 2023",
+          "tees": [
+            "VI",
+            "IV",
+            "III",
+            "II",
+            "I"
+          ]
+        }
+      ],
+      "lat": 63.8172839,
+      "lon": 11.4145212,
+      "osm_name": "Stiklestad Golfklubb"
+    },
+    {
+      "club": "Stjørdal Golfklubb",
+      "guid": "dca9ff8f-f907-4cb0-a7ad-1edf1feb63d3",
+      "courses": [
+        {
+          "course": "Stjørdal Golfklubb 18 hull",
+          "tees": [
+            "45",
+            "49",
+            "53",
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 63.4873506,
+      "lon": 10.9370717,
+      "osm_name": "Stjørdal Golfklubb"
+    },
+    {
+      "club": "Stord Golfklubb",
+      "guid": "e373df01-ac50-41e5-a180-8209c223dae9",
+      "courses": [
+        {
+          "course": "Stord Golfklubb",
+          "tees": [
+            "grønn",
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 59.8075775,
+      "lon": 5.5152187,
+      "osm_name": "Stord Golfbane"
+    },
+    {
+      "club": "Stranda Golfklubb",
+      "guid": "b6a95d56-5376-4bd9-812a-4f47d695407e",
+      "courses": [
+        {
+          "course": "Overvoll Golfbane 18 hull",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Overvoll Golfbane 9 hull x2 registrert som 18-hulls",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Sunndal Golfklubb",
+      "guid": "a654b1a0-53ca-4e4a-b82d-a7cce74604aa",
+      "courses": [
+        {
+          "course": "Sunndal golfklubb",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 62.662863,
+      "lon": 8.5355881,
+      "osm_name": "Sunndal Golfklubb"
+    },
+    {
+      "club": "Sunnfjord Golfklubb",
+      "guid": "0b422bcb-0036-43cc-bc69-7f86448de517",
+      "courses": [
+        {
+          "course": "Sunnfjord Golfklubb 2025",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Sunnmøre Golfklubb",
+      "guid": "a7004d0c-450c-4da1-b202-d11e740983b2",
+      "courses": [
+        {
+          "course": "Hovden Golfbane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Sunnmøre Golfklubb (52, 56, 60, 63)",
+          "tees": [
+            "63",
+            "60",
+            "56",
+            "52"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Surnadal Golfklubb",
+      "guid": "e44d5617-6509-47f4-bbf4-34766427fb45",
+      "courses": [
+        {
+          "course": "Surnadal Golfpark - 33-39",
+          "tees": [
+            "39",
+            "33"
+          ]
+        }
+      ],
+      "lat": 62.8977086,
+      "lon": 8.5629616,
+      "osm_name": "Surnadal Golfklubb"
+    },
+    {
+      "club": "Tingvoll Golfklubb",
+      "guid": "8d9eb4b6-b1d1-4306-938d-e02f9a2f1667",
+      "courses": [
+        {
+          "course": "Grunnsjøen golfbane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Øydegard golfbane 9 hull 2025",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Tjøme Golfklubb",
+      "guid": "2847a540-baf1-49ec-b301-0b4351447c62",
+      "courses": [
+        {
+          "course": "Tjøme golfbane 4 teesteder",
+          "tees": [
+            "55",
+            "50",
+            "44",
+            "32"
+          ]
+        },
+        {
+          "course": "Tjøme golfbane Hvit Rød",
+          "tees": [
+            "55",
+            "50",
+            "44",
+            "32"
+          ]
+        },
+        {
+          "course": "Tjøme golfbane Rød Hvit",
+          "tees": [
+            "55",
+            "50",
+            "44",
+            "32"
+          ]
+        }
+      ],
+      "lat": 59.108853,
+      "lon": 10.3901603,
+      "osm_name": "Tjøme golfklubb"
+    },
+    {
+      "club": "Trollstigen og Geirangerfjord Golfklubb",
+      "guid": "4f9a8e73-50e5-4e21-9fed-9ecdf263cc40",
+      "courses": [
+        {
+          "course": "Overvoll Golfbane 9 hull x2 registrert som 18-hulls",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Tromsø Golfklubb",
+      "guid": "c5505f14-4a17-46ea-812d-c81580a1c345",
+      "courses": [
+        {
+          "course": "Korthullsbanen",
+          "tees": [
+            "Gul"
+          ]
+        },
+        {
+          "course": "Tromsø Golfpark",
+          "tees": [
+            "31",
+            "48",
+            "57"
+          ]
+        }
+      ],
+      "lat": 69.6567967,
+      "lon": 19.6073647,
+      "osm_name": "Tromsø Golfpark"
+    },
+    {
+      "club": "Trondheim Golfklubb",
+      "guid": "b592c9fd-c011-410c-ba32-99b0bd7ee263",
+      "courses": [
+        {
+          "course": "Sommerseter Golfbane",
+          "tees": [
+            "I",
+            "II",
+            "III"
+          ]
+        },
+        {
+          "course": "Trondheim Golfklubb Blå",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 63.4210245,
+      "lon": 10.3371361,
+      "osm_name": "Trondheim Golfklubb"
+    },
+    {
+      "club": "Trysil Golf",
+      "guid": "ea488fec-7ff7-4c22-adb0-6126431c1c35",
+      "courses": [
+        {
+          "course": "Trysilfjellet Golfbane 18 Hull",
+          "tees": [
+            "44",
+            "52",
+            "57",
+            "61"
+          ]
+        }
+      ],
+      "lat": 61.2936741,
+      "lon": 12.2539773,
+      "osm_name": "Trysilfjellet Golf"
+    },
+    {
+      "club": "Tyrifjord Golfklubb",
+      "guid": "31f8375c-430b-461c-a98e-d3659a8cd836",
+      "courses": [
+        {
+          "course": "Sparebank1 RH Barnebanen",
+          "tees": [
+            "Barnebanen"
+          ]
+        },
+        {
+          "course": "Tyrifjord 18 hull",
+          "tees": [
+            "Rød",
+            "Gul",
+            "Hvit"
+          ]
+        }
+      ],
+      "lat": 60.049596,
+      "lon": 10.256108,
+      "osm_name": "Tyrifjord golfklubb"
+    },
+    {
+      "club": "Tysnes Golfklubb",
+      "guid": "ddcb5de0-1537-4e7c-aaca-51e04bfe4799",
+      "courses": [
+        {
+          "course": "Dalen Golf - 6 hulls bane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Pitch & Putt",
+          "tees": [
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 60.0150519,
+      "lon": 5.5487591,
+      "osm_name": "Tysnes Golfklubb"
+    },
+    {
+      "club": "Tønsberg Golfklubb",
+      "guid": "94113c83-8013-4788-8588-89fcc9139f0d",
+      "courses": [
+        {
+          "course": "Re golfbane",
+          "tees": [
+            "Orange",
+            "sort",
+            "Rød",
+            "Blå",
+            "Gul",
+            "Hvit"
+          ]
+        }
+      ],
+      "lat": null,
+      "lon": null
+    },
+    {
+      "club": "Ullensaker Golfklubb",
+      "guid": "ebf75daf-a5d5-4262-b151-b06f78b53f93",
+      "courses": [
+        {
+          "course": "Ullensaker golfklubb, ny sløyfe",
+          "tees": [
+            "31",
+            "41",
+            "49"
+          ]
+        }
+      ],
+      "lat": 60.1545137,
+      "lon": 11.0965356,
+      "osm_name": "Ullensaker Golfklubb"
+    },
+    {
+      "club": "Utsikten Golfklubb",
+      "guid": "c817367f-d24c-4086-9451-d4642de40faa",
+      "courses": [
+        {
+          "course": "18-hullsbanen Utsikten",
+          "tees": [
+            "45",
+            "51",
+            "53"
+          ]
+        },
+        {
+          "course": "Onsdags Tuneringsbane",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Pay & Play",
+          "tees": [
+            "Tee"
+          ]
+        }
+      ],
+      "lat": 58.3153454,
+      "lon": 6.9982602,
+      "osm_name": "Utsikten golfpark"
+    },
+    {
+      "club": "Valdres Golfklubb",
+      "guid": "fdb34ba2-b6b6-436c-8cb5-e4ae09df7ecb",
+      "courses": [
+        {
+          "course": "Valdres Gk Par 66 Grønn Tee",
+          "tees": [
+            "Grønn"
+          ]
+        },
+        {
+          "course": "Valdres Gk Par 72 Hvit Tee",
+          "tees": [
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Valdres GK Par 73 Svart Tee",
+          "tees": [
+            "svart"
+          ]
+        }
+      ],
+      "lat": 60.925942,
+      "lon": 9.3563369,
+      "osm_name": "Valdres golfklubb"
+    },
+    {
+      "club": "Vanylven Golfklubb",
+      "guid": "8cbbd147-2e69-434e-aa81-9ee4b75accab",
+      "courses": [
+        {
+          "course": "Vanylven GK 18 Hull 2025",
+          "tees": [
+            "37",
+            "34",
+            "31"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Varanger Golfklubb",
+      "guid": "a9d746da-9dcb-4e9a-b24f-502ea68a4fcf",
+      "courses": [
+        {
+          "course": "Varanger golfpark",
+          "tees": [
+            "Blå/Rød",
+            "Gul/blå",
+            "Rød",
+            "Blå",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 70.1111686,
+      "lon": 29.3660823,
+      "osm_name": "Varanger golfpark"
+    },
+    {
+      "club": "Veierland Golfklubb",
+      "guid": "b01bfe35-f107-450d-95b8-e98c23f4bebb",
+      "courses": []
+    },
+    {
+      "club": "Vesterålen Golfklubb",
+      "guid": "0e040082-8498-4fbf-aafd-a333f960b0b0",
+      "courses": [
+        {
+          "course": "Kjerringnes Golfbane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        }
+      ],
+      "lat": 68.6621774,
+      "lon": 15.4805147,
+      "osm_name": "Vesterålen Golfklubb Kjerringnes"
+    },
+    {
+      "club": "Vestfold Golfklubb",
+      "guid": "c72f415f-abea-4b5c-81a6-66e0942b9d9b",
+      "courses": [
+        {
+          "course": "VGK 9 hullsbanen",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "VGK Mesterskapsbane",
+          "tees": [
+            "64",
+            "61",
+            "58",
+            "55",
+            "52",
+            "49",
+            "46",
+            "43"
+          ]
+        }
+      ],
+      "lat": 59.2410486,
+      "lon": 10.3533517,
+      "osm_name": "Vestfold Golfklubb"
+    },
+    {
+      "club": "Volda Golfklubb",
+      "guid": "739c422d-ce26-4ddc-bc7b-c18d8c5dbc62",
+      "courses": [
+        {
+          "course": "Volda Golfbane",
+          "tees": [
+            "Rød",
+            "Gul"
+          ]
+        },
+        {
+          "course": "Volda par 3",
+          "tees": [
+            "Par 3"
+          ]
+        }
+      ]
+    },
+    {
+      "club": "Voss Golfklubb",
+      "guid": "2b07771e-d0df-4c9e-89b9-a528e740f008",
+      "courses": [
+        {
+          "course": "Voss Golf 31 sløyfre  HCP godkent",
+          "tees": [
+            "600m",
+            "31"
+          ]
+        },
+        {
+          "course": "Voss Golf og Aktivitetspark_2034",
+          "tees": [
+            "44",
+            "52",
+            "58",
+            "62"
+          ]
+        }
+      ],
+      "lat": 60.6838036,
+      "lon": 6.4872753,
+      "osm_name": "Voss Golf og Aktivitetspark"
+    },
+    {
+      "club": "Vrådal Golfklubb",
+      "guid": "20b55ee1-886a-4190-b45a-076642031920",
+      "courses": [
+        {
+          "course": "Vrådal Golf",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Vrådal Golf (2)",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul",
+            "Hvit"
+          ]
+        }
+      ],
+      "lat": 59.3169605,
+      "lon": 8.4787309
+    },
+    {
+      "club": "Østmarka Golfklubb",
+      "guid": "11a0819e-6d9d-46e2-9585-01379c806ac2",
+      "courses": [
+        {
+          "course": "Vrådal Golf",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Vrådal Golf (2)",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul",
+            "Hvit"
+          ]
+        }
+      ],
+      "lat": 59.7237039,
+      "lon": 11.0425314
+    },
+    {
+      "club": "Ålesund Golfklubb",
+      "guid": "a9ee8209-205f-4ad4-9b59-5ea3c6d8f9dc",
+      "courses": [
+        {
+          "course": "Vrådal Golf",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul",
+            "Hvit"
+          ]
+        },
+        {
+          "course": "Vrådal Golf (2)",
+          "tees": [
+            "Rød",
+            "Blå",
+            "Gul",
+            "Hvit"
+          ]
+        }
+      ]
+    }
+  ]
+}

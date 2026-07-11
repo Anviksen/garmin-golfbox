@@ -1,0 +1,1075 @@
+{
+  "courses": [
+    {
+      "garmin_name": "Mørk Golfklubb ~ Hovedbanen",
+      "country": "",
+      "lat": 59.532721,
+      "lon": 10.999599,
+      "club": "Mørk Golfklubb",
+      "course": "Mørk GK 18-hulls banen",
+      "tee": "Gul"
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 64.3960083,
+      "lon": 27.8720734,
+      "club": "Alta Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.8342576,
+      "lon": 10.3954222,
+      "club": "Asker Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.596801,
+      "lon": 11.1718124,
+      "club": "Askim Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.7550062,
+      "lon": 11.0881619,
+      "club": "Atlungstad Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 63.7034205,
+      "lon": 9.7365655,
+      "club": "Austrått Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.9073636,
+      "lon": 10.5819733,
+      "club": "Ballerud Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 58.9552273,
+      "lon": 9.5953893,
+      "club": "Bamble Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.4473234,
+      "lon": 5.3152368,
+      "club": "Bergen Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.1916853,
+      "lon": 5.4784044,
+      "club": "Bjørnefjorden Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 57.8515387,
+      "lon": 14.0383603,
+      "club": "Bjaavann Golfklubb-Kristiansand",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 69.2820189,
+      "lon": 15.9804074,
+      "club": "Bleik Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 67.3452024,
+      "lon": 14.5341008,
+      "club": "Bodø Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.3996806,
+      "lon": 10.4505246,
+      "club": "Borre Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.2965961,
+      "lon": 11.133997,
+      "club": "Borregaard Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 63.3570528,
+      "lon": 10.1488657,
+      "club": "Byneset Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.9613191,
+      "lon": 10.4949738,
+      "club": "Bærum Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 58.3271227,
+      "lon": 6.2916528,
+      "club": "Dalane Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.6721906,
+      "lon": 10.2153133,
+      "club": "Drammen Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.6746192,
+      "lon": 10.6503748,
+      "club": "Drøbak Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 58.4856811,
+      "lon": 5.9200045,
+      "club": "Egersund Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.7362953,
+      "lon": 10.0054138,
+      "club": "Eiker Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.4072799,
+      "lon": 10.6833033,
+      "club": "Ekholtbruket Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.8730667,
+      "lon": 11.6736497,
+      "club": "Elverum Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.2916662,
+      "lon": 5.3037368,
+      "club": "Fana Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.9166888,
+      "lon": 11.1746093,
+      "club": "Fet Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 63.582239,
+      "lon": 10.8032219,
+      "club": "Frosta Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.2034924,
+      "lon": 10.9779858,
+      "club": "Gamle Fredrikstad Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 62.5310991,
+      "lon": 6.1341119,
+      "club": "Giske Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.064571,
+      "lon": 11.028942,
+      "club": "Gjerdrum Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.7715306,
+      "lon": 10.7776937,
+      "club": "Gjersjøen Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 58.3587295,
+      "lon": 8.638612,
+      "club": "Grimstad Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.9527522,
+      "lon": 10.6214984,
+      "club": "Grini Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.9703643,
+      "lon": 10.9169656,
+      "club": "Groruddalen Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.8449474,
+      "lon": 10.8539141,
+      "club": "Grønmo Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 61.2466551,
+      "lon": 10.4561383,
+      "club": "Hafjell Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.9440265,
+      "lon": 10.5760295,
+      "club": "Haga Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.1316236,
+      "lon": 10.8331566,
+      "club": "Hakadal Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.3758328,
+      "lon": 6.1800127,
+      "club": "Hardanger Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 68.8352787,
+      "lon": 16.4860509,
+      "club": "Harstad Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.5590361,
+      "lon": 5.3706885,
+      "club": "Haugaland Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.0006198,
+      "lon": 10.9793015,
+      "club": "Hauger Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 65.9261152,
+      "lon": 13.3157283,
+      "club": "Helgeland Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.92529,
+      "lon": 8.42876,
+      "club": "Hemsedal Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.5667258,
+      "lon": 4.9520413,
+      "club": "Herdla Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 63.5090299,
+      "lon": 9.0212076,
+      "club": "Hitra Frøya Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.5370432,
+      "lon": 10.0852262,
+      "club": "Hof Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.8659298,
+      "lon": 10.2673775,
+      "club": "Holtsmark Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.4896389,
+      "lon": 7.3963737,
+      "club": "Hovden Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.2690029,
+      "lon": 10.8020916,
+      "club": "Huseby & Hankø Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.0540722,
+      "lon": 11.0228889,
+      "club": "Hvaler Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 58.699552,
+      "lon": 5.6943241,
+      "club": "Jæren Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.6520789,
+      "lon": 12.7786676,
+      "club": "Karasjoga golfsearvi/Karasjok Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.1571495,
+      "lon": 5.2482008,
+      "club": "Karmøy Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.7562219,
+      "lon": 10.3788592,
+      "club": "Kjekstad Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 63.3250661,
+      "lon": 10.4770007,
+      "club": "Klæbu Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.6100616,
+      "lon": 9.7111654,
+      "club": "Kongsberg Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.1334322,
+      "lon": 12.0516043,
+      "club": "Kongsvingers Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 58.8435913,
+      "lon": 9.3978214,
+      "club": "Kragerø Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 58.1434247,
+      "lon": 8.0849696,
+      "club": "Kristiansand Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 63.1120593,
+      "lon": 7.8610513,
+      "club": "Kristiansund og Omegn Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.8050609,
+      "lon": 10.9274671,
+      "club": "Krokhol Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.8663018,
+      "lon": 5.764697,
+      "club": "Kvinnherad Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 58.0436174,
+      "lon": 7.1342185,
+      "club": "Lindesnes Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 68.3405009,
+      "lon": 14.1355629,
+      "club": "Lofoten Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.9688604,
+      "lon": 10.4656851,
+      "club": "Lommedalen Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.8898937,
+      "lon": 10.9867538,
+      "club": "Losby Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.5418373,
+      "lon": 5.0742612,
+      "club": "Meland Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.0734056,
+      "lon": 11.1657314,
+      "club": "Miklagard Golf",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 62.7529508,
+      "lon": 7.2604079,
+      "club": "Molde Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 64.4273651,
+      "lon": 11.4964645,
+      "club": "Namsos Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 68.2406482,
+      "lon": 17.4129625,
+      "club": "Narvik Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.1630507,
+      "lon": 11.4301489,
+      "club": "Nes Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.562412,
+      "lon": 9.1001684,
+      "club": "Nesbyen Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.3972247,
+      "lon": 5.2476481,
+      "club": "Nordvegen Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.1913078,
+      "lon": 9.6052683,
+      "club": "Norefjell Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.3053387,
+      "lon": 9.2704195,
+      "club": "Norsjø Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.225714,
+      "lon": 10.397265,
+      "club": "Nøtterøy Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 58.5249162,
+      "lon": 5.7977666,
+      "club": "Ogna Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.2753212,
+      "lon": 10.7955347,
+      "club": "Onsøy Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 62.5935249,
+      "lon": 9.7053075,
+      "club": "Oppdal Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.7767016,
+      "lon": 10.8152736,
+      "club": "Oppegård Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.920897,
+      "lon": 10.732555,
+      "club": "Oslo Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 66.3114719,
+      "lon": 13.9837849,
+      "club": "Polarsirkelen Golf",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 58.9903571,
+      "lon": 6.1089766,
+      "club": "Preikestolen Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.0271676,
+      "lon": 5.5885636,
+      "club": "Randaberg golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 61.1401276,
+      "lon": 21.5678503,
+      "club": "Rauma Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.3488608,
+      "lon": 10.1004392,
+      "club": "Ringerike Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 62.5916896,
+      "lon": 11.3574303,
+      "club": "Røros Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.6117988,
+      "lon": 10.2168697,
+      "club": "Sande Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.1053907,
+      "lon": 10.1838638,
+      "club": "Sandefjord Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.6467353,
+      "lon": 6.3230066,
+      "club": "Sauda Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 63.4210434,
+      "lon": 7.861813,
+      "club": "Smøla Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 58.8896936,
+      "lon": 5.6832082,
+      "club": "Sola Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.4612446,
+      "lon": 10.3094857,
+      "club": "Solum golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.5363484,
+      "lon": 10.6827746,
+      "club": "Soon Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 61.1783809,
+      "lon": 11.3333568,
+      "club": "Sorknes Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.3512742,
+      "lon": 5.0841287,
+      "club": "Sotra Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 58.9574714,
+      "lon": 5.6604344,
+      "club": "Stavanger Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 63.8172839,
+      "lon": 11.4145212,
+      "club": "Stiklestad Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 63.4873506,
+      "lon": 10.9370717,
+      "club": "Stjørdal Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.8075775,
+      "lon": 5.5152187,
+      "club": "Stord Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 62.662863,
+      "lon": 8.5355881,
+      "club": "Sunndal Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 62.8977086,
+      "lon": 8.5629616,
+      "club": "Surnadal Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.108853,
+      "lon": 10.3901603,
+      "club": "Tjøme Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 69.6567967,
+      "lon": 19.6073647,
+      "club": "Tromsø Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 63.4210245,
+      "lon": 10.3371361,
+      "club": "Trondheim Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 61.2936741,
+      "lon": 12.2539773,
+      "club": "Trysil Golf",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.049596,
+      "lon": 10.256108,
+      "club": "Tyrifjord Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.0150519,
+      "lon": 5.5487591,
+      "club": "Tysnes Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.1545137,
+      "lon": 11.0965356,
+      "club": "Ullensaker Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 58.3153454,
+      "lon": 6.9982602,
+      "club": "Utsikten Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.925942,
+      "lon": 9.3563369,
+      "club": "Valdres Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 70.1111686,
+      "lon": 29.3660823,
+      "club": "Varanger Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 68.6621774,
+      "lon": 15.4805147,
+      "club": "Vesterålen Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.2410486,
+      "lon": 10.3533517,
+      "club": "Vestfold Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 60.6838036,
+      "lon": 6.4872753,
+      "club": "Voss Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.3169605,
+      "lon": 8.4787309,
+      "club": "Vrådal Golfklubb",
+      "course": "",
+      "tee": ""
+    },
+    {
+      "garmin_name": "",
+      "country": "no",
+      "lat": 59.7237039,
+      "lon": 11.0425314,
+      "club": "Østmarka Golfklubb",
+      "course": "",
+      "tee": ""
+    }
+  ]
+}
