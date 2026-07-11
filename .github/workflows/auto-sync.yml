@@ -24,6 +24,8 @@ jobs:
       GOLFBOX_AUTO: "1"
       GOLFBOX_AUTO_SUBMIT: "1"   # sett til "0" for å fylle ut uten å lagre
       GOLFBOX_MARKER_MEMBERNO: ${{ secrets.GOLFBOX_MARKER_MEMBERNO }}
+      GOLFBOX_USERNAME: ${{ secrets.GOLFBOX_USERNAME }}
+      GOLFBOX_PASSWORD: ${{ secrets.GOLFBOX_PASSWORD }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
     steps:

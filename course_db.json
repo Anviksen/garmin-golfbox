@@ -730,13 +730,13 @@
       "tee": ""
     },
     {
-      "garmin_name": "",
-      "country": "no",
-      "lat": 59.7767016,
-      "lon": 10.8152736,
+      "garmin_name": "Oppegård Golfklubb",
+      "country": "",
+      "lat": 59.778222,
+      "lon": 10.816779,
       "club": "Oppegård Golfklubb",
-      "course": "",
-      "tee": ""
+      "course": "Oppegård",
+      "tee": "53"
     },
     {
       "garmin_name": "",

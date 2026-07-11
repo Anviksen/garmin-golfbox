@@ -394,6 +394,106 @@ def try_navigate_to_score(page) -> bool:
     return False
 
 
+def _find_password_frame(page):
+    """Returner (frame, passord-element) for et SYNLIG passordfelt.
+    Skjulte modaler (før «GOLFBOX» er trykket) teller ikke."""
+    for fr in page.frames:
+        try:
+            for pw in fr.query_selector_all("input[type='password']"):
+                try:
+                    if pw.is_visible():
+                        return fr, pw
+                except Exception:
+                    continue
+        except Exception:
+            continue
+    return None, None
+
+
+def try_auto_login(page, username: str, password: str) -> bool:
+    """Logg inn automatisk på norskgolf.no → GolfBox.
+    To-trinns: 1) klikk «GolfBox» (åpner innloggingsmodulen) 2) fyll brukernavn/passord.
+    Gjør at en utløpt økt fikser seg selv – ingen manuell handling. True = sendte inn."""
+    if not username or not password:
+        return False
+
+    fr, pw = _find_password_frame(page)
+
+    # Fase 1: ingen passordfelt synlig ennå → åpne GolfBox-innloggingen.
+    if not pw:
+        for f in page.frames:
+            try:
+                link = (
+                    f.query_selector("a:has-text('GolfBox')")
+                    or f.query_selector("a:has-text('Golfbox')")
+                    or f.query_selector("button:has-text('GolfBox')")
+                    or f.query_selector("a:has-text('Logg inn')")
+                    or f.query_selector("[href*='golfbox' i]")
+                )
+                if link:
+                    link.click(timeout=5000)
+                    time.sleep(2)
+                    break
+            except Exception:
+                continue
+        # Neste runde i løkka finner passordfeltet og fyller det ut.
+        return False
+
+    # Fase 2: fyll inn brukernavn/passord i modulen (kun synlige felt).
+    try:
+        user = None
+        for sel in (
+            "input[type='email']",
+            "input[name*='user' i]", "input[name*='email' i]", "input[name*='bruker' i]",
+            "input[id*='user' i]", "input[id*='email' i]",
+            "input[type='text']",
+        ):
+            for cand in fr.query_selector_all(sel):
+                try:
+                    if cand.is_visible():
+                        user = cand
+                        break
+                except Exception:
+                    continue
+            if user:
+                break
+        if not user:
+            return False
+        user.fill(username)
+        pw.fill(password)
+        # Finn en SYNLIG «Logg inn»-knapp; ellers trykk Enter i passordfeltet.
+        btn = None
+        for sel in (
+            "button:has-text('Logg inn')", "button[type='submit']",
+            "input[type='submit']", "button:has-text('Logg')",
+            "button:has-text('Login')", "a:has-text('Logg inn')",
+        ):
+            for cand in fr.query_selector_all(sel):
+                try:
+                    if cand.is_visible():
+                        btn = cand
+                        break
+                except Exception:
+                    continue
+            if btn:
+                break
+        clicked = False
+        if btn:
+            try:
+                btn.click(timeout=5000)
+                clicked = True
+            except Exception:
+                clicked = False
+        if not clicked:
+            try:
+                pw.press("Enter")
+            except Exception:
+                pass
+        return True
+    except Exception:
+        return False
+
+
 def dump_debug(page, label: str) -> None:
     """Lagre hjem-/mellomsiden så vi kan lese menyen om navigeringen feiler."""
     out = PROJECT_DIR / "data" / "golfbox_map"
@@ -424,6 +524,8 @@ def main() -> None:
     auto = os.getenv("GOLFBOX_AUTO") == "1" or "--auto" in sys.argv
     headless = os.getenv("GOLFBOX_HEADLESS") == "1"  # egen bryter (skyen setter denne)
     auto_submit = os.getenv("GOLFBOX_AUTO_SUBMIT") == "1"
+    gb_user = os.getenv("GOLFBOX_USERNAME")
+    gb_pass = os.getenv("GOLFBOX_PASSWORD")
 
     log(f"=== Start: runde {round_id}{' [AUTO]' if auto else ''} ===")
     try:
@@ -433,9 +535,9 @@ def main() -> None:
         raise SystemExit(1)
     log(f"Runde: {rnd.get('course')} · {rnd.get('date', '')[:10]} · {rnd.get('strokes')} slag")
 
-    if auto and not STATE_FILE.exists():
-        log("❌ AUTO: ingen lagret Golfbox-økt. Kan ikke logge inn uten skjerm. "
-            "Forny økten (se guide). Avslutter med kode 2.")
+    if auto and not STATE_FILE.exists() and not (gb_user and gb_pass):
+        log("❌ AUTO: ingen lagret økt OG ingen GOLFBOX_USERNAME/PASSWORD å logge inn med. "
+            "Avslutter med kode 2.")
         raise SystemExit(2)
 
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -494,6 +596,8 @@ def main() -> None:
         target = None
         last_nav = time.time()
         last_log = 0.0
+        last_login = 0.0
+        login_tries = 0
         saved = False
         while time.time() < deadline:
             target = find_score_frame()
@@ -504,6 +608,22 @@ def main() -> None:
                 urls = " | ".join((p.url or "?") for p in ctx.pages)
                 log(f"  venter på GolfBox … faner: {urls}")
                 last_log = time.time()
+
+            gb_pages = golfbox_pages()
+            if not gb_pages and (gb_user and gb_pass) and login_tries < 5 \
+                    and time.time() - last_login > 8:
+                # Ikke inne i GolfBox ennå (økt utløpt / ny økt) – logg inn automatisk.
+                for pg in list(ctx.pages):
+                    if try_auto_login(pg, gb_user, gb_pass):
+                        login_tries += 1
+                        log(f"  logget inn automatisk (forsøk {login_tries}) …")
+                        time.sleep(3)
+                        try:
+                            pg.goto(SCORE_URL, wait_until="domcontentloaded", timeout=15000)
+                        except Exception:
+                            pass
+                        break
+                last_login = time.time()
 
             gb_pages = golfbox_pages()
             if gb_pages:
