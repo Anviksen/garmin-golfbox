@@ -2,11 +2,11 @@ name: Auto-sync Garmin til Golfbox
 
 # Kjøres av:
 #  - workflow_dispatch: trigges av cron-job.org hvert ~5. min (rask, presis)
-#  - schedule: reserve hvert 15. min hvis cron-job.org skulle svikte (kan være forsinket)
+#  - schedule: kjører hvert 10. min (UTC). Helautomatisk uten cron-job.org.
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/15 * * * *"   # UTC
+    - cron: "*/10 * * * *"   # UTC
 
 permissions:
   contents: write            # for å lagre posted.json tilbake til repoet
