@@ -150,6 +150,174 @@ def only_real_course(fr, select_id: str):
     return opts[0]["value"] if len(opts) == 1 else None
 
 
+def _read_golfbox_pars(fr, n: int):
+    """Les par per hull (#holePar_1..N) fra score-skjemaet. [4,3,4,...] eller None-er."""
+    try:
+        return fr.evaluate(
+            """(n) => {
+                const out = [];
+                for (let i = 1; i <= n; i++) {
+                    const el = document.getElementById('holePar_' + i);
+                    const v = el ? parseInt((el.textContent || '').trim()) : NaN;
+                    out.push(isNaN(v) ? null : v);
+                }
+                return out;
+            }""",
+            n,
+        )
+    except Exception:
+        return [None] * n
+
+
+def garmin_par_sequence(rnd: dict, n_holes: int):
+    """Bygg par-rekka [hull1, hull2, …] fra Garmin-runden."""
+    by_num = {}
+    for h in (rnd.get("holes") or []):
+        num, par = h.get("number"), h.get("par")
+        if num and par:
+            by_num[int(num)] = int(par)
+    return [by_num.get(i) for i in range(1, n_holes + 1)]
+
+
+# Baner vi helst IKKE velger automatisk (kort-/spesialbaner) med mindre par matcher entydig.
+_SHORT = ("kort", "korthull", "par3", "par 3", "akademi", "academy", "6-hull", "pitch")
+_SPECIAL = ("tour", "dame", "herre", "senior", "junior", "vinter", "winter", "matchplay")
+
+
+def choose_course(fr, targets, n_holes: int, garmin_pars=None, club_core: str = ""):
+    """Velg riktig bane innen valgt klubb – UTEN forhåndsspilling.
+    1) tydelig navn-treff  2) eneste bane  3) PAR-SEKVENS-matching (robust):
+    prøver hver bane, leser par per hull, og velger den som matcher Garmin-runden.
+    Returnerer (value, hvordan) eller (None, grunn)."""
+    opts = [o for o in _options(fr, "fld_Course") if o.get("value") and o.get("text", "").strip()]
+    if not opts:
+        return None, "ingen baner"
+
+    # 1) tydelig navn-treff
+    for tgt in targets:
+        if tgt and tgt.strip():
+            v = best_option_value(fr, "fld_Course", tgt)
+            if v:
+                return v, "navn"
+
+    # 2) bare én reell bane
+    if len(opts) == 1:
+        return opts[0]["value"], "eneste bane"
+
+    # 3) par-sekvens-matching
+    gp = list(garmin_pars or [])
+    have_gp = any(p for p in gp)
+    scored = []
+    for o in opts:
+        low = o["text"].lower()
+        try:
+            fr.select_option("#fld_Course", value=o["value"])
+            time.sleep(1.2)
+            tees = [t for t in _options(fr, "fld_Tee") if t.get("value")]
+            if tees:
+                fr.select_option("#fld_Tee", value=tees[0]["value"])
+                time.sleep(0.6)
+        except Exception:
+            continue
+        box = _read_golfbox_pars(fr, n_holes)
+        filled = sum(1 for p in box if p)
+        par_match = sum(1 for a, b in zip(gp, box) if a and b and a == b) if have_gp else 0
+        score = par_match * 100
+        if filled < n_holes:
+            score -= 1000  # ikke en n-hulls bane (f.eks. korthullsbane)
+        if any(w in low for w in _SHORT):
+            score -= 800
+        if any(w in low for w in _SPECIAL):
+            score -= 200
+        if club_core and club_core in core(o["text"]):
+            score += 30
+        if str(n_holes) in low:
+            score += 20
+        scored.append((score, par_match, filled, o))
+
+    if not scored:
+        return None, "ingen lesbare baner"
+    scored.sort(key=lambda x: x[0], reverse=True)
+    top_score, top_match, top_filled, top_o = scored[0]
+    margin = top_score - (scored[1][0] if len(scored) > 1 else -10_000)
+    strong_par = have_gp and top_match >= n_holes - 2 and top_filled >= n_holes
+    clear_main = top_filled >= n_holes and top_score > 0 and margin >= 30
+    if strong_par or clear_main:
+        how = f"par-match {top_match}/{n_holes}" if have_gp else "hovedbane"
+        return top_o["value"], how
+    return None, "flertydig"
+
+
+def _select_club_for(fr, rnd: dict):
+    """Velg riktig GolfBox-klubb for runden (koordinat/mapping). Returnerer club-tekst."""
+    course_name = rnd.get("course", "") or ""
+    override = load_course_map().get(course_name, {})
+    if not (override.get("club") or "").strip():
+        m = course_matcher.match(rnd.get("lat"), rnd.get("lon"), course_name)
+        if m:
+            override = {"club": m.get("club", "")}
+    club_guess = (override.get("club") or "").strip() or course_name.split("~")[0].strip()
+    club_val = (best_option_value(fr, "fld_Club", club_guess)
+                or best_option_value(fr, "fld_Club", course_name))
+    if club_val:
+        try:
+            fr.select_option("#fld_Club", value=club_val)
+            time.sleep(2.0)
+        except Exception:
+            pass
+    return club_guess
+
+
+def inspect_course_form(fr, rnd: dict) -> None:
+    """Diagnose: velg klubb + første bane/tee, og dump par-strukturen i skjemaet."""
+    club = _select_club_for(fr, rnd)
+    try:
+        fr.select_option("#fld_HolesPlayed", value="18")
+        fr.wait_for_selector("#ScoreHole_0", timeout=8000)
+    except Exception:
+        pass
+    courses = [o for o in _options(fr, "fld_Course") if o.get("value") and o.get("text", "").strip()]
+    log(f"🔎 INSPECT: klubb «{club}» → {len(courses)} baner: {[c['text'] for c in courses]}")
+    if courses:
+        try:
+            fr.select_option("#fld_Course", value=courses[0]["value"])
+            time.sleep(1.5)
+            tees = [o for o in _options(fr, "fld_Tee") if o.get("value")]
+            if tees:
+                fr.select_option("#fld_Tee", value=tees[0]["value"])
+                time.sleep(1.0)
+            fr.wait_for_selector("#ScoreHole_0", timeout=8000)
+        except Exception:
+            pass
+        try:
+            info = fr.evaluate(
+                """() => {
+                    const out = {parCandidates: [], sample: ''};
+                    document.querySelectorAll("*").forEach(e => {
+                        const id = e.id || '', cl = (e.className && e.className.toString()) || '';
+                        if (/par/i.test(id) || /par/i.test(cl)) {
+                            const t = (e.textContent || e.value || '').trim().slice(0, 24);
+                            if (out.parCandidates.length < 40)
+                                out.parCandidates.push({id: id, cl: cl, tag: e.tagName, text: t});
+                        }
+                    });
+                    const inp = document.getElementById('ScoreHole_0');
+                    if (inp) { const t = inp.closest('table') || inp.parentElement;
+                               out.sample = (t ? t.outerHTML : '').slice(0, 6000); }
+                    return out;
+                }"""
+            )
+            log("🔎 INSPECT par-kandidater: "
+                + json.dumps(info.get("parCandidates", [])[:40], ensure_ascii=False))
+            outdir = PROJECT_DIR / "data" / "golfbox_map"
+            outdir.mkdir(parents=True, exist_ok=True)
+            (outdir / "score_form.html").write_text(fr.content(), encoding="utf-8")
+            (outdir / "score_table_sample.html").write_text(info.get("sample", ""), encoding="utf-8")
+            log("🔎 INSPECT: lagret data/golfbox_map/score_form.html + score_table_sample.html")
+        except Exception as e:
+            log(f"🔎 INSPECT feilet: {e}")
+
+
 def fill_score_form(fr, rnd: dict):
     """Fyll ut skjemaet i ramme `fr`. Returnerer (notater, status).
     status forteller hva som ble trygt matchet – brukes til å avgjøre auto-lagring."""
@@ -219,21 +387,24 @@ def fill_score_form(fr, rnd: dict):
     course_part = (override.get("course") or "").strip() or (
         course_name.split("~")[-1].strip() if "~" in course_name else course_name
     )
-    course_val = (
-        best_option_value(fr, "fld_Course", course_part)
-        or best_option_value(fr, "fld_Course", course_name)
-        or only_real_course(fr, "fld_Course")  # bare én bane i klubben? velg den.
+    garmin_pars = garmin_par_sequence(rnd, n_holes)
+    course_val, how = choose_course(
+        fr, [course_part, course_name], n_holes, garmin_pars, core(club_guess)
     )
     if course_val:
         try:
             fr.select_option("#fld_Course", value=course_val)
             time.sleep(1.5)  # la changeCourse() laste tees/par
             status["course"] = True
-            notes.append(f"Bane: «{course_part}»")
+            notes.append(f"Bane: valgt ({how})")
         except Exception as e:
             notes.append(f"⚠️ Bane-valg feilet ({e})")
     else:
-        notes.append(f"❗ Fant ikke banen «{course_part}» – velg manuelt.")
+        # Logg de faktiske banenavnene så vi ser hva GolfBox tilbyr for denne klubben.
+        avail = ", ".join(
+            o["text"] for o in _options(fr, "fld_Course") if o.get("text", "").strip()
+        )
+        notes.append(f"❗ Fant ikke banen «{course_part}» ({how}). Baner i GolfBox: [{avail}]")
 
     # 5) Tee (mapping > Garmin teeBox, f.eks. «54»)
     tee_target = str((override.get("tee") or "").strip() or rnd.get("teeBox") or "")
@@ -673,6 +844,12 @@ def main() -> None:
             ctx.storage_state(path=str(STATE_FILE))  # oppdater/forny lagret økt
         except Exception:
             pass
+
+        if os.getenv("GOLFBOX_INSPECT") == "1":
+            inspect_course_form(target, rnd)
+            log("🔎 INSPECT ferdig. Lukk vinduet.")
+            return
+
         notes, status = fill_score_form(target, rnd)
         for n in notes:
             log("  " + n)

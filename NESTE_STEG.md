@@ -4,6 +4,54 @@ Sist oppdatert etter at bane-matcheren (koordinat + katalog + læring) var bevis
 
 ---
 
+## ⏳ AKKURAT NÅ – åpne oppgaver (start her neste gang)
+
+**1. Fullfør bane-valg-forbedringen (kodet lokalt, IKKE testet/pushet ennå).**
+   Vi gjorde bane-utvelgingen hull-antall-bevisst i `golfbox_post.py`
+   (funksjonen `choose_course`): matcher ikke banenavnet, og klubben har flere
+   baner, velger den nå banen som matcher antall spilte hull (18/9). Gjelder ALLE
+   klubber, ikke bare Østmarka.
+   - Test lokalt (synlig, lagrer ikke):
+     ```
+     python3 fetch_garmin.py
+     GOLFBOX_AUTO_SUBMIT=0 python3 golfbox_post.py 371938926
+     ```
+     Se på «Bane:»-linja. «valgt (18 hull)» = løst. «❗ Fant ikke … Baner: [ … ]»
+     = lim inn banenavnene, så finjusterer vi (navnene mangler kanskje hull-tall).
+   - Når testen er god: `git add -A && git commit -m "Hull-bevisst banevalg" && git pull --rebase && git push`
+
+**2. Østmarka-runden (371938926) ligger som «needs_manual» i skyen.**
+   Den ble funnet og fylt ut, men holdt igjen av sikkerhetsnettet (banen matchet
+   ikke). Etter fiks #1 (eller fyll den én gang via web-appen «Send til Golfbox»
+   → velg riktig Østmarka-bane → Lagre). Da læres banen og deles til sentralbasen.
+
+**3. (Kvalitet, lav prioritet) Katalog-databug.** `golfbox_catalog_no.json` har
+   feil banenavn for de siste klubbene (Vrådal/Østmarka/Ålesund viser «Vrådal
+   Golf») – katalog-byggeren rakk ikke å laste banene på nytt før den leste dem.
+   Påvirker IKKE matchingen (koordinat-matcher bruker kun klubb-nivå). Fiks ved
+   behov: legg inn en `wait_for` på at #fld_Course endrer seg etter klubb-bytte i
+   `build_golfbox_catalog.py`, og kjør den på nytt.
+
+**4. (Kosmetisk) Node 20-advarsel** i GitHub Actions – ufarlig. Kan fjernes senere
+   ved å oppdatere `actions/checkout` og `actions/setup-python`.
+
+---
+
+## 🚀 UTRULLET I SKYEN (fullt automatisk)
+
+Kjører på GitHub Actions hvert 10. min (07–23 norsk tid), uavhengig av Macen:
+Garmin → matcher bane mot sentralbasen → logger inn på Golfbox SELV
+(fornyer økten automatisk via GOLFBOX_USERNAME/PASSWORD om den er utløpt) →
+fyller ut + setter markør → lagrer til godkjenning. Du godkjenner på mobilen.
+
+- Repo: github.com/Anviksen/garmin-golfbox (privat drift via secrets)
+- 7 secrets satt: GARMIN_TOKENS_B64, GOLFBOX_STATE_B64, GOLFBOX_MARKER_MEMBERNO,
+  GOLFBOX_USERNAME, GOLFBOX_PASSWORD, SUPABASE_URL, SUPABASE_ANON_KEY
+- Selvhelbredende innlogging bevist ende-til-ende («✅ LAGRET i Golfbox»).
+- Manuell kjøring: `gh workflow run auto-sync.yml` · følg: `gh run watch`
+
+---
+
 ## ✅ Hva som er ferdig og bevist
 
 **Kjernen (Garmin → Golfbox, helautomatisk):**

@@ -1063,13 +1063,13 @@
       "tee": ""
     },
     {
-      "garmin_name": "",
-      "country": "no",
-      "lat": 59.7237039,
-      "lon": 11.0425314,
+      "garmin_name": "Østmarka Golfklubb",
+      "country": "",
+      "lat": 59.722258,
+      "lon": 11.041015,
       "club": "Østmarka Golfklubb",
-      "course": "",
-      "tee": ""
+      "course": "Østmarka 18-hull",
+      "tee": "56"
     }
   ]
 }
