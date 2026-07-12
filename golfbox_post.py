@@ -264,6 +264,47 @@ def _pick_course(fr, value: str, text: str, timeout: float = 20.0) -> bool:
     return False
 
 
+def _pick_option(fr, sel_id: str, value: str, text: str, timeout: float = 15.0) -> bool:
+    """Generisk robust valg: vent til nedtrekket er stabilt (async rebuild ferdig),
+    velg, og re-assert til valget holder. Brukes for tee (og andre reset-utsatte felt)."""
+    _wait_select_stable(fr, sel_id, settle=1.5, timeout=10.0)
+    end = time.time() + timeout
+    while time.time() < end:
+        val = value
+        for o in _options(fr, sel_id):
+            if text and o.get("text", "").strip() == text:
+                val = o["value"]
+                break
+        try:
+            fr.select_option(f"#{sel_id}", value=val, timeout=4000)
+        except Exception:
+            pass
+        try:
+            fr.evaluate(
+                "(id) => { const el = document.getElementById(id);"
+                " if (el) el.dispatchEvent(new Event('change', {bubbles: true})); }",
+                sel_id,
+            )
+        except Exception:
+            pass
+        time.sleep(1.5)
+        try:
+            cur = fr.eval_on_selector(
+                f"#{sel_id}", "el => (el.options[el.selectedIndex]||{}).text || ''") or ""
+        except Exception:
+            cur = ""
+        if text and norm(cur) == norm(text):
+            time.sleep(1.0)
+            try:
+                cur2 = fr.eval_on_selector(
+                    f"#{sel_id}", "el => (el.options[el.selectedIndex]||{}).text || ''") or ""
+            except Exception:
+                cur2 = ""
+            if norm(cur2) == norm(text):
+                return True
+    return False
+
+
 def _select_verified(fr, sel_id: str, value: str, tries: int = 5, settle: float = 1.8) -> bool:
     """Velg en <select>-verdi og VERIFISER at den sitter etter at GolfBox sin
     async changeXxx()-omlasting er ferdig. Velg på nytt hvis den ble nullstilt."""
@@ -525,19 +566,8 @@ def fill_score_form(fr, rnd: dict):
         )
         notes.append(f"❗ Fant ikke banen «{course_part}» ({how}). Baner i GolfBox: [{avail}]")
 
-    # 5) Tee – ALLTID fra Garmin-runden (det du valgte på klokka). Mapping/lært tee
-    #    brukes kun som reserve hvis runden mangler tee, siden tee varierer per runde.
-    tee_target = str(rnd.get("teeBox") or (override.get("tee") or "").strip() or "")
-    if tee_target:
-        tee_val = best_option_value(fr, "fld_Tee", tee_target)
-        if tee_val:
-            if _select_verified(fr, "fld_Tee", tee_val, tries=3, settle=0.8):
-                status["tee"] = True
-                notes.append(f"Tee: {tee_target}")
-            else:
-                notes.append(f"❗ Tee «{tee_target}» festet ikke – velg manuelt.")
-        else:
-            notes.append(f"❗ Fant ikke tee «{tee_target}» – velg manuelt.")
+    # 5) Tee settes HELT TIL SLUTT (se nederst) – GolfBox laster tee-lista på nytt
+    #    asynkront etter bane-valg og kan ellers overskrive den til standard-tee.
 
     # 6) Hull-scorer (vent til tabellen er gjenoppbygd etter evt. bane-bytte)
     try:
@@ -644,6 +674,26 @@ def fill_score_form(fr, rnd: dict):
         notes.append(f"Markør (navn): {marker_name} – trykk «Søk» for å bekrefte")
     else:
         notes.append("Markør: ikke satt – legg inn manuelt.")
+
+    # 8) TEE – ALLTID fra Garmin-runden, satt HELT TIL SLUTT så GolfBox sin sene
+    #    getTeeOptions-omlasting ikke overskriver den til standard-tee.
+    tee_target = str(rnd.get("teeBox") or (override.get("tee") or "").strip() or "")
+    if tee_target:
+        _wait_select_stable(fr, "fld_Tee", settle=1.5, timeout=10.0)
+        tee_val = best_option_value(fr, "fld_Tee", tee_target)
+        if tee_val:
+            tee_text = ""
+            for o in _options(fr, "fld_Tee"):
+                if o.get("value") == tee_val:
+                    tee_text = o.get("text", "").strip()
+                    break
+            if _pick_option(fr, "fld_Tee", tee_val, tee_text):
+                status["tee"] = True
+                notes.append(f"Tee: {tee_target}")
+            else:
+                notes.append(f"❗ Tee «{tee_target}» festet ikke – velg manuelt.")
+        else:
+            notes.append(f"❗ Fant ikke tee «{tee_target}» – velg manuelt.")
 
     return notes, status
 

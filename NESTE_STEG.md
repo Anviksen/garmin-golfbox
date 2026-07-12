@@ -4,7 +4,21 @@ Sist oppdatert etter at bane-matcheren (koordinat + katalog + læring) var bevis
 
 ---
 
-## ⏳ AKKURAT NÅ – åpne oppgaver (start her neste gang)
+## ✅ LØST: riktig bane uten forhåndsspilling (par/navn-matching)
+
+Systemet velger nå riktig GolfBox-bane for en helt ny bane, første gang:
+GPS → klubb, navn/hull-scoring (utelukker kort-/dame-/tour-baner) → bane, tee fra
+Garmin-runden. Banevalget re-asserteres til det fester (GolfBox sin async
+`GetCourses`-ombygging nullstiller ellers til standardbanen). Par-matching er
+autoritativ ved tvil, og læringen sperrer mot baner som ikke matcher runden.
+Bevist på Østmarka (18-hull, tee 47) og pushet.
+
+Små rester (valgfritt): slett testdubletter av Østmarka i GolfBox «Til godkjennelse»,
+og slett raden «Narvesen Tour - Damer - 39» i Supabase-tabellen `courses`.
+
+---
+
+## ⏳ Tidligere åpne oppgaver
 
 **1. Fullfør bane-valg-forbedringen (kodet lokalt, IKKE testet/pushet ennå).**
    Vi gjorde bane-utvelgingen hull-antall-bevisst i `golfbox_post.py`
