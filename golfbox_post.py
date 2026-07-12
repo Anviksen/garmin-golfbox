@@ -184,71 +184,181 @@ _SHORT = ("kort", "korthull", "par3", "par 3", "akademi", "academy", "6-hull", "
 _SPECIAL = ("tour", "dame", "herre", "senior", "junior", "vinter", "winter", "matchplay")
 
 
-def choose_course(fr, targets, n_holes: int, garmin_pars=None, club_core: str = ""):
+def _js_set_select(fr, sel_id: str, value: str) -> bool:
+    """Sett verdi på et <select> via JS + fyr changeXxx() (robust, ingen timeout-heng)."""
+    try:
+        return bool(fr.evaluate(
+            """({id, v}) => {
+                const el = document.getElementById(id);
+                if (!el) return false;
+                el.value = v;
+                el.dispatchEvent(new Event('change', {bubbles: true}));
+                return el.value === v;
+            }""",
+            {"id": sel_id, "v": value},
+        ))
+    except Exception:
+        return False
+
+
+def _wait_select_stable(fr, sel_id: str, settle: float = 2.0, timeout: float = 12.0) -> None:
+    """Vent til <select> sin valgte verdi har vært uendret i `settle` sek (AJAX ferdig)."""
+    end = time.time() + timeout
+    prev, since = "\x00", time.time()
+    while time.time() < end:
+        try:
+            cur = fr.eval_on_selector(f"#{sel_id}", "el => el.value") or ""
+        except Exception:
+            cur = ""
+        if cur == prev:
+            if time.time() - since >= settle:
+                return
+        else:
+            prev, since = cur, time.time()
+        time.sleep(0.4)
+
+
+def _pick_course(fr, value: str, text: str, timeout: float = 20.0) -> bool:
+    """Velg bane robust: vent til klubbens AJAX er ferdig, velg, og re-assert til
+    valget er stabilt (GolfBox nullstiller ellers til standardbanen)."""
+    # 1) vent til bane-lista har roet seg etter changeClub sin GetCourses.
+    _wait_select_stable(fr, "fld_Course", settle=2.0, timeout=12.0)
+    end = time.time() + timeout
+    while time.time() < end:
+        # Finn value på nytt (ombygging kan gi nye/annen-casing verdier).
+        val = value
+        for o in _options(fr, "fld_Course"):
+            if text and o.get("text", "").strip() == text:
+                val = o["value"]
+                break
+        try:
+            fr.select_option("#fld_Course", value=val, timeout=4000)
+        except Exception:
+            pass
+        # Dytt GolfBox sin egen state så en evt. senere ombygging beholder valget.
+        try:
+            fr.evaluate(
+                """() => {
+                    try { ClubHasChanged = false; } catch (e) {}
+                    const el = document.getElementById('fld_Course');
+                    if (el) el.dispatchEvent(new Event('change', {bubbles: true}));
+                }"""
+            )
+        except Exception:
+            pass
+        time.sleep(2.0)
+        try:
+            cur = fr.eval_on_selector(
+                "#fld_Course", "el => (el.options[el.selectedIndex]||{}).text || ''") or ""
+        except Exception:
+            cur = ""
+        if norm(cur) == norm(text):
+            time.sleep(1.5)  # bekreft at det holder
+            try:
+                cur2 = fr.eval_on_selector(
+                    "#fld_Course", "el => (el.options[el.selectedIndex]||{}).text || ''") or ""
+            except Exception:
+                cur2 = ""
+            if norm(cur2) == norm(text):
+                return True
+    return False
+
+
+def _select_verified(fr, sel_id: str, value: str, tries: int = 5, settle: float = 1.8) -> bool:
+    """Velg en <select>-verdi og VERIFISER at den sitter etter at GolfBox sin
+    async changeXxx()-omlasting er ferdig. Velg på nytt hvis den ble nullstilt."""
+    for _ in range(tries):
+        try:
+            fr.select_option(f"#{sel_id}", value=value, timeout=5000)
+        except Exception:
+            pass
+        time.sleep(settle)  # vent til changeCourse()/AJAX har kjørt ferdig
+        try:
+            cur = fr.eval_on_selector(f"#{sel_id}", "el => el.value")
+        except Exception:
+            cur = None
+        if cur == value:
+            return True
+    return False
+
+
+def _score_course_name(text: str, n_holes: int, club_core: str, garmin_core: str) -> int:
+    """Poengsett en bane KUN på navn/hull – rask, ingen skjema-endring."""
+    low = text.lower()
+    c = core(text)
+    other = "9" if n_holes == 18 else "18"
+    score = 0
+    if any(w in low for w in _SHORT):
+        score -= 800
+    if any(w in low for w in _SPECIAL):
+        score -= 200
+    if str(n_holes) in low:
+        score += 30
+    if other in low and str(n_holes) not in low:
+        score -= 300  # feil hull-antall
+    if club_core and club_core in c:
+        score += 40
+    if garmin_core and (garmin_core in c or c in garmin_core):
+        score += 25
+    return score
+
+
+def choose_course(fr, targets, n_holes: int, garmin_pars=None, club_core: str = "",
+                  garmin_course: str = ""):
     """Velg riktig bane innen valgt klubb – UTEN forhåndsspilling.
-    1) tydelig navn-treff  2) eneste bane  3) PAR-SEKVENS-matching (robust):
-    prøver hver bane, leser par per hull, og velger den som matcher Garmin-runden.
+    Primær: navn/hull-scoring (utelukker kort-/dame-/tour-baner, foretrekker rett
+    hull-antall + klubbnavn). Reserve ved tvil: par-sekvens-sjekk (robust JS).
     Returnerer (value, hvordan) eller (None, grunn)."""
     opts = [o for o in _options(fr, "fld_Course") if o.get("value") and o.get("text", "").strip()]
     if not opts:
         return None, "ingen baner"
-
-    # 1) bare én reell bane
     if len(opts) == 1:
         return opts[0]["value"], "eneste bane"
 
-    # 2) PAR-SEKVENS er autoritativ når vi har par + flere baner. En lært/mappet
-    #    banenavn kan være feil, så par (som vi leser direkte) overstyrer det.
+    gcore = core(garmin_course or "")
+    ranked = sorted(
+        ((_score_course_name(o["text"], n_holes, club_core, gcore), o) for o in opts),
+        key=lambda x: x[0], reverse=True,
+    )
+    top_score, top_o = ranked[0]
+    second = ranked[1][0] if len(ranked) > 1 else -10_000
+
+    # Tydelig vinner på navn/hull → bruk den (rask, ingen probing).
+    if top_score > 0 and (top_score - second) >= 40:
+        return top_o["value"], "navn/hull"
+
+    # Tvil → par-sekvens-sjekk (robust JS-valg) på de mest sannsynlige kandidatene.
     gp = list(garmin_pars or [])
-    have_gp = any(p for p in gp)
-    scored = []
-    if have_gp:
-        for o in opts:
-            low = o["text"].lower()
+    if any(p for p in gp):
+        best, best_key = None, (-1, -10_000)
+        for sc, o in ranked:
+            if sc <= -500:
+                continue  # åpenbart kort-/feil bane, hopp over
             try:
-                fr.select_option("#fld_Course", value=o["value"])
-                time.sleep(1.2)
-                tees = [t for t in _options(fr, "fld_Tee") if t.get("value")]
-                if tees:
-                    fr.select_option("#fld_Tee", value=tees[0]["value"])
-                    time.sleep(0.6)
+                fr.select_option("#fld_Course", value=o["value"], timeout=4000)
             except Exception:
                 continue
+            time.sleep(1.2)
+            tees = [t for t in _options(fr, "fld_Tee") if t.get("value")]
+            if tees:
+                try:
+                    fr.select_option("#fld_Tee", value=tees[0]["value"], timeout=4000)
+                except Exception:
+                    pass
+                time.sleep(0.5)
             box = _read_golfbox_pars(fr, n_holes)
-            filled = sum(1 for p in box if p)
-            par_match = sum(1 for a, b in zip(gp, box) if a and b and a == b)
-            score = par_match * 100
-            if filled < n_holes:
-                score -= 1000  # ikke en n-hulls bane (f.eks. korthullsbane)
-            if any(w in low for w in _SHORT):
-                score -= 800
-            if any(w in low for w in _SPECIAL):
-                score -= 200
-            if club_core and club_core in core(o["text"]):
-                score += 30
-            if str(n_holes) in low:
-                score += 20
-            scored.append((score, par_match, filled, o))
-        if scored:
-            scored.sort(key=lambda x: x[0], reverse=True)
-            top_score, top_match, top_filled, top_o = scored[0]
-            if top_match >= n_holes - 2 and top_filled >= n_holes:
-                return top_o["value"], f"par-match {top_match}/{n_holes}"
+            if sum(1 for p in box if p) < n_holes:
+                continue
+            pm = sum(1 for a, b in zip(gp, box) if a and b and a == b)
+            key = (pm, sc)
+            if key > best_key:
+                best, best_key = o, key
+        if best is not None and best_key[0] >= n_holes - 2:
+            return best["value"], f"par-match {best_key[0]}/{n_holes}"
 
-    # 3) navn-treff (kun hvis par ikke fantes / ikke avgjorde)
-    for tgt in targets:
-        if tgt and tgt.strip():
-            v = best_option_value(fr, "fld_Course", tgt)
-            if v:
-                return v, "navn"
-
-    # 4) hovedbane fra par-scoringen (par fantes men var ikke entydig)
-    if scored:
-        top_score, top_match, top_filled, top_o = scored[0]
-        margin = top_score - (scored[1][0] if len(scored) > 1 else -10_000)
-        if top_filled >= n_holes and top_score > 0 and margin >= 30:
-            return top_o["value"], "hovedbane"
-
+    # Fortsatt tvil, men klar navne-leder → bruk den.
+    if top_score > 0 and (top_score - second) >= 20:
+        return top_o["value"], "navn/hull"
     return None, "flertydig"
 
 
@@ -378,7 +488,7 @@ def fill_score_form(fr, rnd: dict):
         try:
             current = fr.eval_on_selector("#fld_Club", "el => el.value")
             if current != club_val:
-                fr.select_option("#fld_Club", value=club_val)
+                fr.select_option("#fld_Club", value=club_val, timeout=10000)
                 time.sleep(2.0)  # changeClub() laster banene til klubben
             status["club"] = True
             notes.append(f"Klubb: «{club_guess}»")
@@ -393,16 +503,21 @@ def fill_score_form(fr, rnd: dict):
     )
     garmin_pars = garmin_par_sequence(rnd, n_holes)
     course_val, how = choose_course(
-        fr, [course_part, course_name], n_holes, garmin_pars, core(club_guess)
+        fr, [course_part, course_name], n_holes, garmin_pars,
+        core(club_guess), course_name
     )
     if course_val:
-        try:
-            fr.select_option("#fld_Course", value=course_val)
-            time.sleep(1.5)  # la changeCourse() laste tees/par
+        course_text = ""
+        for o in _options(fr, "fld_Course"):
+            if o.get("value") == course_val:
+                course_text = o.get("text", "").strip()
+                break
+        if _pick_course(fr, course_val, course_text):
+            time.sleep(0.6)
             status["course"] = True
-            notes.append(f"Bane: valgt ({how})")
-        except Exception as e:
-            notes.append(f"⚠️ Bane-valg feilet ({e})")
+            notes.append(f"Bane: «{course_text or how}» ({how})")
+        else:
+            notes.append(f"⚠️ Bane «{course_text or how}» festet ikke i GolfBox – velg manuelt.")
     else:
         # Logg de faktiske banenavnene så vi ser hva GolfBox tilbyr for denne klubben.
         avail = ", ".join(
@@ -416,13 +531,11 @@ def fill_score_form(fr, rnd: dict):
     if tee_target:
         tee_val = best_option_value(fr, "fld_Tee", tee_target)
         if tee_val:
-            try:
-                fr.select_option("#fld_Tee", value=tee_val)
-                time.sleep(0.8)
+            if _select_verified(fr, "fld_Tee", tee_val, tries=3, settle=0.8):
                 status["tee"] = True
                 notes.append(f"Tee: {tee_target}")
-            except Exception:
-                notes.append(f"❗ Tee «{tee_target}» – velg manuelt.")
+            else:
+                notes.append(f"❗ Tee «{tee_target}» festet ikke – velg manuelt.")
         else:
             notes.append(f"❗ Fant ikke tee «{tee_target}» – velg manuelt.")
 
