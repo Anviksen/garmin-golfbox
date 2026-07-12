@@ -193,58 +193,62 @@ def choose_course(fr, targets, n_holes: int, garmin_pars=None, club_core: str = 
     if not opts:
         return None, "ingen baner"
 
-    # 1) tydelig navn-treff
+    # 1) bare én reell bane
+    if len(opts) == 1:
+        return opts[0]["value"], "eneste bane"
+
+    # 2) PAR-SEKVENS er autoritativ når vi har par + flere baner. En lært/mappet
+    #    banenavn kan være feil, så par (som vi leser direkte) overstyrer det.
+    gp = list(garmin_pars or [])
+    have_gp = any(p for p in gp)
+    scored = []
+    if have_gp:
+        for o in opts:
+            low = o["text"].lower()
+            try:
+                fr.select_option("#fld_Course", value=o["value"])
+                time.sleep(1.2)
+                tees = [t for t in _options(fr, "fld_Tee") if t.get("value")]
+                if tees:
+                    fr.select_option("#fld_Tee", value=tees[0]["value"])
+                    time.sleep(0.6)
+            except Exception:
+                continue
+            box = _read_golfbox_pars(fr, n_holes)
+            filled = sum(1 for p in box if p)
+            par_match = sum(1 for a, b in zip(gp, box) if a and b and a == b)
+            score = par_match * 100
+            if filled < n_holes:
+                score -= 1000  # ikke en n-hulls bane (f.eks. korthullsbane)
+            if any(w in low for w in _SHORT):
+                score -= 800
+            if any(w in low for w in _SPECIAL):
+                score -= 200
+            if club_core and club_core in core(o["text"]):
+                score += 30
+            if str(n_holes) in low:
+                score += 20
+            scored.append((score, par_match, filled, o))
+        if scored:
+            scored.sort(key=lambda x: x[0], reverse=True)
+            top_score, top_match, top_filled, top_o = scored[0]
+            if top_match >= n_holes - 2 and top_filled >= n_holes:
+                return top_o["value"], f"par-match {top_match}/{n_holes}"
+
+    # 3) navn-treff (kun hvis par ikke fantes / ikke avgjorde)
     for tgt in targets:
         if tgt and tgt.strip():
             v = best_option_value(fr, "fld_Course", tgt)
             if v:
                 return v, "navn"
 
-    # 2) bare én reell bane
-    if len(opts) == 1:
-        return opts[0]["value"], "eneste bane"
+    # 4) hovedbane fra par-scoringen (par fantes men var ikke entydig)
+    if scored:
+        top_score, top_match, top_filled, top_o = scored[0]
+        margin = top_score - (scored[1][0] if len(scored) > 1 else -10_000)
+        if top_filled >= n_holes and top_score > 0 and margin >= 30:
+            return top_o["value"], "hovedbane"
 
-    # 3) par-sekvens-matching
-    gp = list(garmin_pars or [])
-    have_gp = any(p for p in gp)
-    scored = []
-    for o in opts:
-        low = o["text"].lower()
-        try:
-            fr.select_option("#fld_Course", value=o["value"])
-            time.sleep(1.2)
-            tees = [t for t in _options(fr, "fld_Tee") if t.get("value")]
-            if tees:
-                fr.select_option("#fld_Tee", value=tees[0]["value"])
-                time.sleep(0.6)
-        except Exception:
-            continue
-        box = _read_golfbox_pars(fr, n_holes)
-        filled = sum(1 for p in box if p)
-        par_match = sum(1 for a, b in zip(gp, box) if a and b and a == b) if have_gp else 0
-        score = par_match * 100
-        if filled < n_holes:
-            score -= 1000  # ikke en n-hulls bane (f.eks. korthullsbane)
-        if any(w in low for w in _SHORT):
-            score -= 800
-        if any(w in low for w in _SPECIAL):
-            score -= 200
-        if club_core and club_core in core(o["text"]):
-            score += 30
-        if str(n_holes) in low:
-            score += 20
-        scored.append((score, par_match, filled, o))
-
-    if not scored:
-        return None, "ingen lesbare baner"
-    scored.sort(key=lambda x: x[0], reverse=True)
-    top_score, top_match, top_filled, top_o = scored[0]
-    margin = top_score - (scored[1][0] if len(scored) > 1 else -10_000)
-    strong_par = have_gp and top_match >= n_holes - 2 and top_filled >= n_holes
-    clear_main = top_filled >= n_holes and top_score > 0 and margin >= 30
-    if strong_par or clear_main:
-        how = f"par-match {top_match}/{n_holes}" if have_gp else "hovedbane"
-        return top_o["value"], how
     return None, "flertydig"
 
 
@@ -406,8 +410,9 @@ def fill_score_form(fr, rnd: dict):
         )
         notes.append(f"❗ Fant ikke banen «{course_part}» ({how}). Baner i GolfBox: [{avail}]")
 
-    # 5) Tee (mapping > Garmin teeBox, f.eks. «54»)
-    tee_target = str((override.get("tee") or "").strip() or rnd.get("teeBox") or "")
+    # 5) Tee – ALLTID fra Garmin-runden (det du valgte på klokka). Mapping/lært tee
+    #    brukes kun som reserve hvis runden mangler tee, siden tee varierer per runde.
+    tee_target = str(rnd.get("teeBox") or (override.get("tee") or "").strip() or "")
     if tee_target:
         tee_val = best_option_value(fr, "fld_Tee", tee_target)
         if tee_val:
@@ -935,6 +940,18 @@ def _observe_and_idle(ctx, fr, rnd) -> None:
     log(f"(observasjon slutt) valgt i skjemaet: {last} · koordinater: "
         f"{rnd.get('lat')}, {rnd.get('lon')}")
     if last.get("club"):
+        # Lærings-sperre: lær kun hvis banen i skjemaet faktisk matcher runden.
+        # Hindrer at feil/spesial-bane (f.eks. «... Damer - Tour») forurenser basen.
+        cname = (last.get("course") or "").lower()
+        n_holes = 18 if (rnd.get("holesCompleted") or 0) >= 18 else 9
+        gpars = garmin_par_sequence(rnd, n_holes)
+        box = _read_golfbox_pars(fr, n_holes)
+        par_match = sum(1 for a, b in zip(gpars, box) if a and b and a == b)
+        looks_wrong = any(w in cname for w in _SHORT) or any(w in cname for w in _SPECIAL)
+        if looks_wrong or (any(gpars) and par_match < n_holes - 2):
+            log(f"⚠️ Lærer IKKE «{last.get('course')}» – matcher ikke runden "
+                f"(par {par_match}/{n_holes}). Velg riktig bane manuelt for å lære den.")
+            return
         # Lær med KOORDINATER (skalerbart – matcher på posisjon neste gang).
         saved = course_matcher.learn(
             rnd.get("course", ""), rnd.get("lat"), rnd.get("lon"), last
@@ -943,8 +960,8 @@ def _observe_and_idle(ctx, fr, rnd) -> None:
             log(f"🧠 Lærte (GPS): «{rnd.get('course', '')}» → klubb «{saved['club']}»"
                 + (f", bane «{saved['course']}»" if saved.get("course") else "")
                 + (f", tee «{saved['tee']}»" if saved.get("tee") else ""))
-    # Backup: også navne-basert mapping.
-    _save_learned_mapping(rnd.get("course", ""), last)
+        # Backup: også navne-basert mapping.
+        _save_learned_mapping(rnd.get("course", ""), last)
 
 
 def submit_score(fr) -> bool:
