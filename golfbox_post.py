@@ -368,11 +368,12 @@ def choose_course(fr, targets, n_holes: int, garmin_pars=None, club_core: str = 
     if top_score > 0 and (top_score - second) >= 40:
         return top_o["value"], "navn/hull"
 
-    # Tvil → par-sekvens-sjekk (robust JS-valg) på de mest sannsynlige kandidatene.
+    # Tvil → par-sekvens-sjekk (robust) på de mest sannsynlige kandidatene.
+    # Begrens til topp 6 så en klubb med mange baner (Nordhaug: 69) ikke tar evigheter.
     gp = list(garmin_pars or [])
     if any(p for p in gp):
         best, best_key = None, (-1, -10_000)
-        for sc, o in ranked:
+        for sc, o in ranked[:6]:
             if sc <= -500:
                 continue  # åpenbart kort-/feil bane, hopp over
             try:

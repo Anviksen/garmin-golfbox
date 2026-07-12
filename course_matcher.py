@@ -87,7 +87,13 @@ def match(lat, lon, name: str = "", max_meters: float = MATCH_RADIUS_M):
         if d < best_d:
             best, best_d = e, d
     if best is not None and best_d <= max_meters:
-        return {**best, "distance_m": round(best_d), "source": "learned"}
+        # Ekte lærte baner (med bane/tee) er betrodd. Men grove klubb-seed UTEN bane
+        # (katalog-koordinater synket inn i course_db) skal ha samme sikring som
+        # katalogen: ikke overstyr med feil naboklubb når navnet er ulikt + langt unna.
+        has_course = bool((best.get("course") or "").strip())
+        if has_course or best_d <= 400 or _names_related(best.get("club", ""), name):
+            return {**best, "distance_m": round(best_d), "source": "learned"}
+        # ellers: forkast grov feil-match, fall videre til katalog/navn.
 
     # 2) Geokodet katalog (klubb-nivå) – grovere posisjon, bredere radius.
     cbest, cbest_d = None, float("inf")
@@ -99,14 +105,35 @@ def match(lat, lon, name: str = "", max_meters: float = MATCH_RADIUS_M):
         if d < cbest_d:
             cbest, cbest_d = c, d
     if cbest is not None and cbest_d <= CATALOG_RADIUS_M:
-        return {
-            "club": cbest.get("club", ""),
-            "course": "",
-            "tee": "",
-            "distance_m": round(cbest_d),
-            "source": "catalog",
-        }
+        club_name = cbest.get("club", "")
+        # Sikring: en grov katalog-match (geokodet klubb-nivå) skal IKKE overstyre
+        # når den peker på en klubb med et helt ANNET navn OG er et stykke unna.
+        # Da mangler trolig den ekte klubben koordinater, og GPS «snapper» feil til
+        # naboklubben. Vi krever da enten kort avstand (<400 m) eller navne-slektskap.
+        if cbest_d <= 400 or _names_related(club_name, name):
+            return {
+                "club": club_name,
+                "course": "",
+                "tee": "",
+                "distance_m": round(cbest_d),
+                "source": "catalog",
+            }
     return None
+
+
+def _core_name(s: str) -> str:
+    s = (s or "").lower().replace("aa", "å")
+    for w in ("golfklubb", "golfpark", "golfbane", "golfclub", "golf", "klubb", "club", "gk"):
+        s = s.replace(w, " ")
+    return "".join(ch for ch in s if ch.isalnum())
+
+
+def _names_related(a: str, b: str) -> bool:
+    """True hvis to klubbnavn deler kjernenavn (f.eks. «Haga» vs «Nordhaug» = False)."""
+    ca, cb = _core_name(a), _core_name(b)
+    if not ca or not cb:
+        return False
+    return ca in cb or cb in ca
 
 
 def learn(garmin_name: str, lat, lon, sel: dict, country: str = "") -> dict | None:
