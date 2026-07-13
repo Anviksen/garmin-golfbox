@@ -623,16 +623,27 @@ def match_tee_by_rating(fr, g_rating, g_slope):
     return None, "", readings, nearest
 
 
+def _round_n_holes(rnd: dict) -> int:
+    """9 eller 18 hull – utledet fra ANTALL HULL MED SCORE (ikke max hull-nr, som
+    ville gjort en back-nine-runde til 18; ikke Garmins >=18-terskel, som gjorde en
+    18-runde med ett manglende hull til 9). ≥10 scorede hull → 18-hulls, ellers 9."""
+    holes = rnd.get("holes") or []
+    scored = sum(1 for h in holes if h.get("strokes") is not None)
+    if not scored:
+        scored = rnd.get("holesCompleted") or 0
+    return 18 if scored >= 10 else 9
+
+
 def fill_score_form(fr, rnd: dict, for_test: bool = False):
     """Fyll ut skjemaet i ramme `fr`. Returnerer (notater, status).
     status forteller hva som ble trygt matchet – brukes til å avgjøre auto-lagring.
     for_test=True hopper over score-fylling + markør (raskere; kun matching testes)."""
     notes: list[str] = []
     holes = rnd.get("holes", []) or []
-    n_holes = 18 if (rnd.get("holesCompleted") or 0) >= 18 else 9
+    n_holes = _round_n_holes(rnd)
     status = {"club": False, "course": False, "tee": False, "holes": 0,
               "n_holes": n_holes, "marker": False, "tee_uncertain": False,
-              "tee_no_source": False}
+              "tee_no_source": False, "holes_missing": []}
 
     # 1) Antall hull (bygger om score-tabellen)
     try:
@@ -735,21 +746,42 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
     if for_test:
         status["holes"] = status["n_holes"]  # antar OK i test (fylles ikke inn)
     else:
+        scored = [h for h in holes if h.get("strokes") is not None]
         filled = 0
-        for h in holes:
-            num = h.get("number")
-            strokes = h.get("strokes")
-            if not num or strokes is None:
-                continue
-            sel = f"#ScoreHole_{num - 1}"
-            try:
-                fr.fill(sel, str(strokes))
-                fr.dispatch_event(sel, "keyup")
-                filled += 1
-            except Exception:
-                pass
+        if n_holes == 9:
+            # 9-hulls: legg de spilte hullene i celle 0–8 i rekkefølge. Håndterer
+            # back-nine (hull-nr 10–18) som ellers ville truffet feil/ikke-eksisterende celler.
+            for idx, h in enumerate(scored[:9]):
+                sel = f"#ScoreHole_{idx}"
+                try:
+                    fr.fill(sel, str(h["strokes"]))
+                    fr.dispatch_event(sel, "keyup")
+                    filled += 1
+                except Exception:
+                    pass
+        else:
+            # 18-hulls: hver score i sitt eget hull (celle = nr-1). Hull uten score
+            # er et EKTE manglende hull (kan ikke auto-postes).
+            for h in holes:
+                num, strokes = h.get("number"), h.get("strokes")
+                if not num or strokes is None:
+                    continue
+                sel = f"#ScoreHole_{num - 1}"
+                try:
+                    fr.fill(sel, str(strokes))
+                    fr.dispatch_event(sel, "keyup")
+                    filled += 1
+                except Exception:
+                    pass
         status["holes"] = filled
-        notes.append(f"Hull-scorer fylt inn: {filled}/{len(holes)}")
+        notes.append(f"Hull-scorer fylt inn: {filled}/{n_holes}")
+        # Kun for 18-hulls er et hull uten score et reelt problem (for 9-hulls er de
+        # «manglende» hullene bare de ni vi ikke spilte).
+        if n_holes == 18 and filled < n_holes:
+            missing = [h.get("number") for h in holes if h.get("strokes") is None]
+            status["holes_missing"] = missing
+            notes.append(f"❗ Mangler score på hull {', '.join(map(str, missing))} "
+                         f"(Garmin registrerte dem ikke) – fyll inn selv i web-appen.")
 
     # 7) Markør (fra .env). Hoppes over i test-modus (påvirker ikke matching).
     marker_no = None if for_test else os.getenv("GOLFBOX_MARKER_MEMBERNO")
@@ -1451,7 +1483,7 @@ def _observe_and_idle(ctx, fr, rnd) -> None:
         # Lærings-sperre: lær kun hvis banen i skjemaet faktisk matcher runden.
         # Hindrer at feil/spesial-bane (f.eks. «... Damer - Tour») forurenser basen.
         cname = (last.get("course") or "").lower()
-        n_holes = 18 if (rnd.get("holesCompleted") or 0) >= 18 else 9
+        n_holes = _round_n_holes(rnd)
         gpars = garmin_par_sequence(rnd, n_holes)
         box = _read_golfbox_pars(fr, n_holes)
         par_match = sum(1 for a, b in zip(gpars, box) if a and b and a == b)

@@ -48,7 +48,9 @@ def main() -> None:
             print("❌ Kunne ikke åpne skjema (økt utløpt?)")
             b.close()
             return
-        notes, status = gp.fill_score_form(fr, rnd, for_test=True)
+        # for_test=False → fyller faktisk inn score + markør (som live), men vi
+        # LAGRER aldri (kaller ikke submit_score). Så vi ser ekte holes-tall.
+        notes, status = gp.fill_score_form(fr, rnd, for_test=False)
         cv, ct = _sel_text(fr, "fld_Course")
         tv, tt = _sel_text(fr, "fld_Tee")
         tees = [o.get("text", "").strip() for o in gp._options(fr, "fld_Tee") if o.get("value")]
