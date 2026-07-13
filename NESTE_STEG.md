@@ -51,6 +51,34 @@ og slett raden «Narvesen Tour - Damer - 39» i Supabase-tabellen `courses`.
 
 ---
 
+## 🧪 Testfase & kvalitetsverktøy (bygget 13. juli)
+
+Systematisk, selv-diagnostiserende testing – ikke tilfeldige stikkprøver:
+
+- `python3 test_rounds.py` – regresjons-harness: tørr-matching (klubb/bane/tee) over
+  alle rundene dine mot live GolfBox. Kjør etter HVER kodeendring for å fange
+  regresjoner. `--all` for alle, eller gi runde-IDer.
+- `python3 test_clubs.py` – koordinat-kvalitet: klubber uten koordinater + nære par
+  (GPS-forvekslingsrisiko).
+- `python3 audit_clubs.py` – risiko-audit av alle 176: fler-bane-klubber (watch-list)
+  + kun-tall-tee-klubber.
+- `python3 clean_catalog_coords.py` – nuller kolliderte koordinater (databug).
+- `python3 telemetry.py` – datadrevet FEILKØ fra `attempts`-tabellen i Supabase
+  (logges automatisk ved hver auto-kjøring). Slik dekkes «hele Norge» over tid.
+
+Matchings-robusthet lagt til i dag: rating-basert tee (universell), farge-sett-bane
+(fler-løkke), delvis klubbnavn-match, naboklubb-sikring, eneste-tee, best-effort tee
+med ⚠-flagg, verifisert lagring, «Innlever score»-navigasjon.
+
+Ærlig dekningsstatus: ~65 % av klubbene har én bane (trivielt). Utestede klubber kan
+ikke garanteres uten spilledata, MEN sikkerhetsnettet garanterer at intet feil postes,
+og telemetrien fanger ekte feil når de skjer. Kjente uløsbare: baner uten tee i Garmin
+(Grønmo-type), private/ikke-WHS-klubber (Oustøen), utland (Spania).
+
+Supabase-tabeller: `courses` (delt banebase) + `attempts` (telemetri).
+
+---
+
 ## 🚀 UTRULLET I SKYEN (fullt automatisk)
 
 Kjører på GitHub Actions hvert 10. min (07–23 norsk tid), uavhengig av Macen:
