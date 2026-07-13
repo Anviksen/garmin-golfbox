@@ -39,7 +39,7 @@ def is_configured() -> bool:
 def send_email(subject: str, body: str) -> bool:
     """Send en e-post via Gmail SMTP. Best effort – returnerer True ved suksess."""
     user = os.getenv("GMAIL_USER")
-    pw = os.getenv("GMAIL_APP_PASSWORD")
+    pw = (os.getenv("GMAIL_APP_PASSWORD") or "").replace(" ", "")  # app-passord uten mellomrom
     to = os.getenv("NOTIFY_EMAIL") or user
     if not (user and pw and to):
         return False
