@@ -643,7 +643,7 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
     n_holes = _round_n_holes(rnd)
     status = {"club": False, "course": False, "tee": False, "holes": 0,
               "n_holes": n_holes, "marker": False, "tee_uncertain": False,
-              "tee_no_source": False, "holes_missing": []}
+              "tee_no_source": False, "holes_missing": [], "scores_missing": False}
 
     # 1) Antall hull (bygger om score-tabellen)
     try:
@@ -775,9 +775,14 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
                     pass
         status["holes"] = filled
         notes.append(f"Hull-scorer fylt inn: {filled}/{n_holes}")
-        # Kun for 18-hulls er et hull uten score et reelt problem (for 9-hulls er de
-        # «manglende» hullene bare de ni vi ikke spilte).
-        if n_holes == 18 and filled < n_holes:
+        # Ingen score i det hele tatt = Garmin har ikke synket scorene ennå (runden er
+        # nettopp ferdig). Da VENTER vi (kode 6), akkurat som for manglende tee-data.
+        if filled == 0:
+            status["scores_missing"] = True
+            notes.append("❗ Ingen hull-score fra Garmin ennå (synkes trolig straks) – venter.")
+        # Kun for 18-hulls er et delvis manglende hull et reelt problem (for 9-hulls er
+        # de «manglende» hullene bare de ni vi ikke spilte).
+        elif n_holes == 18 and filled < n_holes:
             missing = [h.get("number") for h in holes if h.get("strokes") is None]
             status["holes_missing"] = missing
             notes.append(f"❗ Mangler score på hull {', '.join(map(str, missing))} "
@@ -1395,7 +1400,7 @@ def main() -> None:
             else:
                 if not status["club"]:
                     _code = 5
-                elif status.get("tee_no_source"):
+                elif status.get("tee_no_source") or status.get("scores_missing"):
                     _code = 6
                 else:
                     _code = 3
@@ -1413,8 +1418,8 @@ def main() -> None:
             #   kode 3 = klubb OK, men bane/tee ikke bekreftet (kan fullføres)
             if not status["club"]:
                 raise SystemExit(5)
-            if status.get("tee_no_source"):
-                raise SystemExit(6)
+            if status.get("tee_no_source") or status.get("scores_missing"):
+                raise SystemExit(6)  # Garmin-data (tee/score) ikke klar ennå – vent
             raise SystemExit(3)
 
         log("✅ Ferdig utfylt. Sjekk bane/tee/markør i Golfbox og trykk «Lagre» selv. "

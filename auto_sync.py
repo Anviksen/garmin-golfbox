@@ -178,19 +178,20 @@ def main() -> None:
             log(f"   ⏸️ Golfbox-økt utløpt. Stopper. Runde {rid} prøves igjen senere.")
             break
         elif rc == 6:
-            # Garmin har ikke tee-data ennå (fylles med forsinkelse). IKKE marker som
-            # sett – vent og prøv igjen neste kjøring, opp til et tak. Ingen mail ennå.
+            # Garmin har ikke fylt inn data ennå (tee/rating ELLER hull-score – begge
+            # kommer med forsinkelse rett etter runden). IKKE marker som sett – vent og
+            # prøv igjen neste kjøring, opp til et tak. Ingen mail ennå.
             tries = state["pending"].get(str(rid), 0) + 1
             state["pending"][str(rid)] = tries
             if tries >= MAX_TEE_WAIT:
                 state["seen"].append(rid)
                 state["needs_manual"].append(rid)
                 state["pending"].pop(str(rid), None)
-                manual_now.append((name, "Garmin fylte aldri inn tee-data"))
-                log(f"   ⧗→⚠️ Runde {rid}: tee-data kom aldri (etter {tries} forsøk). "
+                manual_now.append((name, "Garmin fylte aldri inn tee/score-data"))
+                log(f"   ⧗→⚠️ Runde {rid}: data kom aldri (etter {tries} forsøk). "
                     f"Flagger for manuell fullføring.")
             else:
-                log(f"   ⧗ Runde {rid}: venter på Garmin sin tee-data "
+                log(f"   ⧗ Runde {rid}: venter på Garmin-data (tee/score) "
                     f"(forsøk {tries}/{MAX_TEE_WAIT}). Prøver igjen neste kjøring.")
         elif rc == 5:
             # Klubben finnes ikke i GolfBox (privat/utland/ikke-WHS) – ikke leverbar.
