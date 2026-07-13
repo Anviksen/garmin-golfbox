@@ -31,6 +31,7 @@ def main() -> None:
         return
 
     # rows er nyeste først → første forekomst per bane = siste utfall.
+    # «matchet» = klubb+bane+tee resolvert (ville postet). «posted» = faktisk lagret.
     agg = {}
     for r in rows:
         key = (r.get("garmin_course") or "?").strip()
@@ -42,16 +43,16 @@ def main() -> None:
         if r.get("tee_uncertain"):
             a["uncertain"] += 1
         if a["last_ok"] is None:
-            a["last_ok"] = bool(r.get("posted"))
+            a["last_ok"] = bool(r.get("club_ok") and r.get("course_ok") and r.get("tee_ok"))
             a["last_reason"] = (r.get("reason") or "").strip()
 
     total = len(rows)
     baner = len(agg)
     ok_baner = sum(1 for a in agg.values() if a["last_ok"])
     print(f"Telemetri: {total} forsøk · {baner} distinkte baner · "
-          f"{ok_baner}/{baner} går nå gjennom\n")
+          f"{ok_baner}/{baner} matcher (klubb+bane+tee)\n")
 
-    # Feilkø: baner der siste utfall IKKE var postet – sortert etter antall forsøk.
+    # Feilkø: baner der siste utfall IKKE matchet – sortert etter antall forsøk.
     failing = [(k, a) for k, a in agg.items() if not a["last_ok"]]
     failing.sort(key=lambda x: -x[1]["n"])
     if failing:
