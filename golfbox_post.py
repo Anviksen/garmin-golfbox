@@ -351,6 +351,25 @@ def _score_course_name(text: str, n_holes: int, club_core: str, garmin_core: str
     return score
 
 
+# Farger på norsk + engelsk → normalisert norsk. For fler-løkke-baner som merkes
+# med farge-kombinasjoner (Haga «BLÅ+RØD», o.l.).
+_COLORS = {
+    "rød": "rød", "roed": "rød", "red": "rød",
+    "gul": "gul", "yellow": "gul",
+    "blå": "blå", "bla": "blå", "blue": "blå",
+    "grønn": "grønn", "gronn": "grønn", "green": "grønn",
+    "hvit": "hvit", "white": "hvit",
+    "svart": "svart", "black": "svart",
+    "oransje": "oransje", "orange": "oransje",
+}
+
+
+def _color_set(text: str) -> set:
+    """Fargene i et banenavn som et sett (språk-/rekkefølge-uavhengig)."""
+    cleaned = "".join(ch if ch.isalpha() else " " for ch in (text or "").lower())
+    return {_COLORS[tok] for tok in cleaned.split() if tok in _COLORS}
+
+
 def choose_course(fr, targets, n_holes: int, garmin_pars=None, club_core: str = "",
                   garmin_course: str = ""):
     """Velg riktig bane innen valgt klubb – UTEN forhåndsspilling.
@@ -362,6 +381,15 @@ def choose_course(fr, targets, n_holes: int, garmin_pars=None, club_core: str = 
         return None, "ingen baner"
     if len(opts) == 1:
         return opts[0]["value"], "eneste bane"
+
+    # Farge-sett-match: fler-løkke-klubber der Garmin-navnet har en farge-kombinasjon
+    # («Red/Blue») → finn GolfBox-banen med samme farge-SETT («Haga BLÅ+RØD»),
+    # uavhengig av språk og rekkefølge. Generelt for alle farge-kombo-klubber.
+    gset = _color_set(garmin_course)
+    if len(gset) >= 2:
+        exact = [o for o in opts if _color_set(o["text"]) == gset]
+        if len(exact) == 1:
+            return exact[0]["value"], "farge-sett"
 
     gcore = core(garmin_course or "")
     ranked = sorted(
