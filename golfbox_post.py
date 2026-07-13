@@ -136,6 +136,13 @@ def best_option_value(fr, select_id: str, target_text: str):
         for o in options:
             if core(o["text"]) and core(o["text"]) == tc:
                 return o["value"]
+    # 2b) delvis kjernenavn – f.eks. «Oustøen» (GolfBox) i «Oustøen Country Club»
+    #     (Garmin). Min. 4 tegn for å unngå tilfeldige småtreff.
+    if tc:
+        for o in options:
+            oc = core(o["text"])
+            if oc and len(oc) >= 4 and (oc in tc or tc in oc):
+                return o["value"]
     # 3) delvis treff (minst 3 tegn for å unngå tilfeldige småtreff)
     for o in options:
         ot = norm(o["text"])
@@ -592,7 +599,13 @@ def fill_score_form(fr, rnd: dict):
         except Exception as e:
             notes.append(f"⚠️ Klubb-valg feilet ({e})")
     else:
-        notes.append(f"❗ Fant ikke klubben «{club_guess}» – velg manuelt.")
+        key = core(club_guess)[:4]
+        cand = [o["text"] for o in _options(fr, "fld_Club")
+                if key and key in core(o.get("text", ""))] if key else []
+        notes.append(
+            f"❗ Fant ikke klubben «{club_guess}» – velg manuelt."
+            + (f" Lignende i GolfBox: [{', '.join(cand[:8])}]" if cand
+               else " (ingen lignende klubb i GolfBox)"))
 
     # Bane innen valgt klubb (mapping > delen etter « ~ » > hele navnet).
     course_part = (override.get("course") or "").strip() or (
