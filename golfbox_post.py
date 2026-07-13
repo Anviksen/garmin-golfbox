@@ -474,6 +474,61 @@ def inspect_course_form(fr, rnd: dict) -> None:
             log(f"🔎 INSPECT feilet: {e}")
 
 
+_TEE_TRANS = {
+    "red": "rød", "yellow": "gul", "white": "hvit", "blue": "blå", "green": "grønn",
+    "black": "svart", "orange": "oransje", "gold": "gull",
+    "mens": "herrer", "men": "herrer", "ladies": "damer", "women": "damer", "womens": "damer",
+}
+
+
+def _translate_tee(s: str) -> str:
+    return _TEE_TRANS.get((s or "").strip().lower(), s)
+
+
+def _read_rating_slope(fr):
+    """Les CR/slope som GolfBox viser for valgt tee (norsk desimalkomma → punktum)."""
+    def _val(sel):
+        try:
+            return (fr.eval_on_selector(sel, "el => el.value") or "").strip()
+        except Exception:
+            return ""
+    r, s = _val("#fld_CourseRating"), _val("#fld_Slope")
+    try:
+        rating = float(r.replace(",", ".")) if r else None
+    except Exception:
+        rating = None
+    try:
+        slope = int(float(s)) if s else None
+    except Exception:
+        slope = None
+    return rating, slope
+
+
+def match_tee_by_rating(fr, g_rating, g_slope):
+    """Finn riktig GolfBox-tee via RATING/slope – universelt, uavhengig av om
+    klubben merker tee-er med farge eller tall. Returnerer (value, tekst) eller (None, '')."""
+    if not g_rating:
+        return None, ""
+    best, best_diff = None, 99.0
+    for o in [o for o in _options(fr, "fld_Tee") if o.get("value")]:
+        try:
+            fr.select_option("#fld_Tee", value=o["value"], timeout=4000)
+        except Exception:
+            continue
+        time.sleep(1.3)  # la updateStats() hente CR/slope for tee-en
+        rating, slope = _read_rating_slope(fr)
+        if rating is None:
+            continue
+        diff = abs(rating - float(g_rating))
+        if g_slope and slope:
+            diff += abs(slope - int(g_slope)) * 0.02
+        if diff < best_diff:
+            best, best_diff = o, diff
+    if best is not None and best_diff <= 0.5:  # rating innen ~0,5
+        return best["value"], best.get("text", "").strip()
+    return None, ""
+
+
 def fill_score_form(fr, rnd: dict):
     """Fyll ut skjemaet i ramme `fr`. Returnerer (notater, status).
     status forteller hva som ble trygt matchet – brukes til å avgjøre auto-lagring."""
@@ -678,23 +733,40 @@ def fill_score_form(fr, rnd: dict):
 
     # 8) TEE – ALLTID fra Garmin-runden, satt HELT TIL SLUTT så GolfBox sin sene
     #    getTeeOptions-omlasting ikke overskriver den til standard-tee.
+    _wait_select_stable(fr, "fld_Tee", settle=1.5, timeout=10.0)
+    avail_tees = [o.get("text", "").strip() for o in _options(fr, "fld_Tee") if o.get("text", "").strip()]
     tee_target = str(rnd.get("teeBox") or (override.get("tee") or "").strip() or "")
-    if tee_target:
-        _wait_select_stable(fr, "fld_Tee", settle=1.5, timeout=10.0)
-        tee_val = best_option_value(fr, "fld_Tee", tee_target)
-        if tee_val:
-            tee_text = ""
-            for o in _options(fr, "fld_Tee"):
-                if o.get("value") == tee_val:
-                    tee_text = o.get("text", "").strip()
-                    break
-            if _pick_option(fr, "fld_Tee", tee_val, tee_text):
-                status["tee"] = True
-                notes.append(f"Tee: {tee_target}")
-            else:
-                notes.append(f"❗ Tee «{tee_target}» festet ikke – velg manuelt.")
+
+    # 1) RATING-basert (universelt – uavhengig av farge/tall-etikett).
+    tee_val, tee_text = match_tee_by_rating(fr, rnd.get("teeBoxRating"), rnd.get("teeBoxSlope"))
+    how_tee = "rating"
+    # 2) Etikett-match (med farge-oversettelse En↔No) som reserve.
+    if not tee_val and tee_target:
+        tv = (best_option_value(fr, "fld_Tee", tee_target)
+              or best_option_value(fr, "fld_Tee", _translate_tee(tee_target)))
+        if tv:
+            tee_val = tv
+            tee_text = next((o.get("text", "").strip() for o in _options(fr, "fld_Tee")
+                             if o.get("value") == tv), "")
+            how_tee = "etikett"
+    # 3) Lært tee (override) som siste reserve.
+    if not tee_val and (override.get("tee") or "").strip():
+        tv = best_option_value(fr, "fld_Tee", override["tee"])
+        if tv:
+            tee_val, how_tee = tv, "lært"
+            tee_text = next((o.get("text", "").strip() for o in _options(fr, "fld_Tee")
+                             if o.get("value") == tv), "")
+
+    if tee_val:
+        if _pick_option(fr, "fld_Tee", tee_val, tee_text):
+            status["tee"] = True
+            notes.append(f"Tee: «{tee_text or tee_target}» ({how_tee})")
         else:
-            notes.append(f"❗ Fant ikke tee «{tee_target}» – velg manuelt.")
+            notes.append(f"❗ Tee «{tee_text or tee_target}» festet ikke – velg manuelt.")
+    else:
+        notes.append(
+            f"❗ Fant ikke tee (Garmin teeBox='{rnd.get('teeBox')}', "
+            f"rating={rnd.get('teeBoxRating')}). Tee-er i GolfBox: [{', '.join(avail_tees)}]")
 
     return notes, status
 
