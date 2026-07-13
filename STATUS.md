@@ -27,8 +27,9 @@ klubb/bane/tee → fyll GolfBox-skjema via Playwright → lagre → varsle (mobi
 - **notify.py** — varsling: e-post (Gmail) + push (ntfy.sh).
 - **central_registry.py** — delt base i Supabase (baner + telemetri/attempts).
 - **golfbox_catalog_no.json** — 176 norske klubber m/ koordinater og baner.
-- **.github/workflows/auto-sync.yml** — cron hvert 10. min (07–23 norsk tid), lås mot
-  dobbel-posting, timeout 20 min, secrets for alt følsomt.
+- **.github/workflows/auto-sync.yml** — selve jobben. Lås mot dobbel-posting, timeout
+  20 min, secrets for alt følsomt. Trigges av cron-job.org (se under), ikke GitHubs
+  egen schedule (som er hardt strupt til hver 2.–3. time og bare er en treg reserve).
 
 ## Exit-koder (golfbox_post --auto → auto_sync)
 
@@ -69,6 +70,10 @@ Nittedal) håndteres ærlig som «kan ikke leveres», og Garmin-datahull fanges 
 - **Fullføring krever i dag det lokale dashbordet** (Mac). For fremtidige sky-brukere
   uten Mac finnes ingen hostet fullførings-flyt ennå — større fremtidig bygg.
 - Runder der Garmin ALDRI fyller tee-data (`teeBox=None`) går til «fullfør selv».
+- 18-hullsrunder der Garmin mangler score på ett+ hull (du glemte å registrere et hull
+  på klokka) kan ikke auto-postes – flagges «fullfør selv» med hvilke hull som mangler.
+  Legg inn hullet i Garmin og re-sync, eller fyll det i dashbordet. `n_holes` utledes
+  nå fra antall scorede hull (ikke `holesCompleted`), så klassifiseringen 9/18 er robust.
 - `seen`/`pending`-listene i posted.json vokser sakte (kosmetisk).
 - En runde som venter på tee-data OG faller ut av Garmins siste-50-vindu løses ikke
   (svært sjeldent for én bruker).
@@ -93,6 +98,24 @@ Kjør alltid med `GOLFBOX_HEADLESS=1` og aktivert `.venv` på Mac-en.
 - Alt følsomt i skyen via `${{ secrets }}` (inkl. base64 Garmin-token + GolfBox-økt).
 - Supabase anon-nøkkel er den offentlige RLS-nøkkelen.
 - Markør må være medspiller (14-24068), ikke deg selv (14-25124).
+
+## Trigger (hvordan jobben faktisk startes)
+
+GitHubs innebygde `schedule`-cron er hardt strupt på gratis-nivå (fyrer bare hver
+2.–3. time), så den alene er ikke nok. Den PÅLITELIGE triggeren er **cron-job.org**:
+
+- En gratis cron-job.org-konto pinger GitHub sitt dispatch-endepunkt hvert **5. min**:
+  `POST https://api.github.com/repos/Anviksen/garmin-golfbox/actions/workflows/auto-sync.yml/dispatches`
+  med header `Authorization: Bearer <PAT>`, `Accept: application/vnd.github+json`,
+  `Content-Type: application/json`, body `{"ref":"main"}`. Suksess = HTTP 204.
+- **PAT:** fine-grained GitHub-token med KUN «Actions: Read and write» på denne ene
+  repoen (minste privilegium). Har en utløpsdato — **fornyes før den går ut**, ellers
+  slutter triggeren å fyre. Sett ny PAT i cron-job.org sin Authorization-header.
+- **Feilvarsling er på** i cron-job.org (e-post hvis pingen feiler), så triggeren
+  aldri dør stille. Får du slik e-post: sjekk om PAT-en er utløpt.
+- Verifisert 13.07.2026: dispatch-kjøringer hvert ~5. min, latens ~5–10 min.
+- Ingen runde går tapt selv om triggeren stopper en stund: neste kjøring tar ALLE
+  nye runder siden sist. Trigger-svikt = forsinkelse, ikke tap.
 
 ## Drift / vedlikehold
 
