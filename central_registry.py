@@ -86,6 +86,47 @@ def contribute(entry: dict) -> bool:
         return False
 
 
+_ATTEMPT_FIELDS = (
+    "round_id", "garmin_course", "club", "club_ok", "course", "course_ok",
+    "tee", "tee_ok", "tee_uncertain", "posted", "reason", "country",
+)
+
+
+def fetch_attempts(limit: int = 2000) -> list:
+    """Hent telemetri-loggen (attempts) – nyeste først."""
+    if not is_configured():
+        return []
+    url = (f"{SUPABASE_URL}/rest/v1/attempts?select=*"
+           f"&order=created_at.desc&limit={limit}")
+    try:
+        req = urllib.request.Request(url, headers=_headers())
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        print(f"(telemetri: kunne ikke lese – {e})")
+        return []
+
+
+def log_attempt(data: dict) -> bool:
+    """Telemetri: logg utfallet av ett poste-forsøk til `attempts`-tabellen.
+    Datadrevet feilkø – best effort, feiler stille hvis ikke konfigurert."""
+    if not is_configured():
+        return False
+    row = {k: data.get(k) for k in _ATTEMPT_FIELDS}
+    row["country"] = row.get("country") or "no"
+    try:
+        req = urllib.request.Request(
+            f"{SUPABASE_URL}/rest/v1/attempts",
+            data=json.dumps(row).encode("utf-8"),
+            headers=_headers({"Prefer": "return=minimal"}),
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=15):
+            return True
+    except Exception:
+        return False
+
+
 if __name__ == "__main__":
     if not is_configured():
         print("Sentralbasen er IKKE konfigurert. Sett SUPABASE_URL og SUPABASE_ANON_KEY i .env.")

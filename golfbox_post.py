@@ -1070,6 +1070,26 @@ def reopen_score_form(ctx, timeout: float = 40):
     return None
 
 
+def _log_attempt(rnd, sel, status, notes, posted) -> None:
+    """Telemetri: send utfallet av forsøket til sentralbasen (best effort)."""
+    try:
+        import central_registry
+        reason = next((n.strip() for n in reversed(notes)
+                       if ("❗" in n or "⚠️" in n or "DOBBELTSJEKK" in n)), "")
+        central_registry.log_attempt({
+            "round_id": rnd.get("id"),
+            "garmin_course": rnd.get("course", ""),
+            "club": (sel or {}).get("club", ""), "club_ok": status.get("club", False),
+            "course": (sel or {}).get("course", ""), "course_ok": status.get("course", False),
+            "tee": (sel or {}).get("tee", ""), "tee_ok": status.get("tee", False),
+            "tee_uncertain": status.get("tee_uncertain", False),
+            "posted": posted,
+            "reason": reason,
+        })
+    except Exception:
+        pass
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         print("Bruk: python3 golfbox_post.py <round_id>")
@@ -1247,20 +1267,22 @@ def main() -> None:
         )
 
         if auto:
+            posted = False
             if auto_submit and safe:
-                if submit_score(target):
+                posted = submit_score(target)
+                if posted:
                     extra = " ⚠️ (tee valgt på skjønn – dobbeltsjekk før godkjenning!)" \
                         if status.get("tee_uncertain") else ""
                     log(f"✅ LAGRET i Golfbox – runden ligger nå til godkjennelse.{extra}")
-                    raise SystemExit(0)
-                log("⚠️ AUTO: lagringen ble ikke bekreftet. Flagges for manuell sjekk "
-                    "(kode 3).")
-                raise SystemExit(3)
-            reason = "auto-lagring av" if not auto_submit else "usikker match –"
-            log(f"ℹ️ AUTO: {reason} ikke lagret. Runden er fylt ut, men trenger manuell "
-                f"sjekk (klubb={status['club']}, bane={status['course']}, tee={status['tee']}, "
-                f"markør={status['marker']}). Avslutter med kode 3.")
-            raise SystemExit(3)
+                else:
+                    log("⚠️ AUTO: lagringen ble ikke bekreftet. Flagges for manuell sjekk.")
+            else:
+                reason = "auto-lagring av" if not auto_submit else "usikker match –"
+                log(f"ℹ️ AUTO: {reason} ikke lagret. Runden er fylt ut, men trenger manuell "
+                    f"sjekk (klubb={status['club']}, bane={status['course']}, "
+                    f"tee={status['tee']}, markør={status['marker']}). Avslutter med kode 3.")
+            _log_attempt(rnd, _read_selection(target), status, notes, posted)
+            raise SystemExit(0 if posted else 3)
 
         log("✅ Ferdig utfylt. Sjekk bane/tee/markør i Golfbox og trykk «Lagre» selv. "
             "(Ingenting er sendt inn.)")
