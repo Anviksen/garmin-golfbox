@@ -541,9 +541,11 @@ def _read_rating_slope(fr):
 
 def match_tee_by_rating(fr, g_rating, g_slope):
     """Finn riktig GolfBox-tee via RATING/slope – universelt, uavhengig av om
-    klubben merker tee-er med farge eller tall. Returnerer (value, tekst) eller (None, '')."""
+    klubben merker tee-er med farge eller tall.
+    Returnerer (value, tekst, readings) der readings=[(tekst, CR, slope), ...]."""
+    readings = []
     if not g_rating:
-        return None, ""
+        return None, "", readings
     best, best_diff = None, 99.0
     for o in [o for o in _options(fr, "fld_Tee") if o.get("value")]:
         try:
@@ -552,6 +554,7 @@ def match_tee_by_rating(fr, g_rating, g_slope):
             continue
         time.sleep(1.3)  # la updateStats() hente CR/slope for tee-en
         rating, slope = _read_rating_slope(fr)
+        readings.append((o.get("text", "").strip(), rating, slope))
         if rating is None:
             continue
         diff = abs(rating - float(g_rating))
@@ -560,13 +563,14 @@ def match_tee_by_rating(fr, g_rating, g_slope):
         if diff < best_diff:
             best, best_diff = o, diff
     if best is not None and best_diff <= 0.5:  # rating innen ~0,5
-        return best["value"], best.get("text", "").strip()
-    return None, ""
+        return best["value"], best.get("text", "").strip(), readings
+    return None, "", readings
 
 
-def fill_score_form(fr, rnd: dict):
+def fill_score_form(fr, rnd: dict, for_test: bool = False):
     """Fyll ut skjemaet i ramme `fr`. Returnerer (notater, status).
-    status forteller hva som ble trygt matchet – brukes til å avgjøre auto-lagring."""
+    status forteller hva som ble trygt matchet – brukes til å avgjøre auto-lagring.
+    for_test=True hopper over score-fylling + markør (raskere; kun matching testes)."""
     notes: list[str] = []
     holes = rnd.get("holes", []) or []
     n_holes = 18 if (rnd.get("holesCompleted") or 0) >= 18 else 9
@@ -671,26 +675,28 @@ def fill_score_form(fr, rnd: dict):
         fr.wait_for_selector("#ScoreHole_0", timeout=8000)
     except Exception:
         pass
-    filled = 0
-    for h in holes:
-        num = h.get("number")
-        strokes = h.get("strokes")
-        if not num or strokes is None:
-            continue
-        sel = f"#ScoreHole_{num - 1}"
-        try:
-            fr.fill(sel, str(strokes))
-            fr.dispatch_event(sel, "keyup")
-            filled += 1
-        except Exception:
-            pass
-    status["holes"] = filled
-    notes.append(f"Hull-scorer fylt inn: {filled}/{len(holes)}")
+    if for_test:
+        status["holes"] = status["n_holes"]  # antar OK i test (fylles ikke inn)
+    else:
+        filled = 0
+        for h in holes:
+            num = h.get("number")
+            strokes = h.get("strokes")
+            if not num or strokes is None:
+                continue
+            sel = f"#ScoreHole_{num - 1}"
+            try:
+                fr.fill(sel, str(strokes))
+                fr.dispatch_event(sel, "keyup")
+                filled += 1
+            except Exception:
+                pass
+        status["holes"] = filled
+        notes.append(f"Hull-scorer fylt inn: {filled}/{len(holes)}")
 
-    # 7) Markør (fra .env). Settes via JavaScript så vi slipper synlighetskrav,
-    #    så trykker vi «Søk» og venter på at markøren bekreftes (skjult GUID-felt).
-    marker_no = os.getenv("GOLFBOX_MARKER_MEMBERNO")
-    marker_name = os.getenv("GOLFBOX_MARKER_NAME")
+    # 7) Markør (fra .env). Hoppes over i test-modus (påvirker ikke matching).
+    marker_no = None if for_test else os.getenv("GOLFBOX_MARKER_MEMBERNO")
+    marker_name = None if for_test else os.getenv("GOLFBOX_MARKER_NAME")
     if marker_no:
         def _cur_guid() -> str:
             try:
@@ -779,7 +785,8 @@ def fill_score_form(fr, rnd: dict):
     tee_target = str(rnd.get("teeBox") or (override.get("tee") or "").strip() or "")
 
     # 1) RATING-basert (universelt – uavhengig av farge/tall-etikett).
-    tee_val, tee_text = match_tee_by_rating(fr, rnd.get("teeBoxRating"), rnd.get("teeBoxSlope"))
+    tee_val, tee_text, tee_readings = match_tee_by_rating(
+        fr, rnd.get("teeBoxRating"), rnd.get("teeBoxSlope"))
     how_tee = "rating"
     # 2) Etikett-match (med farge-oversettelse En↔No) som reserve.
     if not tee_val and tee_target:
@@ -790,13 +797,19 @@ def fill_score_form(fr, rnd: dict):
             tee_text = next((o.get("text", "").strip() for o in _options(fr, "fld_Tee")
                              if o.get("value") == tv), "")
             how_tee = "etikett"
-    # 3) Lært tee (override) som siste reserve.
+    # 3) Lært tee (override) som reserve.
     if not tee_val and (override.get("tee") or "").strip():
         tv = best_option_value(fr, "fld_Tee", override["tee"])
         if tv:
             tee_val, how_tee = tv, "lært"
             tee_text = next((o.get("text", "").strip() for o in _options(fr, "fld_Tee")
                              if o.get("value") == tv), "")
+    # 4) Bare én reell tee? Da er den utvetydig – velg den.
+    if not tee_val:
+        real_tees = [o for o in _options(fr, "fld_Tee") if o.get("value")]
+        if len(real_tees) == 1:
+            tee_val, how_tee = real_tees[0]["value"], "eneste tee"
+            tee_text = real_tees[0].get("text", "").strip()
 
     if tee_val:
         if _pick_option(fr, "fld_Tee", tee_val, tee_text):
@@ -805,9 +818,10 @@ def fill_score_form(fr, rnd: dict):
         else:
             notes.append(f"❗ Tee «{tee_text or tee_target}» festet ikke – velg manuelt.")
     else:
+        crs = ", ".join(f"{t}=CR{cr}" for t, cr, _s in tee_readings) if tee_readings else ""
         notes.append(
             f"❗ Fant ikke tee (Garmin teeBox='{rnd.get('teeBox')}', "
-            f"rating={rnd.get('teeBoxRating')}). Tee-er i GolfBox: [{', '.join(avail_tees)}]")
+            f"rating={rnd.get('teeBoxRating')}). GolfBox: [{crs or ', '.join(avail_tees)}]")
 
     return notes, status
 
@@ -963,6 +977,86 @@ def dump_debug(page, label: str) -> None:
             )
         except Exception:
             pass
+
+
+def _find_score_frame(ctx):
+    for pg in list(ctx.pages):
+        try:
+            for fr in pg.frames:
+                try:
+                    if fr.query_selector("#fld_ScoreDate"):
+                        return fr
+                except Exception:
+                    continue
+        except Exception:
+            continue
+    return None
+
+
+def open_score_form(ctx, gb_user=None, gb_pass=None, timeout: float = 150):
+    """Logg inn (auto) om nødvendig og åpne WHS-score-skjemaet. Returner rammen
+    eller None. Gjenbrukbar for test-harness (én innlogging, mange runder)."""
+    page = ctx.pages[0] if ctx.pages else ctx.new_page()
+    try:
+        page.goto(SCORE_URL, wait_until="domcontentloaded", timeout=20000)
+    except Exception:
+        pass
+
+    def _gb_pages():
+        return [pg for pg in list(ctx.pages) if "golfbox" in (pg.url or "").lower()]
+
+    deadline = time.time() + timeout
+    last_nav, last_login, login_tries = time.time(), 0.0, 0
+    while time.time() < deadline:
+        fr = _find_score_frame(ctx)
+        if fr:
+            return fr
+        if not _gb_pages() and gb_user and gb_pass and login_tries < 6 \
+                and time.time() - last_login > 8:
+            for pg in list(ctx.pages):
+                if try_auto_login(pg, gb_user, gb_pass):
+                    login_tries += 1
+                    time.sleep(3)
+                    try:
+                        pg.goto(SCORE_URL, wait_until="domcontentloaded", timeout=15000)
+                    except Exception:
+                        pass
+                    break
+            last_login = time.time()
+        gbp = _gb_pages()
+        if gbp and time.time() - last_nav > 8:
+            gb = gbp[-1]
+            try:
+                gb.bring_to_front()
+            except Exception:
+                pass
+            if not try_navigate_to_score(gb):
+                try:
+                    gb.goto(SCORE_URL, wait_until="domcontentloaded", timeout=15000)
+                except Exception:
+                    pass
+            last_nav = time.time()
+        time.sleep(2)
+    return None
+
+
+def reopen_score_form(ctx, timeout: float = 40):
+    """Last score-skjemaet på nytt (frisk, tom form) og returner rammen."""
+    for pg in list(ctx.pages):
+        if "golfbox" in (pg.url or "").lower():
+            try:
+                pg.goto(SCORE_URL, wait_until="domcontentloaded", timeout=15000)
+            except Exception:
+                pass
+            break
+    end = time.time() + timeout
+    while time.time() < end:
+        fr = _find_score_frame(ctx)
+        if fr:
+            time.sleep(1.0)
+            return fr
+        time.sleep(1)
+    return None
 
 
 def main() -> None:
