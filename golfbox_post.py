@@ -1282,7 +1282,10 @@ def main() -> None:
                     f"sjekk (klubb={status['club']}, bane={status['course']}, "
                     f"tee={status['tee']}, markør={status['marker']}). Avslutter med kode 3.")
             _log_attempt(rnd, _read_selection(target), status, notes, posted)
-            raise SystemExit(0 if posted else 3)
+            if posted:
+                # kode 4 = lagret, men tee valgt på skjønn (bør dobbeltsjekkes)
+                raise SystemExit(4 if status.get("tee_uncertain") else 0)
+            raise SystemExit(3)
 
         log("✅ Ferdig utfylt. Sjekk bane/tee/markør i Golfbox og trykk «Lagre» selv. "
             "(Ingenting er sendt inn.)")

@@ -100,6 +100,19 @@ def run(cmd: list[str], extra_env: dict | None = None) -> int:
     return subprocess.run(cmd, cwd=str(PROJECT_DIR), env=env).returncode
 
 
+def round_name(rid: int) -> str:
+    """Slå opp banenavn for en runde-ID fra lokal data (for varsler)."""
+    try:
+        raw = json.loads((PROJECT_DIR / "data" / "all_rounds.json").read_text(encoding="utf-8"))
+        for r in raw.get("runder", []):
+            s = r.get("summary", {})
+            if s.get("id") == rid:
+                return s.get("courseName") or str(rid)
+    except Exception:
+        pass
+    return str(rid)
+
+
 def main() -> None:
     load_dotenv(PROJECT_DIR / ".env")
     log("=== auto_sync start ===")
@@ -136,29 +149,47 @@ def main() -> None:
         log("⚠️ fetch_garmin feilet – prøver likevel å poste med eksisterende data.")
 
     # Post hver nye runde til Golfbox i auto-modus.
+    posted_now, review_now, manual_now = [], [], []
     for rid in new_ids:
-        log(f"→ Sender runde {rid} til Golfbox ...")
+        name = round_name(rid)
+        log(f"→ Sender runde {rid} ({name}) til Golfbox ...")
         rc = run([sys.executable, str(POST_SCRIPT), str(rid), "--auto"],
                  extra_env={"GOLFBOX_AUTO": "1"})
-        if rc == 0:
+        if rc in (0, 4):
             state["seen"].append(rid)
             state["posted"].append(rid)
-            log(f"   ✅ Runde {rid} lagret i Golfbox (til godkjennelse).")
+            if rc == 4:
+                review_now.append((name, "tee valgt på skjønn"))
+                log(f"   ✅ Runde {rid} lagret – men tee usikker, flagget for dobbeltsjekk.")
+            else:
+                posted_now.append((name, ""))
+                log(f"   ✅ Runde {rid} lagret i Golfbox (til godkjennelse).")
         elif rc == 2:
             # Golfbox-økt utløpt – ingen vits å prøve flere nå. IKKE marker som sett,
             # så den prøves igjen ved neste kjøring etter at du har fornyet økten.
-            log(f"   ⏸️ Golfbox-økt utløpt. Stopper. Runde {rid} prøves igjen senere. "
-                f"Forny Golfbox-innloggingen (se guide).")
+            log(f"   ⏸️ Golfbox-økt utløpt. Stopper. Runde {rid} prøves igjen senere.")
             break
         else:
             # rc == 3 (fylt, men ikke trygt å lagre) eller annen feil: marker som sett
             # så vi ikke maser, men flagg for manuell håndtering.
             state["seen"].append(rid)
             state["needs_manual"].append(rid)
+            manual_now.append((name, "kunne ikke matches automatisk"))
             log(f"   ⚠️ Runde {rid} kunne ikke lagres automatisk (kode {rc}). "
                 f"Flagget for manuell sjekk.")
 
     save_state(state)
+
+    # Varsle brukeren hvis noe krever et blikk (fullfør / dobbeltsjekk).
+    if manual_now or review_now:
+        try:
+            import notify
+            if notify.is_configured() and notify.notify_rounds(manual_now, review_now, posted_now):
+                log(f"📧 Varsel sendt ({len(manual_now)} å fullføre, "
+                    f"{len(review_now)} å dobbeltsjekke).")
+        except Exception as e:
+            log(f"(varsling hoppet over: {e})")
+
     log("=== auto_sync ferdig ===")
 
 
