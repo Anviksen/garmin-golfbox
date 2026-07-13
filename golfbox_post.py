@@ -235,6 +235,41 @@ def _wait_select_stable(fr, sel_id: str, settle: float = 2.0, timeout: float = 1
         time.sleep(0.4)
 
 
+def _wait_options_nonempty(fr, sel_id: str, timeout: float = 8.0) -> int:
+    """Vent til <select> har minst én reell option (value != ''). GolfBox laster
+    tees via async getTeeOptions() – lista er tom et øyeblikk etter banevalg.
+    Returnerer antall reelle opsjoner (0 hvis den forblir tom = banen har ingen tees)."""
+    end = time.time() + timeout
+    n = 0
+    while time.time() < end:
+        n = len([o for o in _options(fr, sel_id) if o.get("value")])
+        if n > 0:
+            time.sleep(0.4)  # la den evt. laste ferdig flere
+            n2 = len([o for o in _options(fr, sel_id) if o.get("value")])
+            if n2 == n:
+                return n
+            n = n2
+        else:
+            time.sleep(0.4)
+    return n
+
+
+def _ensure_tees_loaded(fr, timeout: float = 8.0) -> int:
+    """Sørg for at tee-lista er fylt. Hvis tom: re-trigg changeCourse() (dispatch
+    'change' på fld_Course) for å tvinge en ny getTeeOptions(), og vent igjen.
+    Generelt mot GolfBox' async-race der tees noen ganger ikke lastes."""
+    n = _wait_options_nonempty(fr, "fld_Tee", timeout=timeout)
+    if n > 0:
+        return n
+    try:  # dytt et nytt change-event på banevalget → GolfBox laster tees på nytt
+        fr.eval_on_selector(
+            "#fld_Course",
+            "el => el.dispatchEvent(new Event('change', {bubbles: true}))")
+    except Exception:
+        pass
+    return _wait_options_nonempty(fr, "fld_Tee", timeout=timeout)
+
+
 def _pick_course(fr, value: str, text: str, timeout: float = 20.0) -> bool:
     """Velg bane robust: vent til klubbens AJAX er ferdig, velg, og re-assert til
     valget er stabilt (GolfBox nullstiller ellers til standardbanen)."""
@@ -425,14 +460,15 @@ def choose_course(fr, targets, n_holes: int, garmin_pars=None, club_core: str = 
                 fr.select_option("#fld_Course", value=o["value"], timeout=4000)
             except Exception:
                 continue
-            time.sleep(1.2)
+            _wait_options_nonempty(fr, "fld_Tee", timeout=6.0)
             tees = [t for t in _options(fr, "fld_Tee") if t.get("value")]
-            if tees:
-                try:
-                    fr.select_option("#fld_Tee", value=tees[0]["value"], timeout=4000)
-                except Exception:
-                    pass
-                time.sleep(0.5)
+            if not tees:
+                continue  # bane uten tees er ubrukelig (f.eks. «Narvesen»-placeholder) → hopp
+            try:
+                fr.select_option("#fld_Tee", value=tees[0]["value"], timeout=4000)
+            except Exception:
+                pass
+            time.sleep(0.5)
             box = _read_golfbox_pars(fr, n_holes)
             if sum(1 for p in box if p) < n_holes:
                 continue
@@ -446,6 +482,14 @@ def choose_course(fr, targets, n_holes: int, garmin_pars=None, club_core: str = 
     # Fortsatt tvil, men klar navne-leder → bruk den.
     if top_score > 0 and (top_score - second) >= 20:
         return top_o["value"], "navn/hull"
+
+    # Siste utvei: er det nøyaktig ÉN «ordentlig» bane (ikke kort/dame/tour/placeholder)?
+    # Da er den hovedbanen – f.eks. «Østmarka 18-hull» når man har spilt 9 hull der.
+    # Trygt fordi vi bare gjør dette når det ikke finnes flere reelle alternativer.
+    real = [o for _sc, o in ranked
+            if not any(w in o["text"].lower() for w in _SHORT + _SPECIAL)]
+    if len(real) == 1:
+        return real[0]["value"], "hovedbane"
     return None, "flertydig"
 
 
@@ -792,14 +836,40 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
 
     # 8) TEE – ALLTID fra Garmin-runden, satt HELT TIL SLUTT så GolfBox sin sene
     #    getTeeOptions-omlasting ikke overskriver den til standard-tee.
+    # Forsvar banevalget: GolfBox kan ha revertert til standardbanen (f.eks.
+    # «Narvesen Tour», som ikke har tees) under score-/markør-stegene. Re-asserter
+    # valgt bane før vi leser tees – ellers leser vi feil banes (tomme) tee-liste.
+    if course_val:
+        try:
+            cur_course = fr.eval_on_selector("#fld_Course", "el => el.value") or ""
+        except Exception:
+            cur_course = ""
+        if cur_course != course_val:
+            notes.append(f"↻ Bane hadde revertert – gjenvelger «{course_text}».")
+            _pick_course(fr, course_val, course_text)
     _wait_select_stable(fr, "fld_Tee", settle=1.5, timeout=10.0)
+    _ensure_tees_loaded(fr, timeout=8.0)  # tee-lista kan være tom pga async-race
     avail_tees = [o.get("text", "").strip() for o in _options(fr, "fld_Tee") if o.get("text", "").strip()]
     tee_target = str(rnd.get("teeBox") or (override.get("tee") or "").strip() or "")
 
-    # 1) RATING-basert (universelt – uavhengig av farge/tall-etikett).
-    tee_val, tee_text, tee_readings, tee_nearest = match_tee_by_rating(
+    tee_val, tee_text, how_tee = None, "", ""
+    # Kjør alltid rating-matchen for å ha readings/nearest til best-effort senere.
+    r_val, r_text, tee_readings, tee_nearest = match_tee_by_rating(
         fr, rnd.get("teeBoxRating"), rnd.get("teeBoxSlope"))
-    how_tee = "rating"
+
+    # 0) EKSAKT etikett-treff (Garmin «56» == GolfBox «56»). Norske baner bruker
+    #    meter-merker som tee-navn; en eksakt etikett er mer pålitelig enn Garmins
+    #    utdaterte (2019) rating – så dette går FØR rating-match.
+    if tee_target:
+        _tl = tee_target.strip().lower()
+        for o in _options(fr, "fld_Tee"):
+            if o.get("value") and o.get("text", "").strip().lower() == _tl:
+                tee_val, tee_text, how_tee = o["value"], o.get("text", "").strip(), "etikett-eksakt"
+                break
+
+    # 1) RATING-basert (universelt) som reserve.
+    if not tee_val and r_val:
+        tee_val, tee_text, how_tee = r_val, r_text, "rating"
     # 2) Etikett-match (med farge-oversettelse En↔No) som reserve.
     if not tee_val and tee_target:
         tv = (best_option_value(fr, "fld_Tee", tee_target)
