@@ -46,6 +46,9 @@ LOG_FILE = PROJECT_DIR / "data" / "auto_sync.log"
 FETCH_SCRIPT = PROJECT_DIR / "fetch_garmin.py"
 POST_SCRIPT = PROJECT_DIR / "golfbox_post.py"
 TOKENSTORE = os.getenv("GARMINTOKENS", "~/.garminconnect")
+# Hvor mange kjøringer vi venter på at Garmin fyller inn tee-data før vi gir opp
+# og ber brukeren fullføre selv. 4 × 10 min ≈ 40 min maks. Justerbart via env.
+MAX_TEE_WAIT = int(os.getenv("GOLFBOX_TEE_WAIT_TRIES", "4"))
 
 
 def log(msg: str) -> None:
@@ -66,10 +69,12 @@ def load_state() -> dict:
             data.setdefault("seen", [])
             data.setdefault("posted", [])
             data.setdefault("needs_manual", [])
+            data.setdefault("pending", {})  # {rid: antall vente-forsøk} for tee-data
             return data
         except Exception:
             pass
-    return {"seen": [], "posted": [], "needs_manual": [], "_initialized": False}
+    return {"seen": [], "posted": [], "needs_manual": [], "pending": {},
+            "_initialized": False}
 
 
 def save_state(state: dict) -> None:
@@ -158,6 +163,7 @@ def main() -> None:
         if rc in (0, 4):
             state["seen"].append(rid)
             state["posted"].append(rid)
+            state["pending"].pop(str(rid), None)
             if rc == 4:
                 review_now.append((name, "tee valgt på skjønn"))
                 log(f"   ✅ Runde {rid} lagret – men tee usikker, flagget for dobbeltsjekk.")
@@ -169,16 +175,33 @@ def main() -> None:
             # så den prøves igjen ved neste kjøring etter at du har fornyet økten.
             log(f"   ⏸️ Golfbox-økt utløpt. Stopper. Runde {rid} prøves igjen senere.")
             break
+        elif rc == 6:
+            # Garmin har ikke tee-data ennå (fylles med forsinkelse). IKKE marker som
+            # sett – vent og prøv igjen neste kjøring, opp til et tak. Ingen mail ennå.
+            tries = state["pending"].get(str(rid), 0) + 1
+            state["pending"][str(rid)] = tries
+            if tries >= MAX_TEE_WAIT:
+                state["seen"].append(rid)
+                state["needs_manual"].append(rid)
+                state["pending"].pop(str(rid), None)
+                manual_now.append((name, "Garmin fylte aldri inn tee-data"))
+                log(f"   ⧗→⚠️ Runde {rid}: tee-data kom aldri (etter {tries} forsøk). "
+                    f"Flagger for manuell fullføring.")
+            else:
+                log(f"   ⧗ Runde {rid}: venter på Garmin sin tee-data "
+                    f"(forsøk {tries}/{MAX_TEE_WAIT}). Prøver igjen neste kjøring.")
         elif rc == 5:
             # Klubben finnes ikke i GolfBox (privat/utland/ikke-WHS) – ikke leverbar.
             state["seen"].append(rid)
             state["needs_manual"].append(rid)
+            state["pending"].pop(str(rid), None)
             notpostable_now.append((name, "klubben finnes ikke i GolfBox"))
             log(f"   ⛔ Runde {rid} – klubben finnes ikke i GolfBox. Kan ikke leveres.")
         else:
             # rc == 3: klubb OK, men bane/tee ikke bekreftet – KAN fullføres i web-appen.
             state["seen"].append(rid)
             state["needs_manual"].append(rid)
+            state["pending"].pop(str(rid), None)
             manual_now.append((name, "bane/tee ikke bekreftet"))
             log(f"   ⚠️ Runde {rid} matchet ikke helt (kode {rc}). Kan fullføres i web-appen.")
 

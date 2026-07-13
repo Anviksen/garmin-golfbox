@@ -631,7 +631,8 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
     holes = rnd.get("holes", []) or []
     n_holes = 18 if (rnd.get("holesCompleted") or 0) >= 18 else 9
     status = {"club": False, "course": False, "tee": False, "holes": 0,
-              "n_holes": n_holes, "marker": False, "tee_uncertain": False}
+              "n_holes": n_holes, "marker": False, "tee_uncertain": False,
+              "tee_no_source": False}
 
     # 1) Antall hull (bygger om score-tabellen)
     try:
@@ -851,6 +852,9 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
     _ensure_tees_loaded(fr, timeout=8.0)  # tee-lista kan være tom pga async-race
     avail_tees = [o.get("text", "").strip() for o in _options(fr, "fld_Tee") if o.get("text", "").strip()]
     tee_target = str(rnd.get("teeBox") or (override.get("tee") or "").strip() or "")
+    # Ga Garmin i det hele tatt et tee-signal? (Ofte None rett etter runden – Garmin
+    # fyller tee/rating med forsinkelse.) Da er dette en VENT-sak, ikke en match-feil.
+    status["tee_no_source"] = (not tee_target) and (rnd.get("teeBoxRating") is None)
 
     tee_val, tee_text, how_tee = None, "", ""
     # Kjør alltid rating-matchen for å ha readings/nearest til best-effort senere.
@@ -1357,14 +1361,28 @@ def main() -> None:
                 else:
                     log("⚠️ AUTO: lagringen ble ikke bekreftet. Flagges for manuell sjekk.")
             else:
+                if not status["club"]:
+                    _code = 5
+                elif status.get("tee_no_source"):
+                    _code = 6
+                else:
+                    _code = 3
                 reason = "auto-lagring av" if not auto_submit else "usikker match –"
                 log(f"ℹ️ AUTO: {reason} ikke lagret. Runden er fylt ut, men trenger manuell "
                     f"sjekk (klubb={status['club']}, bane={status['course']}, "
-                    f"tee={status['tee']}, markør={status['marker']}). Avslutter med kode 3.")
+                    f"tee={status['tee']}, markør={status['marker']}). Avslutter med kode {_code}.")
             _log_attempt(rnd, _read_selection(target), status, notes, posted)
             if posted:
                 # kode 4 = lagret, men tee valgt på skjønn (bør dobbeltsjekkes)
                 raise SystemExit(4 if status.get("tee_uncertain") else 0)
+            # Ikke postet – skill kategoriene:
+            #   kode 5 = klubben finnes ikke i GolfBox (ikke leverbar)
+            #   kode 6 = Garmin har ikke tee-data ennå (VENT – prøv igjen senere)
+            #   kode 3 = klubb OK, men bane/tee ikke bekreftet (kan fullføres)
+            if not status["club"]:
+                raise SystemExit(5)
+            if status.get("tee_no_source"):
+                raise SystemExit(6)
             raise SystemExit(3)
 
         log("✅ Ferdig utfylt. Sjekk bane/tee/markør i Golfbox og trykk «Lagre» selv. "
