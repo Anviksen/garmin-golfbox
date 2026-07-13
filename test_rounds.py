@@ -92,17 +92,23 @@ def main() -> None:
                 continue
             c = "✓" if status["club"] else "✗"
             b = "✓" if status["course"] else "✗"
-            t = "✓" if status["tee"] else "✗"
-            reason = "" if (status["club"] and status["course"] and status["tee"]) else \
+            t = ("⚠" if status.get("tee_uncertain") else "✓") if status["tee"] else "✗"
+            posts = status["club"] and status["course"] and status["tee"]
+            reason = "" if posts else \
                 next((n.strip() for n in reversed(notes) if "❗" in n or "⚠️" in n), "")
+            if posts and status.get("tee_uncertain"):
+                reason = next((n.strip() for n in reversed(notes) if "DOBBELTSJEKK" in n), "")
             rows.append([rnd.get("id"), name, c, b, t, reason])
             print(f"[{i}/{len(rounds)}] {name[:36]:36}  klubb {c}  bane {b}  tee {t}"
                   + (f"   → {reason[:90]}" if reason else ""))
         browser.close()
 
-    full = sum(1 for r in rows if r[2] == r[3] == r[4] == "✓")
-    print(f"\n===== {full}/{len(rows)} matcher klubb + bane + tee =====")
-    stuck = [r for r in rows if not (r[2] == r[3] == r[4] == "✓")]
+    posts = sum(1 for r in rows if r[2] == "✓" and r[3] == "✓" and r[4] in ("✓", "⚠"))
+    solid = sum(1 for r in rows if r[2] == r[3] == r[4] == "✓")
+    besteffort = sum(1 for r in rows if r[4] == "⚠")
+    print(f"\n===== {posts}/{len(rows)} vil POSTES (klubb+bane+tee)  ·  "
+          f"{solid} sikre, {besteffort} best-effort-tee (⚠ dobbeltsjekk) =====")
+    stuck = [r for r in rows if not (r[2] == "✓" and r[3] == "✓" and r[4] in ("✓", "⚠"))]
     if stuck:
         print("Gjenstår:")
         for r in stuck:
@@ -112,7 +118,8 @@ def main() -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     lines = [f"{r[0]}\t{r[2]}{r[3]}{r[4]}\t{r[1]}\t{r[5]}" for r in rows]
     out.write_text(
-        f"Regresjons-rapport ({full}/{len(rows)} full match)\n\n" + "\n".join(lines),
+        f"Regresjons-rapport ({posts}/{len(rows)} vil postes · {solid} sikre · "
+        f"{besteffort} best-effort)\n\n" + "\n".join(lines),
         encoding="utf-8",
     )
     print(f"\nRapport lagret: {out}")

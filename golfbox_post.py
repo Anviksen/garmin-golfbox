@@ -540,31 +540,33 @@ def _read_rating_slope(fr):
 
 
 def match_tee_by_rating(fr, g_rating, g_slope):
-    """Finn riktig GolfBox-tee via RATING/slope – universelt, uavhengig av om
-    klubben merker tee-er med farge eller tall.
-    Returnerer (value, tekst, readings) der readings=[(tekst, CR, slope), ...]."""
+    """Finn GolfBox-tee via RATING/slope – universelt, uavhengig av farge/tall.
+    Returnerer (streng_value, streng_tekst, readings, nærmeste) der:
+      streng_* = treff innen ~0,5 rating (trygt), ellers (None, '')
+      readings = [(tekst, CR, slope), ...]
+      nærmeste = (value, tekst, diff) – nærmeste kandidat uansett toleranse (best-effort)."""
     readings = []
-    if not g_rating:
-        return None, "", readings
     best, best_diff = None, 99.0
-    for o in [o for o in _options(fr, "fld_Tee") if o.get("value")]:
-        try:
-            fr.select_option("#fld_Tee", value=o["value"], timeout=4000)
-        except Exception:
-            continue
-        time.sleep(1.3)  # la updateStats() hente CR/slope for tee-en
-        rating, slope = _read_rating_slope(fr)
-        readings.append((o.get("text", "").strip(), rating, slope))
-        if rating is None:
-            continue
-        diff = abs(rating - float(g_rating))
-        if g_slope and slope:
-            diff += abs(slope - int(g_slope)) * 0.02
-        if diff < best_diff:
-            best, best_diff = o, diff
-    if best is not None and best_diff <= 0.5:  # rating innen ~0,5
-        return best["value"], best.get("text", "").strip(), readings
-    return None, "", readings
+    if g_rating:
+        for o in [o for o in _options(fr, "fld_Tee") if o.get("value")]:
+            try:
+                fr.select_option("#fld_Tee", value=o["value"], timeout=4000)
+            except Exception:
+                continue
+            time.sleep(1.3)  # la updateStats() hente CR/slope for tee-en
+            rating, slope = _read_rating_slope(fr)
+            readings.append((o.get("text", "").strip(), rating, slope))
+            if rating is None:
+                continue
+            diff = abs(rating - float(g_rating))
+            if g_slope and slope:
+                diff += abs(slope - int(g_slope)) * 0.02
+            if diff < best_diff:
+                best, best_diff = o, diff
+    nearest = (best["value"], best.get("text", "").strip(), round(best_diff, 1)) if best else None
+    if best is not None and best_diff <= 0.5:  # trygt treff
+        return best["value"], best.get("text", "").strip(), readings, nearest
+    return None, "", readings, nearest
 
 
 def fill_score_form(fr, rnd: dict, for_test: bool = False):
@@ -575,7 +577,7 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
     holes = rnd.get("holes", []) or []
     n_holes = 18 if (rnd.get("holesCompleted") or 0) >= 18 else 9
     status = {"club": False, "course": False, "tee": False, "holes": 0,
-              "n_holes": n_holes, "marker": False}
+              "n_holes": n_holes, "marker": False, "tee_uncertain": False}
 
     # 1) Antall hull (bygger om score-tabellen)
     try:
@@ -785,7 +787,7 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
     tee_target = str(rnd.get("teeBox") or (override.get("tee") or "").strip() or "")
 
     # 1) RATING-basert (universelt – uavhengig av farge/tall-etikett).
-    tee_val, tee_text, tee_readings = match_tee_by_rating(
+    tee_val, tee_text, tee_readings, tee_nearest = match_tee_by_rating(
         fr, rnd.get("teeBoxRating"), rnd.get("teeBoxSlope"))
     how_tee = "rating"
     # 2) Etikett-match (med farge-oversettelse En↔No) som reserve.
@@ -811,10 +813,19 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
             tee_val, how_tee = real_tees[0]["value"], "eneste tee"
             tee_text = real_tees[0].get("text", "").strip()
 
+    # 5) BEST-EFFORT (kombinasjon): fortsatt usikker → nærmeste rating, men FLAGG.
+    #    Garmin sine ratinger kan avvike (utdaterte 2019-data), så dette kan bomme.
+    #    Runden går til godkjenning, så markøren/du kan fange en feil tee.
+    if not tee_val and tee_nearest and tee_nearest[2] <= 6.0:
+        tee_val, tee_text = tee_nearest[0], tee_nearest[1]
+        how_tee = f"best-effort Δ{tee_nearest[2]}"
+        status["tee_uncertain"] = True
+
     if tee_val:
         if _pick_option(fr, "fld_Tee", tee_val, tee_text):
             status["tee"] = True
-            notes.append(f"Tee: «{tee_text or tee_target}» ({how_tee})")
+            warn = " ⚠️ DOBBELTSJEKK TEE" if status["tee_uncertain"] else ""
+            notes.append(f"Tee: «{tee_text or tee_target}» ({how_tee}){warn}")
         else:
             notes.append(f"❗ Tee «{tee_text or tee_target}» festet ikke – velg manuelt.")
     else:
@@ -1238,7 +1249,9 @@ def main() -> None:
         if auto:
             if auto_submit and safe:
                 if submit_score(target):
-                    log("✅ LAGRET i Golfbox – runden ligger nå til godkjennelse.")
+                    extra = " ⚠️ (tee valgt på skjønn – dobbeltsjekk før godkjenning!)" \
+                        if status.get("tee_uncertain") else ""
+                    log(f"✅ LAGRET i Golfbox – runden ligger nå til godkjennelse.{extra}")
                     raise SystemExit(0)
                 log("⚠️ AUTO: lagringen ble ikke bekreftet. Flagges for manuell sjekk "
                     "(kode 3).")
