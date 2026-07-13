@@ -207,16 +207,20 @@ def main() -> None:
 
     save_state(state)
 
-    # Varsle brukeren hvis noe krever et blikk.
-    if manual_now or review_now or notpostable_now:
-        try:
-            import notify
-            if notify.is_configured() and notify.notify_rounds(
-                    manual_now, review_now, posted_now, notpostable_now):
-                log(f"📧 Varsel sendt ({len(manual_now)} å fullføre, "
+    # Varsling. E-post KUN ved unntak (som før – suksess-mail ville vært støy).
+    # Push til mobil: BÅDE suksess (bekreftelse) OG problemer.
+    try:
+        import notify
+        if (manual_now or review_now or notpostable_now) and notify.is_configured():
+            if notify.notify_rounds(manual_now, review_now, posted_now, notpostable_now):
+                log(f"📧 E-post sendt ({len(manual_now)} å fullføre, "
                     f"{len(review_now)} å dobbeltsjekke, {len(notpostable_now)} ikke leverbare).")
-        except Exception as e:
-            log(f"(varsling hoppet over: {e})")
+        if (posted_now or manual_now or review_now or notpostable_now) and notify.is_push_configured():
+            if notify.notify_push(manual_now, review_now, posted_now, notpostable_now):
+                log(f"📱 Push sendt ({len(posted_now)} lagt inn, "
+                    f"{len(manual_now) + len(review_now) + len(notpostable_now)} trenger blikk).")
+    except Exception as e:
+        log(f"(varsling hoppet over: {e})")
 
     log("=== auto_sync ferdig ===")
 
