@@ -1033,7 +1033,8 @@ def main() -> None:
                 if submit_score(target):
                     log("✅ LAGRET i Golfbox – runden ligger nå til godkjennelse.")
                     raise SystemExit(0)
-                log("⚠️ AUTO: klarte ikke trykke Lagre. Avslutter med kode 3 (må sjekkes).")
+                log("⚠️ AUTO: lagringen ble ikke bekreftet. Flagges for manuell sjekk "
+                    "(kode 3).")
                 raise SystemExit(3)
             reason = "auto-lagring av" if not auto_submit else "usikker match –"
             log(f"ℹ️ AUTO: {reason} ikke lagret. Runden er fylt ut, men trenger manuell "
@@ -1128,20 +1129,77 @@ def _observe_and_idle(ctx, fr, rnd) -> None:
         _save_learned_mapping(rnd.get("course", ""), last)
 
 
-def submit_score(fr) -> bool:
-    """Trykk «Lagre» og bekreft eventuell dialog. Returnerer True ved suksess."""
+def _score_form_open(ctx) -> bool:
+    """True hvis WHS-score-skjemaet (#cmdSave) fortsatt er åpent i en av fanene."""
     try:
-        pg = fr.page
-        pg.on("dialog", lambda d: d.accept())
+        pages = list(ctx.pages)
+    except Exception:
+        return False
+    for pg in pages:
+        try:
+            for f in pg.frames:
+                try:
+                    if f.query_selector("#cmdSave"):
+                        return True
+                except Exception:
+                    continue
+        except Exception:
+            continue
+    return False
+
+
+def submit_score(fr) -> bool:
+    """Trykk «Lagre», bekreft dialoger, og VERIFISER at lagringen faktisk landet.
+    Suksess = score-skjemaet forsvinner (postback/redirect). Blir skjemaet stående
+    (typisk validerings-avvisning), returneres False. Ingen dublett-risiko: auto_sync
+    flagger da runden for manuell sjekk uten å prøve på nytt."""
+    try:
+        ctx = fr.page.context
+    except Exception:
+        ctx = None
+
+    dialogs: list = []
+
+    def _on_dialog(d):
+        try:
+            dialogs.append((d.type, d.message))
+        except Exception:
+            pass
+        try:
+            d.accept()
+        except Exception:
+            try:
+                d.dismiss()
+            except Exception:
+                pass
+
+    try:
+        fr.page.on("dialog", _on_dialog)
     except Exception:
         pass
+
     try:
         fr.click("#cmdSave", timeout=5000)
-        time.sleep(4)
-        return True
     except Exception as e:
-        log(f"  submit-feil: {e}")
+        log(f"  submit-feil: klarte ikke trykke «Lagre» ({e})")
         return False
+
+    if ctx is None:
+        time.sleep(4)
+        return True  # kan ikke verifisere uten context – gammel oppførsel
+
+    # Vent på bekreftelse: skjemaet forsvinner ved vellykket lagring.
+    deadline = time.time() + 12
+    while time.time() < deadline:
+        time.sleep(1)
+        if not _score_form_open(ctx):
+            return True
+
+    msg = next((m for (t, m) in dialogs if m), "")
+    log("  ⚠️ Lagring IKKE bekreftet – score-skjemaet står fortsatt åpent"
+        + (f" (GolfBox: «{msg.strip()}»)" if msg else "")
+        + ". Runden flagges for manuell sjekk.")
+    return False
 
 
 def _idle(ctx) -> None:
