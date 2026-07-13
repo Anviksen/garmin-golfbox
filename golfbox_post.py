@@ -97,10 +97,20 @@ def iso_to_ddmmyyyy(iso: str | None) -> str | None:
         return None
 
 
+def _fold(s: str) -> str:
+    """Fold norske/nordiske spesialtegn til ASCII. Garmin stripper ofte æ/ø/å
+    (f.eks. «Østmork» → «Ostmork»), mens GolfBox beholder dem – så vi folder
+    BEGGE likt for at match skal treffe. Generelt for alle baner med æ/ø/å."""
+    s = (s or "").lower()
+    for a, b in (("æ", "ae"), ("ø", "o"), ("å", "a"),
+                 ("ä", "a"), ("ö", "o"), ("ü", "u")):
+        s = s.replace(a, b)
+    s = s.replace("aa", "a")  # aa == å == a i norsk
+    return s
+
+
 def norm(s: str) -> str:
-    # aa == å i norsk; behandle likt for bedre matching.
-    s = (s or "").lower().replace("aa", "å")
-    return "".join(ch for ch in s if ch.isalnum())
+    return "".join(ch for ch in _fold(s) if ch.isalnum())
 
 
 _GENERIC = ("golfklubb", "golfpark", "golfclub", "golfsearvi", "golf", "klubb", "club", "gk")
@@ -108,7 +118,7 @@ _GENERIC = ("golfklubb", "golfpark", "golfclub", "golfsearvi", "golf", "klubb", 
 
 def core(s: str) -> str:
     """Kjernenavn uten generiske golf-ord (for klubb-/bane-match)."""
-    s = (s or "").lower().replace("aa", "å")
+    s = _fold(s)
     for w in _GENERIC:
         s = s.replace(w, " ")
     return "".join(ch for ch in s if ch.isalnum())
@@ -1278,17 +1288,14 @@ def main() -> None:
                     log("⚠️ AUTO: lagringen ble ikke bekreftet. Flagges for manuell sjekk.")
             else:
                 reason = "auto-lagring av" if not auto_submit else "usikker match –"
-                _code = 5 if not status["club"] else 3
                 log(f"ℹ️ AUTO: {reason} ikke lagret. Runden er fylt ut, men trenger manuell "
                     f"sjekk (klubb={status['club']}, bane={status['course']}, "
-                    f"tee={status['tee']}, markør={status['marker']}). Avslutter med kode {_code}.")
+                    f"tee={status['tee']}, markør={status['marker']}). Avslutter med kode 3.")
             _log_attempt(rnd, _read_selection(target), status, notes, posted)
             if posted:
                 # kode 4 = lagret, men tee valgt på skjønn (bør dobbeltsjekkes)
                 raise SystemExit(4 if status.get("tee_uncertain") else 0)
-            # Ikke postet: skill «klubb finnes ikke i GolfBox» (kode 5, ikke leverbar)
-            # fra «klubb OK, men bane/tee ikke bekreftet» (kode 3, kan fullføres).
-            raise SystemExit(5 if not status["club"] else 3)
+            raise SystemExit(3)
 
         log("✅ Ferdig utfylt. Sjekk bane/tee/markør i Golfbox og trykk «Lagre» selv. "
             "(Ingenting er sendt inn.)")
