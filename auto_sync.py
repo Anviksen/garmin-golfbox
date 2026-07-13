@@ -149,7 +149,7 @@ def main() -> None:
         log("⚠️ fetch_garmin feilet – prøver likevel å poste med eksisterende data.")
 
     # Post hver nye runde til Golfbox i auto-modus.
-    posted_now, review_now, manual_now = [], [], []
+    posted_now, review_now, manual_now, notpostable_now = [], [], [], []
     for rid in new_ids:
         name = round_name(rid)
         log(f"→ Sender runde {rid} ({name}) til Golfbox ...")
@@ -169,24 +169,29 @@ def main() -> None:
             # så den prøves igjen ved neste kjøring etter at du har fornyet økten.
             log(f"   ⏸️ Golfbox-økt utløpt. Stopper. Runde {rid} prøves igjen senere.")
             break
-        else:
-            # rc == 3 (fylt, men ikke trygt å lagre) eller annen feil: marker som sett
-            # så vi ikke maser, men flagg for manuell håndtering.
+        elif rc == 5:
+            # Klubben finnes ikke i GolfBox (privat/utland/ikke-WHS) – ikke leverbar.
             state["seen"].append(rid)
             state["needs_manual"].append(rid)
-            manual_now.append((name, "kunne ikke matches automatisk"))
-            log(f"   ⚠️ Runde {rid} kunne ikke lagres automatisk (kode {rc}). "
-                f"Flagget for manuell sjekk.")
+            notpostable_now.append((name, "klubben finnes ikke i GolfBox"))
+            log(f"   ⛔ Runde {rid} – klubben finnes ikke i GolfBox. Kan ikke leveres.")
+        else:
+            # rc == 3: klubb OK, men bane/tee ikke bekreftet – KAN fullføres i web-appen.
+            state["seen"].append(rid)
+            state["needs_manual"].append(rid)
+            manual_now.append((name, "bane/tee ikke bekreftet"))
+            log(f"   ⚠️ Runde {rid} matchet ikke helt (kode {rc}). Kan fullføres i web-appen.")
 
     save_state(state)
 
-    # Varsle brukeren hvis noe krever et blikk (fullfør / dobbeltsjekk).
-    if manual_now or review_now:
+    # Varsle brukeren hvis noe krever et blikk.
+    if manual_now or review_now or notpostable_now:
         try:
             import notify
-            if notify.is_configured() and notify.notify_rounds(manual_now, review_now, posted_now):
+            if notify.is_configured() and notify.notify_rounds(
+                    manual_now, review_now, posted_now, notpostable_now):
                 log(f"📧 Varsel sendt ({len(manual_now)} å fullføre, "
-                    f"{len(review_now)} å dobbeltsjekke).")
+                    f"{len(review_now)} å dobbeltsjekke, {len(notpostable_now)} ikke leverbare).")
         except Exception as e:
             log(f"(varsling hoppet over: {e})")
 

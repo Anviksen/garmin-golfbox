@@ -59,14 +59,22 @@ def send_email(subject: str, body: str) -> bool:
         return False
 
 
-def notify_rounds(needs_manual: list, review: list, posted: list) -> bool:
-    """Bygg og send et oppsummerings-varsel. needs_manual/review/posted er lister
-    av (navn, grunn)-tupler. Sender kun hvis det er noe som krever handling."""
-    if not (needs_manual or review):
+def notify_rounds(needs_manual: list, review: list, posted: list,
+                  not_postable: list | None = None) -> bool:
+    """Bygg og send et oppsummerings-varsel. Listene er (navn, grunn)-tupler:
+      needs_manual – klubb OK, men bane/tee ikke bekreftet (KAN fullføres i web-appen)
+      review       – lagt inn, men tee på skjønn (DOBBELTSJEKK)
+      not_postable – klubben finnes ikke i GolfBox (ingen handling mulig)
+      posted       – lagt inn automatisk (bare til info)
+    Sender kun hvis noe krever/fortjener et blikk."""
+    not_postable = not_postable or []
+    if not (needs_manual or review or not_postable):
         return False
     lines = []
     if needs_manual:
-        lines.append("🔴 Kunne IKKE legges inn automatisk – fullfør selv i web-appen:")
+        lines.append("🔴 Nesten i mål – fullfør i web-appen (åpne dashbordet → "
+                     "«Send til Golfbox» på runden; den fyller inn alt, du bekrefter "
+                     "bane/tee og lagrer):")
         for name, why in needs_manual:
             lines.append(f"   • {name}" + (f"  ({why})" if why else ""))
         lines.append("")
@@ -76,14 +84,23 @@ def notify_rounds(needs_manual: list, review: list, posted: list) -> bool:
         for name, why in review:
             lines.append(f"   • {name}" + (f"  ({why})" if why else ""))
         lines.append("")
+    if not_postable:
+        lines.append("⛔ Kan ikke leveres – disse banene finnes ikke i GolfBox "
+                     "(privat bane / utland / ikke WHS). Ingenting du kan gjøre:")
+        for name, why in not_postable:
+            lines.append(f"   • {name}" + (f"  ({why})" if why else ""))
+        lines.append("")
     if posted:
-        lines.append(f"✅ La automatisk inn {len(posted)} runde(r): "
-                     + ", ".join(n for n, _ in posted))
+        lines.append(f"✅ La automatisk inn {len(posted)} runde(r) (ligger til "
+                     f"godkjennelse i GolfBox): " + ", ".join(n for n, _ in posted))
     body = ("Hei!\n\nOppdatering fra Garmin → GolfBox:\n\n"
             + "\n".join(lines)
             + "\n\nMvh, din golf-robot 🏌️")
     n = len(needs_manual) + len(review)
-    subject = f"Golf: {n} runde(r) trenger et blikk"
+    if n:
+        subject = f"Golf: {n} runde(r) trenger et blikk"
+    else:
+        subject = f"Golf: {len(not_postable)} runde(r) kan ikke leveres"
     return send_email(subject, body)
 
 

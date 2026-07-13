@@ -1278,14 +1278,17 @@ def main() -> None:
                     log("⚠️ AUTO: lagringen ble ikke bekreftet. Flagges for manuell sjekk.")
             else:
                 reason = "auto-lagring av" if not auto_submit else "usikker match –"
+                _code = 5 if not status["club"] else 3
                 log(f"ℹ️ AUTO: {reason} ikke lagret. Runden er fylt ut, men trenger manuell "
                     f"sjekk (klubb={status['club']}, bane={status['course']}, "
-                    f"tee={status['tee']}, markør={status['marker']}). Avslutter med kode 3.")
+                    f"tee={status['tee']}, markør={status['marker']}). Avslutter med kode {_code}.")
             _log_attempt(rnd, _read_selection(target), status, notes, posted)
             if posted:
                 # kode 4 = lagret, men tee valgt på skjønn (bør dobbeltsjekkes)
                 raise SystemExit(4 if status.get("tee_uncertain") else 0)
-            raise SystemExit(3)
+            # Ikke postet: skill «klubb finnes ikke i GolfBox» (kode 5, ikke leverbar)
+            # fra «klubb OK, men bane/tee ikke bekreftet» (kode 3, kan fullføres).
+            raise SystemExit(5 if not status["club"] else 3)
 
         log("✅ Ferdig utfylt. Sjekk bane/tee/markør i Golfbox og trykk «Lagre» selv. "
             "(Ingenting er sendt inn.)")
