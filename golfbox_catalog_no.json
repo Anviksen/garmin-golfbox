@@ -71,9 +71,8 @@
           ]
         }
       ],
-      "lat": 59.596801,
-      "lon": 11.1718124,
-      "osm_name": "Askim golfklubb"
+      "lat": null,
+      "lon": null
     },
     {
       "club": "Atlungstad Golfklubb",
@@ -282,9 +281,8 @@
           ]
         }
       ],
-      "lat": 57.8515387,
-      "lon": 14.0383603,
-      "osm_name": "Sand Golf Club"
+      "lat": null,
+      "lon": null
     },
     {
       "club": "Bleik Golfklubb",
@@ -2073,9 +2071,8 @@
           ]
         }
       ],
-      "lat": 60.0734056,
-      "lon": 11.1657314,
-      "osm_name": "Miklagard Golf"
+      "lat": null,
+      "lon": null
     },
     {
       "club": "Miklagard Golfklubb Ullensaker",
@@ -2092,9 +2089,8 @@
           ]
         }
       ],
-      "lat": 60.0734056,
-      "lon": 11.1657314,
-      "osm_name": "Miklagard Golf"
+      "lat": null,
+      "lon": null
     },
     {
       "club": "Mjøsen Golfklubb",
@@ -3222,9 +3218,8 @@
           ]
         }
       ],
-      "lat": 57.8515387,
-      "lon": 14.0383603,
-      "osm_name": "Sand Golf Club"
+      "lat": null,
+      "lon": null
     },
     {
       "club": "Sande Golfklubb",
@@ -3286,9 +3281,8 @@
           ]
         }
       ],
-      "lat": 57.8515387,
-      "lon": 14.0383603,
-      "osm_name": "Sand Golf Club"
+      "lat": null,
+      "lon": null
     },
     {
       "club": "Sauda Golfklubb",
@@ -3410,9 +3404,8 @@
           ]
         }
       ],
-      "lat": 59.596801,
-      "lon": 11.1718124,
-      "osm_name": "Askim golfklubb"
+      "lat": null,
+      "lon": null
     },
     {
       "club": "Skjeberg Golfklubb",
