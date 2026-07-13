@@ -47,8 +47,10 @@ FETCH_SCRIPT = PROJECT_DIR / "fetch_garmin.py"
 POST_SCRIPT = PROJECT_DIR / "golfbox_post.py"
 TOKENSTORE = os.getenv("GARMINTOKENS", "~/.garminconnect")
 # Hvor mange kjøringer vi venter på at Garmin fyller inn tee-data før vi gir opp
-# og ber brukeren fullføre selv. 4 × 10 min ≈ 40 min maks. Justerbart via env.
-MAX_TEE_WAIT = int(os.getenv("GOLFBOX_TEE_WAIT_TRIES", "4"))
+# og ber brukeren fullføre selv. Garmin kan bruke god stund på tee/rating, så vi er
+# rause: 12 × ~5 min ≈ 60 min. Runden postes automatisk så snart tee-en dukker opp;
+# først etter en time gir vi opp og ber deg fullføre selv. Justerbart via env.
+MAX_TEE_WAIT = int(os.getenv("GOLFBOX_TEE_WAIT_TRIES", "12"))
 
 
 def log(msg: str) -> None:
