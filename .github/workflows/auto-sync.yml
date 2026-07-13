@@ -19,6 +19,7 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 20        # en hengende kjøring skal aldri blokkere køen i timevis
     env:
       GARMINTOKENS: /home/runner/.garminconnect
       GOLFBOX_AUTO: "1"
