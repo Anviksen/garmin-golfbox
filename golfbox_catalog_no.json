@@ -4192,52 +4192,14 @@
     {
       "club": "Østmarka Golfklubb",
       "guid": "11a0819e-6d9d-46e2-9585-01379c806ac2",
-      "courses": [
-        {
-          "course": "Vrådal Golf",
-          "tees": [
-            "Rød",
-            "Blå",
-            "Gul",
-            "Hvit"
-          ]
-        },
-        {
-          "course": "Vrådal Golf (2)",
-          "tees": [
-            "Rød",
-            "Blå",
-            "Gul",
-            "Hvit"
-          ]
-        }
-      ],
+      "courses": [],
       "lat": 59.7237039,
       "lon": 11.0425314
     },
     {
       "club": "Ålesund Golfklubb",
       "guid": "a9ee8209-205f-4ad4-9b59-5ea3c6d8f9dc",
-      "courses": [
-        {
-          "course": "Vrådal Golf",
-          "tees": [
-            "Rød",
-            "Blå",
-            "Gul",
-            "Hvit"
-          ]
-        },
-        {
-          "course": "Vrådal Golf (2)",
-          "tees": [
-            "Rød",
-            "Blå",
-            "Gul",
-            "Hvit"
-          ]
-        }
-      ]
+      "courses": []
     }
   ]
 }
