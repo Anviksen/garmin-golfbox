@@ -21,7 +21,7 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 try:
@@ -72,11 +72,13 @@ def load_state() -> dict:
             data.setdefault("posted", [])
             data.setdefault("needs_manual", [])
             data.setdefault("pending", {})  # {rid: antall vente-forsøk} for tee-data
+            data.setdefault("garmin_fails", 0)          # påfølgende Garmin-feil
+            data.setdefault("garmin_cooldown_until", None)  # ISO: hopp over til da
             return data
         except Exception:
             pass
     return {"seen": [], "posted": [], "needs_manual": [], "pending": {},
-            "_initialized": False}
+            "garmin_fails": 0, "garmin_cooldown_until": None, "_initialized": False}
 
 
 def save_state(state: dict) -> None:
@@ -126,11 +128,51 @@ def main() -> None:
 
     state = load_state()
 
+    # Backoff-vakt: fikk vi nylig push-back fra Garmin, hopper vi over til cooldown er
+    # ute – slik at vi ALDRI maser videre og forverrer en evt. rate-limit-grense.
+    cd = state.get("garmin_cooldown_until")
+    if cd:
+        try:
+            if datetime.now(timezone.utc) < datetime.fromisoformat(cd):
+                log(f"⏸️ Garmin-cooldown til {cd}. Hopper over (skåner Garmin). Ferdig.")
+                return
+        except Exception:
+            pass
+
     try:
         ids = garmin_summary_ids()
     except Exception as e:
-        log(f"❌ Garmin-innlogging/-henting feilet (token utløpt?): {e}")
+        # Garmin presser tilbake (429 / token-problem). Sett eskalerende pause og
+        # varsle ved gjentatte feil – i stedet for å prøve igjen om 5 min.
+        fails = int(state.get("garmin_fails", 0)) + 1
+        wait_min = min(120, 30 * fails)   # 30 → 60 → 90 → 120 min
+        until = (datetime.now(timezone.utc) + timedelta(minutes=wait_min)).isoformat()
+        state["garmin_fails"] = fails
+        state["garmin_cooldown_until"] = until
+        save_state(state)
+        log(f"❌ Garmin-innlogging/-henting feilet (feil #{fails}): {e}")
+        log(f"   ⏸️ Cooldown {wait_min} min (til {until}) for ikke å forverre en grense.")
+        if fails == 3:   # varsle én gang når det ser vedvarende ut
+            try:
+                import notify
+                msg = ("Garmin-innlogging har feilet flere ganger på rad. Sannsynligvis "
+                       "er tokenet utløpt/revokert – lag et nytt og oppdater "
+                       "GARMIN_TOKENS_B64-secret. Roboten tar pauser og maser ikke videre.")
+                if notify.is_push_configured():
+                    notify._push("Golf-robot: Garmin-innlogging feiler", msg,
+                                 tags="warning", priority="high")
+                if notify.is_configured():
+                    notify.send_email("Golf-robot: Garmin-innlogging feiler",
+                                      "Hei!\n\n" + msg + "\n\nMvh, golf-roboten 🏌️")
+            except Exception as ne:
+                log(f"(kunne ikke varsle om Garmin-feil: {ne})")
         raise SystemExit(2)
+
+    # Suksess → nullstill feilteller/cooldown hvis de var satt.
+    if state.get("garmin_fails") or state.get("garmin_cooldown_until"):
+        state["garmin_fails"] = 0
+        state["garmin_cooldown_until"] = None
+        save_state(state)
 
     log(f"Fant {len(ids)} runder i Garmin-oversikten.")
 
