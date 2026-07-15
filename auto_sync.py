@@ -202,14 +202,23 @@ def main() -> None:
     for rid in new_ids:
         name = round_name(rid)
         log(f"→ Sender runde {rid} ({name}) til Golfbox ...")
+        _reason_file = PROJECT_DIR / "data" / "last_reason.txt"
+        try:
+            _reason_file.unlink()  # nullstill så vi ikke arver forrige rundes grunn
+        except Exception:
+            pass
         rc = run([sys.executable, str(POST_SCRIPT), str(rid), "--auto"],
                  extra_env={"GOLFBOX_AUTO": "1"})
+        try:
+            reason = _reason_file.read_text(encoding="utf-8").strip()
+        except Exception:
+            reason = ""
         if rc in (0, 4):
             state["seen"].append(rid)
             state["posted"].append(rid)
             state["pending"].pop(str(rid), None)
             if rc == 4:
-                review_now.append((name, "tee valgt på skjønn"))
+                review_now.append((name, reason or "tee valgt på skjønn"))
                 log(f"   ✅ Runde {rid} lagret – men tee usikker, flagget for dobbeltsjekk.")
             else:
                 posted_now.append((name, ""))
@@ -229,7 +238,7 @@ def main() -> None:
                 state["seen"].append(rid)
                 state["needs_manual"].append(rid)
                 state["pending"].pop(str(rid), None)
-                manual_now.append((name, "Garmin fylte aldri inn tee/score-data"))
+                manual_now.append((name, reason or "Garmin fylte aldri inn tee/score-data"))
                 log(f"   ⧗→⚠️ Runde {rid}: data kom aldri (etter {tries} forsøk). "
                     f"Flagger for manuell fullføring.")
             else:
@@ -240,15 +249,16 @@ def main() -> None:
             state["seen"].append(rid)
             state["needs_manual"].append(rid)
             state["pending"].pop(str(rid), None)
-            notpostable_now.append((name, "klubben finnes ikke i GolfBox"))
+            notpostable_now.append((name, reason or "klubben finnes ikke i GolfBox"))
             log(f"   ⛔ Runde {rid} – klubben finnes ikke i GolfBox. Kan ikke leveres.")
         else:
             # rc == 3: klubb OK, men bane/tee ikke bekreftet – KAN fullføres i web-appen.
             state["seen"].append(rid)
             state["needs_manual"].append(rid)
             state["pending"].pop(str(rid), None)
-            manual_now.append((name, "bane/tee ikke bekreftet"))
-            log(f"   ⚠️ Runde {rid} matchet ikke helt (kode {rc}). Kan fullføres i web-appen.")
+            manual_now.append((name, reason or "bane/tee ikke bekreftet"))
+            log(f"   ⚠️ Runde {rid} matchet ikke helt (kode {rc}): {reason or '—'}. "
+                f"Kan fullføres i web-appen.")
 
         # Lagre framgang etter HVER runde, så en evt. avbrutt kjøring (timeout midt i en
         # stor batch) aldri fører til at en allerede-postet runde behandles på nytt.

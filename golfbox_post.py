@@ -1419,6 +1419,8 @@ def main() -> None:
             or (status["n_holes"] == 18 and status["holes"] >= 10
                 and status.get("holes_contiguous", True))
         )
+        if os.getenv("GOLFBOX_FORCE_SUBMIT") == "1":
+            holes_ok = True  # DEBUG: tving submit for å fange GolfBox sin respons
         safe = (
             status["club"] and status["course"] and status["tee"]
             and holes_ok and status["marker"]
@@ -1459,6 +1461,41 @@ def main() -> None:
                     f"hull={status['holes']}/{status['n_holes']}, markør={status['marker']}). "
                     f"Avslutter med kode {_code}.")
             _log_attempt(rnd, _read_selection(target), status, notes, posted)
+
+            # Skriv en MENNESKELIG grunn til fil, så auto_sync kan ta den med i push/mail.
+            def _pick_reason():
+                if posted:
+                    return "tee valgt på skjønn – dobbeltsjekk" if status.get("tee_uncertain") else ""
+                if submit_result == "session":
+                    return "GolfBox-økt utløp under lagring – prøver igjen automatisk"
+                if submit_result == "unsaved":
+                    return "GolfBox avviste lagringen – sjekk/legg inn manuelt"
+                if not status["club"]:
+                    return "klubben finnes ikke i GolfBox (privat bane/utland)"
+                if status.get("scores_missing"):
+                    return "Garmin har ikke synket scorene ennå"
+                if status.get("tee_no_source"):
+                    return "Garmin mangler tee/rating ennå"
+                if status["holes"] < status["n_holes"] and not status.get("holes_contiguous", True):
+                    _miss = status.get("holes_missing") or [h.get("number") for h in holes
+                                                            if h.get("strokes") is None]
+                    return f"mangler score på hull {', '.join(map(str, _miss))} (klokka synket ikke alt)"
+                if status["holes"] < status["n_holes"]:
+                    return f"kun {status['holes']} av {status['n_holes']} hull registrert"
+                if not status["tee"]:
+                    return "fant ikke riktig tee automatisk"
+                if not status["course"]:
+                    return "fant ikke riktig bane automatisk"
+                if not status["marker"]:
+                    return "markør ikke satt"
+                return "trenger manuell sjekk"
+            try:
+                _rf = PROJECT_DIR / "data" / "last_reason.txt"
+                _rf.parent.mkdir(parents=True, exist_ok=True)
+                _rf.write_text(_pick_reason(), encoding="utf-8")
+            except Exception:
+                pass
+
             if posted:
                 # kode 4 = lagret, men tee valgt på skjønn (bør dobbeltsjekkes)
                 raise SystemExit(4 if status.get("tee_uncertain") else 0)
@@ -1625,6 +1662,19 @@ def submit_score(fr) -> str:
     except Exception as e:
         log(f"  submit-feil: klarte ikke trykke «Lagre» ({e})")
         return "unsaved"
+
+    if os.getenv("GOLFBOX_DEBUG_SAVE") == "1" and ctx is not None:
+        # Fang GolfBox sin respons rett etter «Lagre» (f.eks. rød feilboks) til fil.
+        for i in range(7):
+            time.sleep(0.8)
+            for j, pg in enumerate(list(ctx.pages or [])):
+                try:
+                    (PROJECT_DIR / "data").mkdir(parents=True, exist_ok=True)
+                    (PROJECT_DIR / "data" / f"save_debug_{i}_{j}.html").write_text(
+                        pg.content(), encoding="utf-8")
+                except Exception:
+                    pass
+        log("  🔎 DEBUG: lagret sidedumper i data/save_debug_*.html")
 
     if ctx is None:
         time.sleep(4)
