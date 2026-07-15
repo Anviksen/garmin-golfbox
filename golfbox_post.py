@@ -663,7 +663,8 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
     n_holes = _round_n_holes(rnd)
     status = {"club": False, "course": False, "tee": False, "holes": 0,
               "n_holes": n_holes, "marker": False, "tee_uncertain": False,
-              "tee_no_source": False, "holes_missing": [], "scores_missing": False}
+              "tee_no_source": False, "holes_missing": [], "scores_missing": False,
+              "holes_contiguous": True}
 
     # 1) Antall hull (bygger om score-tabellen)
     try:
@@ -795,6 +796,12 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
                     pass
         status["holes"] = filled
         notes.append(f"Hull-scorer fylt inn: {filled}/{n_holes}")
+        # Er de scorede hullene sammenhengende fra hull 1 (1..k)? GolfBox godtar en
+        # ufullstendig 18-runde KUN da (spilte f.eks. 1–12). Spredte hull inni (mangler
+        # hull 3 og 7) = klokka synket ikke alt = datahull, ikke en gyldig runde å poste.
+        _snums = sorted(h.get("number") for h in holes
+                        if h.get("strokes") is not None and h.get("number"))
+        status["holes_contiguous"] = (_snums == list(range(1, len(_snums) + 1)))
         # Ingen score i det hele tatt = Garmin har ikke synket scorene ennå (runden er
         # nettopp ferdig). Da VENTER vi (kode 6), akkurat som for manglende tee-data.
         if filled == 0:
@@ -1409,7 +1416,8 @@ def main() -> None:
         # <10 godtar den ikke. Vi venter derfor ALDRI på flere hull – kun på tee/rating.
         holes_ok = (
             status["holes"] == status["n_holes"]
-            or (status["n_holes"] == 18 and status["holes"] >= 10)
+            or (status["n_holes"] == 18 and status["holes"] >= 10
+                and status.get("holes_contiguous", True))
         )
         safe = (
             status["club"] and status["course"] and status["tee"]
