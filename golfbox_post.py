@@ -421,6 +421,10 @@ def choose_course(fr, targets, n_holes: int, garmin_pars=None, club_core: str = 
     Primær: navn/hull-scoring (utelukker kort-/dame-/tour-baner, foretrekker rett
     hull-antall + klubbnavn). Reserve ved tvil: par-sekvens-sjekk (robust JS).
     Returnerer (value, hvordan) eller (None, grunn)."""
+    # Vent til bane-lista har roet seg etter klubb-byttet (changeClub → getCourseOptions).
+    # Ellers kan vi score mot en FORRIGE klubbs stale baner og velge en bane som ikke
+    # finnes i den valgte klubben (async-race).
+    _wait_select_stable(fr, "fld_Course", settle=1.0, timeout=8.0)
     opts = [o for o in _options(fr, "fld_Course") if o.get("value") and o.get("text", "").strip()]
     if not opts:
         return None, "ingen baner"
