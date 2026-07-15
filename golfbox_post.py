@@ -1469,7 +1469,12 @@ def main() -> None:
                 if submit_result == "session":
                     return "GolfBox-økt utløp under lagring – prøver igjen automatisk"
                 if submit_result == "unsaved":
-                    return "GolfBox avviste lagringen – sjekk/legg inn manuelt"
+                    try:
+                        _e = (PROJECT_DIR / "data" / "golfbox_error.txt").read_text(
+                            encoding="utf-8").strip()
+                    except Exception:
+                        _e = ""
+                    return f"GolfBox avviste: {_e}" if _e else "GolfBox avviste lagringen – sjekk manuelt"
                 if not status["club"]:
                     return "klubben finnes ikke i GolfBox (privat bane/utland)"
                 if status.get("scores_missing"):
@@ -1624,6 +1629,33 @@ def _score_form_open(ctx) -> bool:
     return False
 
 
+def _visible_error(ctx) -> str:
+    """Returner teksten i en SYNLIG GolfBox-feilboks (rød boks) hvis noen vises, ellers "".
+    GolfBox validerer klient-side og viser feil i .alert-danger / .tblError. En synlig
+    slik boks = lagringen ble AVVIST (f.eks. «hull skal være i rekkefølge»)."""
+    try:
+        pages = list(ctx.pages)
+    except Exception:
+        return ""
+    for pg in pages:
+        try:
+            for f in pg.frames:
+                try:
+                    for el in f.query_selector_all(".alert-danger, .tblError"):
+                        try:
+                            if el.is_visible():
+                                t = (el.inner_text() or "").strip()
+                                if t:
+                                    return " ".join(t.split())[:200]
+                        except Exception:
+                            continue
+                except Exception:
+                    continue
+        except Exception:
+            continue
+    return ""
+
+
 def submit_score(fr) -> str:
     """Trykk «Lagre», bekreft dialoger, og VERIFISER at lagringen faktisk landet.
     Returnerer:
@@ -1636,6 +1668,10 @@ def submit_score(fr) -> str:
         ctx = fr.page.context
     except Exception:
         ctx = None
+    try:  # nullstill evt. gammel feiltekst
+        (PROJECT_DIR / "data" / "golfbox_error.txt").unlink()
+    except Exception:
+        pass
 
     dialogs: list = []
 
@@ -1684,6 +1720,15 @@ def submit_score(fr) -> str:
     deadline = time.time() + 12
     while time.time() < deadline:
         time.sleep(1)
+        # Synlig rød feilboks fra GolfBox? → lagringen ble AVVIST (ikke lagret).
+        err = _visible_error(ctx)
+        if err:
+            log(f"  ⚠️ GolfBox avviste lagringen: «{err}». Ikke lagret – flagges manuelt.")
+            try:
+                (PROJECT_DIR / "data" / "golfbox_error.txt").write_text(err, encoding="utf-8")
+            except Exception:
+                pass
+            return "unsaved"
         if not _score_form_open(ctx):
             # Skjemaet lukket. Men LUKKET det fordi lagringen landet, eller fordi GolfBox
             # kastet oss til innlogging (utløpt økt)? Ved utløpt økt lagres INGENTING –
