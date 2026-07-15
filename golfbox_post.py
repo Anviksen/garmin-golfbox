@@ -1398,9 +1398,19 @@ def main() -> None:
         for n in notes:
             log("  " + n)
 
+        # Hull-antall: komplett = alle spilt. GolfBox godtar også en UFULLSTENDIG
+        # 18-hullsrunde ned til 10 hull (med en «ikke alle hull»-popup som submit_score
+        # bekrefter automatisk). Vi poster ufullstendig KUN når GOLFBOX_ACCEPT_PARTIAL=1
+        # (settes av auto_sync på siste forsøk, etter at vi har ventet på at Garmin
+        # eventuelt synker resten). <10 hull godtar ikke GolfBox → aldri postbar.
+        accept_partial = os.getenv("GOLFBOX_ACCEPT_PARTIAL") == "1"
+        holes_ok = (
+            status["holes"] == status["n_holes"]
+            or (accept_partial and status["n_holes"] == 18 and status["holes"] >= 10)
+        )
         safe = (
             status["club"] and status["course"] and status["tee"]
-            and status["holes"] == status["n_holes"] and status["marker"]
+            and holes_ok and status["marker"]
         )
 
         if auto:
@@ -1418,7 +1428,7 @@ def main() -> None:
                 # opp, prøv igjen senere. Dekker: ingen tee-data, ingen score, ELLER
                 # delvis score (færre hull enn forventet, f.eks. 17/18 rett etter runden).
                 _waiting = (status.get("tee_no_source")
-                            or status["holes"] < status["n_holes"])
+                            or (status["holes"] < status["n_holes"] and not accept_partial))
                 if not status["club"]:
                     _code = 5
                 elif _waiting:
@@ -1440,7 +1450,8 @@ def main() -> None:
             #   kode 3 = klubb OK, data komplett, men bane/tee ikke bekreftet (kan fullføres)
             if not status["club"]:
                 raise SystemExit(5)
-            if status.get("tee_no_source") or status["holes"] < status["n_holes"]:
+            if status.get("tee_no_source") or (status["holes"] < status["n_holes"]
+                                               and not accept_partial):
                 raise SystemExit(6)  # data ikke komplett ennå – vent, ikke mas
             raise SystemExit(3)
 
