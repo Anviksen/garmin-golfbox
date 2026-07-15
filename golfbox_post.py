@@ -1414,12 +1414,17 @@ def main() -> None:
 
         if auto:
             posted = False
+            submit_result = None
             if auto_submit and safe:
-                posted = submit_score(target)
+                submit_result = submit_score(target)
+                posted = (submit_result == "saved")
                 if posted:
                     extra = " ⚠️ (tee valgt på skjønn – dobbeltsjekk før godkjenning!)" \
                         if status.get("tee_uncertain") else ""
                     log(f"✅ LAGRET i Golfbox – runden ligger nå til godkjennelse.{extra}")
+                elif submit_result == "session":
+                    log("⏸️ AUTO: økten utløp under lagring – ingenting lagret. "
+                        "Prøver igjen neste kjøring.")
                 else:
                     log("⚠️ AUTO: lagringen ble ikke bekreftet. Flagges for manuell sjekk.")
             else:
@@ -1445,6 +1450,10 @@ def main() -> None:
             if posted:
                 # kode 4 = lagret, men tee valgt på skjønn (bør dobbeltsjekkes)
                 raise SystemExit(4 if status.get("tee_uncertain") else 0)
+            if submit_result == "session":
+                # Økt utløpt under lagring – forbigående. Kode 2 = ikke marker som sett,
+                # prøv igjen neste kjøring (auto-login fornyer økten da).
+                raise SystemExit(2)
             # Ikke postet – skill kategoriene:
             #   kode 5 = klubben finnes ikke i GolfBox (ikke leverbar)
             #   kode 6 = Garmin-data ufullstendig ennå (tee/score/delvis hull) → VENT
@@ -1566,11 +1575,14 @@ def _score_form_open(ctx) -> bool:
     return False
 
 
-def submit_score(fr) -> bool:
+def submit_score(fr) -> str:
     """Trykk «Lagre», bekreft dialoger, og VERIFISER at lagringen faktisk landet.
-    Suksess = score-skjemaet forsvinner (postback/redirect). Blir skjemaet stående
-    (typisk validerings-avvisning), returneres False. Ingen dublett-risiko: auto_sync
-    flagger da runden for manuell sjekk uten å prøve på nytt."""
+    Returnerer:
+      "saved"   – skjemaet lukket og vi er fortsatt innlogget (lagret).
+      "session" – skjemaet lukket, men GolfBox viser innlogging (økt utløpt → INGENTING
+                  lagret; skal prøves på nytt, ikke flagges som feil).
+      "unsaved" – skjemaet står fortsatt åpent (validerings-avvisning e.l.) → manuell sjekk.
+    Ingen dublett-risiko: kun "saved" regnes som postet."""
     try:
         ctx = fr.page.context
     except Exception:
@@ -1600,24 +1612,37 @@ def submit_score(fr) -> bool:
         fr.click("#cmdSave", timeout=5000)
     except Exception as e:
         log(f"  submit-feil: klarte ikke trykke «Lagre» ({e})")
-        return False
+        return "unsaved"
 
     if ctx is None:
         time.sleep(4)
-        return True  # kan ikke verifisere uten context – gammel oppførsel
+        return "saved"  # kan ikke verifisere uten context – gammel oppførsel
 
     # Vent på bekreftelse: skjemaet forsvinner ved vellykket lagring.
     deadline = time.time() + 12
     while time.time() < deadline:
         time.sleep(1)
         if not _score_form_open(ctx):
-            return True
+            # Skjemaet lukket. Men LUKKET det fordi lagringen landet, eller fordi GolfBox
+            # kastet oss til innlogging (utløpt økt)? Ved utløpt økt lagres INGENTING –
+            # da ville «skjema borte = lagret» vært en falsk positiv (stille tap).
+            time.sleep(1.5)  # la en evt. redirect fullføre
+            for pg in list(ctx.pages or []):
+                try:
+                    _f, _pw = _find_password_frame(pg)
+                except Exception:
+                    _pw = None
+                if _pw is not None:
+                    log("  ⚠️ Skjemaet lukket, men GolfBox viser innlogging – økten utløp "
+                        "under lagring. INGENTING lagret; prøver igjen neste kjøring.")
+                    return "session"
+            return "saved"
 
     msg = next((m for (t, m) in dialogs if m), "")
     log("  ⚠️ Lagring IKKE bekreftet – score-skjemaet står fortsatt åpent"
         + (f" (GolfBox: «{msg.strip()}»)" if msg else "")
         + ". Runden flagges for manuell sjekk.")
-    return False
+    return "unsaved"
 
 
 def _idle(ctx) -> None:
