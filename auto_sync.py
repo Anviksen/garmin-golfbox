@@ -250,6 +250,10 @@ def main() -> None:
             manual_now.append((name, "bane/tee ikke bekreftet"))
             log(f"   ⚠️ Runde {rid} matchet ikke helt (kode {rc}). Kan fullføres i web-appen.")
 
+        # Lagre framgang etter HVER runde, så en evt. avbrutt kjøring (timeout midt i en
+        # stor batch) aldri fører til at en allerede-postet runde behandles på nytt.
+        save_state(state)
+
     save_state(state)
 
     # Varsling. E-post KUN ved unntak (som før – suksess-mail ville vært støy).
