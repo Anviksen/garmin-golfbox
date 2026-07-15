@@ -1398,15 +1398,14 @@ def main() -> None:
         for n in notes:
             log("  " + n)
 
-        # Hull-antall: komplett = alle spilt. GolfBox godtar også en UFULLSTENDIG
-        # 18-hullsrunde ned til 10 hull (med en «ikke alle hull»-popup som submit_score
-        # bekrefter automatisk). Vi poster ufullstendig KUN når GOLFBOX_ACCEPT_PARTIAL=1
-        # (settes av auto_sync på siste forsøk, etter at vi har ventet på at Garmin
-        # eventuelt synker resten). <10 hull godtar ikke GolfBox → aldri postbar.
-        accept_partial = os.getenv("GOLFBOX_ACCEPT_PARTIAL") == "1"
+        # Hull-antallet er AUTORITATIVT ved opplasting: score-ene lastes opp samlet fra
+        # klokka (ulikt tee/rating, som Garmin beriker tregt). Har du lastet opp 10/12/16
+        # hull, ER det runden din, og den skal postes like raskt som en full 18-runde.
+        # GolfBox godtar 10–17 hull (med en «ikke alle hull»-popup submit_score bekrefter);
+        # <10 godtar den ikke. Vi venter derfor ALDRI på flere hull – kun på tee/rating.
         holes_ok = (
             status["holes"] == status["n_holes"]
-            or (accept_partial and status["n_holes"] == 18 and status["holes"] >= 10)
+            or (status["n_holes"] == 18 and status["holes"] >= 10)
         )
         safe = (
             status["club"] and status["course"] and status["tee"]
@@ -1427,8 +1426,10 @@ def main() -> None:
                 # «Venter»: data ser ufullstendig ut (Garmin synker fortsatt) – ikke gi
                 # opp, prøv igjen senere. Dekker: ingen tee-data, ingen score, ELLER
                 # delvis score (færre hull enn forventet, f.eks. 17/18 rett etter runden).
+                # Vent kun på tee/rating, eller på hull som ennå ikke er postbare (<10
+                # på 18-runde, eller 0 = fortsatt under opplasting). 10–17 venter vi IKKE på.
                 _waiting = (status.get("tee_no_source")
-                            or (status["holes"] < status["n_holes"] and not accept_partial))
+                            or (not holes_ok and status["holes"] < status["n_holes"]))
                 if not status["club"]:
                     _code = 5
                 elif _waiting:
@@ -1450,9 +1451,9 @@ def main() -> None:
             #   kode 3 = klubb OK, data komplett, men bane/tee ikke bekreftet (kan fullføres)
             if not status["club"]:
                 raise SystemExit(5)
-            if status.get("tee_no_source") or (status["holes"] < status["n_holes"]
-                                               and not accept_partial):
-                raise SystemExit(6)  # data ikke komplett ennå – vent, ikke mas
+            if status.get("tee_no_source") or (not holes_ok
+                                               and status["holes"] < status["n_holes"]):
+                raise SystemExit(6)  # tee/rating mangler, eller <10 hull – vent
             raise SystemExit(3)
 
         log("✅ Ferdig utfylt. Sjekk bane/tee/markør i Golfbox og trykk «Lagre» selv. "

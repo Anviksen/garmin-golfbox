@@ -202,13 +202,8 @@ def main() -> None:
     for rid in new_ids:
         name = round_name(rid)
         log(f"→ Sender runde {rid} ({name}) til Golfbox ...")
-        # Har vi ventet nesten opp til taket? Da er dette siste forsøk – be golfbox_post
-        # poste en ufullstendig runde (10–17 hull) i stedet for å vente mer. (Komplette
-        # runder postes uansett med en gang; dette gjelder kun de som forblir ufullstendige.)
-        _extra = {"GOLFBOX_AUTO": "1"}
-        if state["pending"].get(str(rid), 0) >= MAX_TEE_WAIT - 1:
-            _extra["GOLFBOX_ACCEPT_PARTIAL"] = "1"
-        rc = run([sys.executable, str(POST_SCRIPT), str(rid), "--auto"], extra_env=_extra)
+        rc = run([sys.executable, str(POST_SCRIPT), str(rid), "--auto"],
+                 extra_env={"GOLFBOX_AUTO": "1"})
         if rc in (0, 4):
             state["seen"].append(rid)
             state["posted"].append(rid)
