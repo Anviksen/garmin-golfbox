@@ -442,7 +442,8 @@ def choose_course(fr, targets, n_holes: int, garmin_pars=None, club_core: str = 
     for _t in targets:
         tc = core(_t)
         if len(tc) >= 4:
-            hit = [o for o in opts if core(o["text"]) == tc]
+            hit = [o for o in opts if core(o["text"]) == tc
+                   and not any(w in o["text"].lower() for w in _SHORT + _SPECIAL)]
             if len(hit) == 1:
                 return hit[0]["value"], "eksakt banenavn"
 
@@ -1469,6 +1470,10 @@ def _read_selection(fr) -> dict:
 def _save_learned_mapping(garmin_course: str, sel: dict) -> None:
     """Lagre Garmin-navn -> Golfbox klubb/bane/tee i golfbox_course_map.json."""
     if not garmin_course or not sel.get("club"):
+        return
+    # Aldri lær en placeholder-bane (kort/dame/tour) – det er tee-løse standardbaner
+    # som forurenser matchingen (jf. «Narvesen Tour - Damer»). Da hopper vi over.
+    if any(w in (sel.get("course") or "").lower() for w in _SHORT + _SPECIAL):
         return
     entry = {
         "club": sel.get("club", ""),
