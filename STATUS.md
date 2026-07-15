@@ -38,14 +38,44 @@ klubb/bane/tee → fyll GolfBox-skjema via Playwright → lagre → varsle (mobi
 - **2** = GolfBox-økt utløpt (stopp, prøv igjen senere — ikke marker som sett)
 - **3** = klubb OK, men bane/tee ikke bekreftet (kan fullføres i web-appen)
 - **5** = klubben finnes ikke i GolfBox (privat/utland → kan ikke leveres)
-- **6** = Garmin har ikke tee-data ennå (VENT — prøv igjen, opp til `MAX_TEE_WAIT`=4)
+- **6** = Garmin-data ufullstendig ennå (tee/rating ELLER hull-score/<10 hull) → VENT,
+  prøv igjen opp til `MAX_TEE_WAIT`=12 (~60 min), så needs_manual.
+
+`submit_score` returnerer nå tre-tilstand: **"saved"** (skjema lukket + fortsatt innlogget),
+**"session"** (skjema lukket men innloggingsside vises = økt utløpt → kode 2, prøv igjen),
+**"unsaved"** (skjema åpent ELLER synlig GolfBox-feilboks `.alert-danger` → manuell). Kun
+"saved" regnes som postet. Dette lukker «stille tap».
+
+## Kveldens herding (15. juli 2026) — les denne
+
+Mange generelle robusthets-fikser ble lagt til (alle mønster-fikser, verifisert live):
+- **Eksakt banenavn-prioritet** i `choose_course` (Garmin «~ Vestmork» → GolfBox «Vestmork»,
+  selv om «9»-baner ellers scorer høyere for 9-hullsrunder). Utelukker placeholder-baner.
+- **9-hulls rating-dobling** for tee-match (Garmin gir ~halv rating; GolfBox viser 18-hulls CR).
+- **Vent på stabil bane-liste** etter klubb-bytte (async-race: unngå feil-klubb-bane).
+- **n_holes fra ANTALL SCOREDE HULL** (ikke `holesCompleted`); 9-hull fylles posisjonelt (back-nine).
+- **Ufullstendige runder postes UMIDDELBART** (hull-antall er autoritativt) — MEN kun hvis
+  hullene er **sammenhengende fra hull 1** (GolfBox-regel: «spilte hull skal være i rekkefølge
+  og starte med hull 1»). Spredte hull-hull = klokka synket ikke alt → vent/manual. GolfBox
+  «ikke alle hull»-popup bekreftes automatisk (JS-dialog).
+- **Positiv verifisering mot stille tap:** oppdager GolfBox sin røde feilboks + økt-utløp; en
+  runde markeres aldri postet uten faktisk å ligge i GolfBox.
+- **Grunn i varsel:** push/mail sier nå HVORFOR («GolfBox avviste: …», «Garmin mangler tee/rating
+  ennå», «mangler score på hull 1,2,3», «klubben finnes ikke i GolfBox»).
+- **Garmin-backoff** ved 429/token-feil (eskalerende pause + varsel), **inkrementell state-lagring**
+  etter hver runde (ingen dobbel-post ved timeout), **placeholder-baner læres/velges aldri**.
+- **Trigger:** cron-job.org pinger dispatch hvert 5. min, dagtid 08–22 (se Trigger-seksjon).
+- Debug-verktøy: `debug_round.py <id>` (ekte utfylling, poster ikke), `diag_club.py "<klubb>"`,
+  env `GOLFBOX_FORCE_SUBMIT=1` + `GOLFBOX_DEBUG_SAVE=1` (dump GolfBox-respons ved lagring).
 
 ## Hva som er bevist å virke
 
-Regresjon (43 runder mot live GolfBox): **34 postes automatisk**, 0 regresjoner.
-Bekreftet ende-til-ende fra klokka: runder lander i GolfBox, mail + push kommer.
-De resterende er «rene» kategorier: baner utenfor norsk GolfBox (Spania, Oustøen,
-Nittedal) håndteres ærlig som «kan ikke leveres», og Garmin-datahull fanges av retry.
+Live-testet fra klokka 15.07: farge-løkke-baner (Haga Red/Blue m.fl.), fler-bane-klubb (Losby
+Ostmork+Vestmork), ny klubb (Groruddalen), 9-hull (Grønmo) — alle traff. Regresjon (`test_rounds.py
+--all`, 61 runder): ~48 postes, 0 ekte regresjoner. Resten er «rene» kategorier: baner utenfor
+norsk GolfBox (Spania/Oustøen/Nittedal) = «kan ikke leveres», eller teeBox=None = venter på Garmin.
+Én kjent grense: en runde med hull-hull *midt inne* (klokka synket ikke alt) avvises av GolfBox og
+må legges inn manuelt.
 
 ## Viktige designvalg (og hvorfor)
 
