@@ -436,6 +436,16 @@ def choose_course(fr, targets, n_holes: int, garmin_pars=None, club_core: str = 
         if len(exact) == 1:
             return exact[0]["value"], "farge-sett"
 
+    # Eksakt banenavn-treff på løkke-navnet (etter folding) → bruk det direkte. F.eks.
+    # Garmin «... ~ Vestmork» mot GolfBox-banen «Vestmork», selv om andre baner med «9»
+    # i navnet ellers ville scoret høyere for en 9-hullsrunde. Generelt for alle løkker.
+    for _t in targets:
+        tc = core(_t)
+        if len(tc) >= 4:
+            hit = [o for o in opts if core(o["text"]) == tc]
+            if len(hit) == 1:
+                return hit[0]["value"], "eksakt banenavn"
+
     gcore = core(garmin_course or "")
     ranked = sorted(
         ((_score_course_name(o["text"], n_holes, club_core, gcore), o) for o in opts),
@@ -593,12 +603,17 @@ def _read_rating_slope(fr):
     return rating, slope
 
 
-def match_tee_by_rating(fr, g_rating, g_slope):
+def match_tee_by_rating(fr, g_rating, g_slope, n_holes=18):
     """Finn GolfBox-tee via RATING/slope – universelt, uavhengig av farge/tall.
     Returnerer (streng_value, streng_tekst, readings, nærmeste) der:
       streng_* = treff innen ~0,5 rating (trygt), ellers (None, '')
       readings = [(tekst, CR, slope), ...]
       nærmeste = (value, tekst, diff) – nærmeste kandidat uansett toleranse (best-effort)."""
+    # GolfBox viser 18-hulls course rating i skjemaet, også når 9 hull er valgt. For en
+    # 9-hullsrunde gir Garmin ~halv rating (f.eks. 31.9), så vi dobler Garmins rating før
+    # sammenligning (31.9 → 63.8 ≈ GolfBox 61.8). Generelt for alle 9-hullsrunder.
+    if n_holes == 9 and g_rating:
+        g_rating = float(g_rating) * 2
     readings = []
     best, best_diff = None, 99.0
     if g_rating:
@@ -896,7 +911,7 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
     tee_val, tee_text, how_tee = None, "", ""
     # Kjør alltid rating-matchen for å ha readings/nearest til best-effort senere.
     r_val, r_text, tee_readings, tee_nearest = match_tee_by_rating(
-        fr, rnd.get("teeBoxRating"), rnd.get("teeBoxSlope"))
+        fr, rnd.get("teeBoxRating"), rnd.get("teeBoxSlope"), n_holes)
 
     # 0) EKSAKT etikett-treff (Garmin «56» == GolfBox «56»). Norske baner bruker
     #    meter-merker som tee-navn; en eksakt etikett er mer pålitelig enn Garmins
