@@ -120,9 +120,9 @@
   ],
   "_initialized": true,
   "pending": {
-    "372746411": 3,
-    "372746304": 3,
-    "372746537": 2
+    "372746411": 4,
+    "372746304": 4,
+    "372746537": 3
   },
   "garmin_fails": 0,
   "garmin_cooldown_until": null
