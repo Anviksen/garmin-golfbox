@@ -819,8 +819,11 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
         elif n_holes == 18 and filled < n_holes:
             missing = [h.get("number") for h in holes if h.get("strokes") is None]
             status["holes_missing"] = missing
-            notes.append(f"⧗ Mangler score på hull {', '.join(map(str, missing))} "
-                         f"(Garmin har ikke synket alle hull ennå) – venter på resten.")
+            if status["holes_contiguous"]:
+                notes.append(f"Ufullstendig runde: {filled}/18 (hull 1–{filled}) – postes som delrunde.")
+            else:
+                notes.append(f"❗ Mangler hull {', '.join(map(str, missing))} MIDT INNE – GolfBox "
+                             f"krever spilte hull i rekkefølge fra hull 1. Kan ikke leveres automatisk.")
 
     # 7) Markør (fra .env). Hoppes over i test-modus (påvirker ikke matching).
     marker_no = None if for_test else os.getenv("GOLFBOX_MARKER_MEMBERNO")
@@ -1450,12 +1453,11 @@ def main() -> None:
                     log("⚠️ AUTO: lagringen ble ikke bekreftet. Flagges for manuell sjekk.")
             else:
                 # «Venter»: data ser ufullstendig ut (Garmin synker fortsatt) – ikke gi
-                # opp, prøv igjen senere. Dekker: ingen tee-data, ingen score, ELLER
-                # delvis score (færre hull enn forventet, f.eks. 17/18 rett etter runden).
-                # Vent kun på tee/rating, eller på hull som ennå ikke er postbare (<10
-                # på 18-runde, eller 0 = fortsatt under opplasting). 10–17 venter vi IKKE på.
-                _waiting = (status.get("tee_no_source")
-                            or (not holes_ok and status["holes"] < status["n_holes"]))
+                # VENT kun på EKTE forsinkelser: tee/rating mangler ennå, ELLER 0 score
+                # (fortsatt under opplasting). En runde med hull MIDT INNE som mangler er
+                # ENDELIG (klokka laster opp alle registrerte hull samlet) → vi venter IKKE,
+                # men flagger med en gang så brukeren får riktig grunn umiddelbart.
+                _waiting = (status.get("tee_no_source") or status.get("scores_missing"))
                 if not status["club"]:
                     _code = 5
                 elif _waiting:
@@ -1489,11 +1491,12 @@ def main() -> None:
                 if status.get("tee_no_source"):
                     return "Garmin mangler tee/rating ennå"
                 if status["holes"] < status["n_holes"] and not status.get("holes_contiguous", True):
-                    _miss = status.get("holes_missing") or [h.get("number") for h in holes
-                                                            if h.get("strokes") is None]
-                    return f"mangler score på hull {', '.join(map(str, _miss))} (klokka synket ikke alt)"
+                    _miss = [h.get("number") for h in holes if h.get("strokes") is None]
+                    return (f"scorekortet mangler hull {', '.join(map(str, _miss))} midt inne "
+                            f"– GolfBox krever spilte hull i rekkefølge fra hull 1. Fyll inn selv.")
                 if status["holes"] < status["n_holes"]:
-                    return f"kun {status['holes']} av {status['n_holes']} hull registrert"
+                    return (f"kun {status['holes']} av {status['n_holes']} hull registrert "
+                            f"– GolfBox krever minst 10. Fyll inn selv.")
                 if not status["tee"]:
                     return "fant ikke riktig tee automatisk"
                 if not status["course"]:
@@ -1521,9 +1524,8 @@ def main() -> None:
             #   kode 3 = klubb OK, data komplett, men bane/tee ikke bekreftet (kan fullføres)
             if not status["club"]:
                 raise SystemExit(5)
-            if status.get("tee_no_source") or (not holes_ok
-                                               and status["holes"] < status["n_holes"]):
-                raise SystemExit(6)  # tee/rating mangler, eller <10 hull – vent
+            if status.get("tee_no_source") or status.get("scores_missing"):
+                raise SystemExit(6)  # ekte forsinkelse (tee mangler / 0 score) – vent
             raise SystemExit(3)
 
         log("✅ Ferdig utfylt. Sjekk bane/tee/markør i Golfbox og trykk «Lagre» selv. "
