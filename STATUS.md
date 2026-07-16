@@ -61,7 +61,14 @@ Mange generelle robusthets-fikser ble lagt til (alle mønster-fikser, verifisert
 - **Positiv verifisering mot stille tap:** oppdager GolfBox sin røde feilboks + økt-utløp; en
   runde markeres aldri postet uten faktisk å ligge i GolfBox.
 - **Grunn i varsel:** push/mail sier nå HVORFOR («GolfBox avviste: …», «Garmin mangler tee/rating
-  ennå», «mangler score på hull 1,2,3», «klubben finnes ikke i GolfBox»).
+  ennå», «scorekortet mangler hull X midt inne», «klubben finnes ikke i GolfBox»).
+- **Vent vs. flagg-straks (viktig prinsipp):** kode 6 (VENT) brukes KUN ved EKTE forsinkelser
+  – tee/rating mangler ennå, eller 0 score (fortsatt opplasting). Et ENDELIG problem (hull midt
+  inne mangler = klokka lastet opp alt, men gappy; GolfBox-regel «hull i rekkefølge fra 1»)
+  flagges UMIDDELBART (kode 3) med konkret grunn, ikke vent 60 min. Prinsipp: si ifra straks
+  med riktig årsak; vent kun når data faktisk kan komme.
+- **Farge-multisett:** «Red/Red» → «Haga RØD+RØD» (spilte samme løkke to ganger) — multisett,
+  ikke sett, så gjentatt farge matcher.
 - **Garmin-backoff** ved 429/token-feil (eskalerende pause + varsel), **inkrementell state-lagring**
   etter hver runde (ingen dobbel-post ved timeout), **placeholder-baner læres/velges aldri**.
 - **Trigger:** cron-job.org pinger dispatch hvert 5. min, dagtid 08–22 (se Trigger-seksjon).
