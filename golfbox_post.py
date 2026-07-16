@@ -1419,15 +1419,15 @@ def main() -> None:
         for n in notes:
             log("  " + n)
 
-        # Hull-antallet er AUTORITATIVT ved opplasting: score-ene lastes opp samlet fra
-        # klokka (ulikt tee/rating, som Garmin beriker tregt). Har du lastet opp 10/12/16
-        # hull, ER det runden din, og den skal postes like raskt som en full 18-runde.
-        # GolfBox godtar 10–17 hull (med en «ikke alle hull»-popup submit_score bekrefter);
-        # <10 godtar den ikke. Vi venter derfor ALDRI på flere hull – kun på tee/rating.
+        # Hull-antallet er AUTORITATIVT ved opplasting (score-ene lastes opp samlet fra
+        # klokka). Har du lastet opp ≥10 hull, forsøker vi å poste – og lar GOLFBOX være
+        # dommer på om mønsteret er gyldig (den godtar f.eks. hull 1 + baksida, men ikke
+        # Haugers spredte mønster). Avviser GolfBox, fanger den positive verifiseringen det
+        # (rød feilboks → "unsaved" → «fullfør selv» med GolfBox sin egen tekst). Vi gjetter
+        # altså IKKE lenger GolfBox sine hull-regler selv. <10 hull godtar GolfBox aldri.
         holes_ok = (
             status["holes"] == status["n_holes"]
-            or (status["n_holes"] == 18 and status["holes"] >= 10
-                and status.get("holes_contiguous", True))
+            or (status["n_holes"] == 18 and status["holes"] >= 10)
         )
         if os.getenv("GOLFBOX_FORCE_SUBMIT") == "1":
             holes_ok = True  # DEBUG: tving submit for å fange GolfBox sin respons
@@ -1638,6 +1638,19 @@ def _score_form_open(ctx) -> bool:
     return False
 
 
+def _friendly_golfbox_error(t: str) -> str:
+    """Oversett kjente tekniske GolfBox-feilkoder til lesbar norsk (behold rå tekst ellers)."""
+    low = t.lower()
+    if "not_played_holes_between" in low:
+        return ("GolfBox godtar ikke dette hull-mønsteret (for mange uspilte hull mellom "
+                "spilte hull). Legg inn manuelt.")
+    if "negative" in low or "negativt" in low:
+        return "negativt antall slag på et hull – kan ikke sendes inn."
+    if "spilledato" in low or "whs" in low:
+        return "ugyldig spilledato (før WHS-dato e.l.)."
+    return t
+
+
 def _visible_error(ctx) -> str:
     """Returner teksten i en SYNLIG GolfBox-feilboks (rød boks) hvis noen vises, ellers "".
     GolfBox validerer klient-side og viser feil i .alert-danger / .tblError. En synlig
@@ -1653,9 +1666,9 @@ def _visible_error(ctx) -> str:
                     for el in f.query_selector_all(".alert-danger, .tblError"):
                         try:
                             if el.is_visible():
-                                t = (el.inner_text() or "").strip()
+                                t = " ".join((el.inner_text() or "").split())
                                 if t:
-                                    return " ".join(t.split())[:200]
+                                    return _friendly_golfbox_error(t)[:200]
                         except Exception:
                             continue
                 except Exception:
