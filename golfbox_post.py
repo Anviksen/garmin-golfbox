@@ -87,14 +87,31 @@ def get_round(round_id: str) -> dict:
     raise ValueError(f"Fant ikke runde {round_id} i data/. Har du synket fra Garmin?")
 
 
-def iso_to_ddmmyyyy(iso: str | None) -> str | None:
+def _iso_oslo(iso: str | None):
+    """Parse Garmins UTC-ISO og konverter til norsk tid (Europe/Oslo)."""
     if not iso:
         return None
     try:
         dt = datetime.fromisoformat(iso.replace("Z", "+00:00"))
-        return dt.strftime("%d.%m.%Y")
+        try:
+            from zoneinfo import ZoneInfo
+            dt = dt.astimezone(ZoneInfo("Europe/Oslo"))
+        except Exception:
+            pass  # uten tz-database: behold UTC (bedre enn ingenting)
+        return dt
     except Exception:
         return None
+
+
+def iso_to_ddmmyyyy(iso: str | None) -> str | None:
+    dt = _iso_oslo(iso)
+    return dt.strftime("%d.%m.%Y") if dt else None
+
+
+def iso_to_hhmm(iso: str | None) -> str | None:
+    """Klokkeslett (HH:MM) for når runden ble startet, i norsk tid."""
+    dt = _iso_oslo(iso)
+    return dt.strftime("%H:%M") if dt else None
 
 
 def _fold(s: str) -> str:
@@ -688,7 +705,8 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
     except Exception:
         pass
 
-    # 3) Dato
+    # 3) Dato + klokkeslett (fra Garmins start-tid, i norsk tid). GolfBox har et eget
+    #    #fld_ScoreTime som ellers fylles med en rar standardverdi hvis vi ikke setter det.
     ddmmyyyy = iso_to_ddmmyyyy(rnd.get("date"))
     if ddmmyyyy:
         try:
@@ -697,6 +715,14 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
             notes.append(f"Dato: {ddmmyyyy}")
         except Exception as e:
             notes.append(f"⚠️ Dato feilet ({e})")
+    hhmm = iso_to_hhmm(rnd.get("date"))
+    if hhmm:
+        try:
+            fr.fill("#fld_ScoreTime", hhmm)
+            fr.dispatch_event("#fld_ScoreTime", "change")
+            notes.append(f"Tid: {hhmm}")
+        except Exception:
+            pass
 
     # 4) KLUBB + bane. GolfBox viser kun baner for valgt klubb, så velg klubb først.
     course_name = rnd.get("course", "") or ""
