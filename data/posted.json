@@ -131,7 +131,9 @@
     372746304
   ],
   "_initialized": true,
-  "pending": {},
+  "pending": {
+    "372767395": 1
+  },
   "garmin_fails": 0,
   "garmin_cooldown_until": null
 }
