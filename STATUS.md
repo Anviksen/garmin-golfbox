@@ -70,6 +70,9 @@ Mange generelle robusthets-fikser ble lagt til (alle mønster-fikser, verifisert
   straks med riktig årsak; vent kun når data faktisk kan komme.
 - **Farge-multisett:** «Red/Red» → «Haga RØD+RØD» (spilte samme løkke to ganger) — multisett,
   ikke sett, så gjentatt farge matcher.
+- **Spilletidspunkt:** setter nå BÅDE `#fld_ScoreDate` og `#fld_ScoreTime` fra Garmins start-tid
+  omregnet til norsk tid (Europe/Oslo). GolfBox fylte ellers klokkeslettet med en rar standardverdi.
+  Dato bruker også norsk tid nå (sen kveldsrunde havner ikke på feil dag pga. UTC).
 - **Garmin-backoff** ved 429/token-feil (eskalerende pause + varsel), **inkrementell state-lagring**
   etter hver runde (ingen dobbel-post ved timeout), **placeholder-baner læres/velges aldri**.
 - **Trigger:** cron-job.org pinger dispatch hvert 5. min, dagtid 08–22 (se Trigger-seksjon).
