@@ -93,9 +93,21 @@ def test_course_scoring():
     check_true("korthullsbane straffes", short < vest)
 
 
+def test_holes_decision():
+    h = lambda nums: _rnd(nums)["holes"]
+    check_true("1-13 sammenhengende", gp._holes_contiguous(h(range(1, 14))))
+    check_true("full 18 sammenhengende", gp._holes_contiguous(h(range(1, 19))))
+    check("gappy 1+10-18 ikke sammenh", gp._holes_contiguous(h([1] + list(range(10, 19)))), False)
+    check("back-nine ikke sammenh fra 1", gp._holes_contiguous(h(range(10, 19))), False)
+    check_true("10/18 postbar", gp._holes_postable(10, 18))
+    check_true("18/18 postbar", gp._holes_postable(18, 18))
+    check("9/18 ikke postbar", gp._holes_postable(9, 18), False)
+    check_true("9/9 postbar", gp._holes_postable(9, 9))
+
+
 def main():
     for fn in [test_norm, test_colors, test_n_holes, test_datetime,
-               test_gb_error, test_course_scoring]:
+               test_gb_error, test_course_scoring, test_holes_decision]:
         fn()
     print(f"\n{'='*40}\n{_passed} bestått, {_failed} feilet")
     sys.exit(1 if _failed else 0)

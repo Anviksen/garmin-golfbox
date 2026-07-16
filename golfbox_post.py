@@ -678,6 +678,20 @@ def _round_n_holes(rnd: dict) -> int:
     return 18 if scored >= 10 else 9
 
 
+def _holes_contiguous(holes: list) -> bool:
+    """True hvis de scorede hullene er sammenhengende fra hull 1 (1..k). Brukes bare til
+    logging/grunn – GolfBox er endelig dommer på om mønsteret godtas."""
+    nums = sorted(h.get("number") for h in (holes or [])
+                  if h.get("strokes") is not None and h.get("number"))
+    return nums == list(range(1, len(nums) + 1))
+
+
+def _holes_postable(scored: int, n_holes: int) -> bool:
+    """Kan GolfBox i det hele tatt ta imot dette antallet? Full runde, eller ≥10 av 18
+    (delrunde). Selve hull-MØNSTERET lar vi GolfBox avgjøre ved lagring."""
+    return scored == n_holes or (n_holes == 18 and scored >= 10)
+
+
 def fill_score_form(fr, rnd: dict, for_test: bool = False):
     """Fyll ut skjemaet i ramme `fr`. Returnerer (notater, status).
     status forteller hva som ble trygt matchet – brukes til å avgjøre auto-lagring.
@@ -832,9 +846,7 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
         # Er de scorede hullene sammenhengende fra hull 1 (1..k)? GolfBox godtar en
         # ufullstendig 18-runde KUN da (spilte f.eks. 1–12). Spredte hull inni (mangler
         # hull 3 og 7) = klokka synket ikke alt = datahull, ikke en gyldig runde å poste.
-        _snums = sorted(h.get("number") for h in holes
-                        if h.get("strokes") is not None and h.get("number"))
-        status["holes_contiguous"] = (_snums == list(range(1, len(_snums) + 1)))
+        status["holes_contiguous"] = _holes_contiguous(holes)
         # Ingen score i det hele tatt = Garmin har ikke synket scorene ennå (runden er
         # nettopp ferdig). Da VENTER vi (kode 6), akkurat som for manglende tee-data.
         if filled == 0:
@@ -1451,10 +1463,7 @@ def main() -> None:
         # Haugers spredte mønster). Avviser GolfBox, fanger den positive verifiseringen det
         # (rød feilboks → "unsaved" → «fullfør selv» med GolfBox sin egen tekst). Vi gjetter
         # altså IKKE lenger GolfBox sine hull-regler selv. <10 hull godtar GolfBox aldri.
-        holes_ok = (
-            status["holes"] == status["n_holes"]
-            or (status["n_holes"] == 18 and status["holes"] >= 10)
-        )
+        holes_ok = _holes_postable(status["holes"], status["n_holes"])
         if os.getenv("GOLFBOX_FORCE_SUBMIT") == "1":
             holes_ok = True  # DEBUG: tving submit for å fange GolfBox sin respons
         safe = (
