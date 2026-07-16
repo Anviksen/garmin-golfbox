@@ -1270,8 +1270,8 @@ def _log_attempt(rnd, sel, status, notes, posted) -> None:
             "posted": posted,
             "reason": reason,
         })
-    except Exception:
-        pass
+    except Exception as e:
+        log(f"(telemetri-logging hoppet over: {e})")  # best-effort, men logg feilen
 
 
 def main() -> None:
@@ -1534,8 +1534,8 @@ def main() -> None:
                 _rf = PROJECT_DIR / "data" / "last_reason.txt"
                 _rf.parent.mkdir(parents=True, exist_ok=True)
                 _rf.write_text(_pick_reason(), encoding="utf-8")
-            except Exception:
-                pass
+            except Exception as e:
+                log(f"(kunne ikke skrive grunn til fil: {e})")  # logg, ikke svelg
 
             if posted:
                 # kode 4 = lagret, men tee valgt på skjønn (bør dobbeltsjekkes)
@@ -1603,8 +1603,8 @@ def _save_learned_mapping(garmin_course: str, sel: dict) -> None:
         log(f"🧠 Lærte: «{garmin_course}» → klubb «{entry['club']}»"
             + (f", bane «{entry['course']}»" if entry["course"] else "")
             + (f", tee «{entry['tee']}»" if entry["tee"] else ""))
-    except Exception:
-        pass
+    except Exception as e:
+        log(f"(kunne ikke lagre lært mapping: {e})")  # logg, ikke svelg
 
 
 def _observe_and_idle(ctx, fr, rnd) -> None:
