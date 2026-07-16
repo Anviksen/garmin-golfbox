@@ -54,19 +54,20 @@ Mange generelle robusthets-fikser ble lagt til (alle mønster-fikser, verifisert
 - **9-hulls rating-dobling** for tee-match (Garmin gir ~halv rating; GolfBox viser 18-hulls CR).
 - **Vent på stabil bane-liste** etter klubb-bytte (async-race: unngå feil-klubb-bane).
 - **n_holes fra ANTALL SCOREDE HULL** (ikke `holesCompleted`); 9-hull fylles posisjonelt (back-nine).
-- **Ufullstendige runder postes UMIDDELBART** (hull-antall er autoritativt) — MEN kun hvis
-  hullene er **sammenhengende fra hull 1** (GolfBox-regel: «spilte hull skal være i rekkefølge
-  og starte med hull 1»). Spredte hull-hull = klokka synket ikke alt → vent/manual. GolfBox
-  «ikke alle hull»-popup bekreftes automatisk (JS-dialog).
-- **Positiv verifisering mot stille tap:** oppdager GolfBox sin røde feilboks + økt-utløp; en
-  runde markeres aldri postet uten faktisk å ligge i GolfBox.
-- **Grunn i varsel:** push/mail sier nå HVORFOR («GolfBox avviste: …», «Garmin mangler tee/rating
-  ennå», «scorekortet mangler hull X midt inne», «klubben finnes ikke i GolfBox»).
-- **Vent vs. flagg-straks (viktig prinsipp):** kode 6 (VENT) brukes KUN ved EKTE forsinkelser
-  – tee/rating mangler ennå, eller 0 score (fortsatt opplasting). Et ENDELIG problem (hull midt
-  inne mangler = klokka lastet opp alt, men gappy; GolfBox-regel «hull i rekkefølge fra 1»)
-  flagges UMIDDELBART (kode 3) med konkret grunn, ikke vent 60 min. Prinsipp: si ifra straks
-  med riktig årsak; vent kun når data faktisk kan komme.
+- **Ufullstendige runder postes UMIDDELBART** (hull-antall er autoritativt, ≥10 hull for 18-runde).
+  **VIKTIG PRINSIPP: vi gjetter IKKE GolfBox sine hull-regler — GolfBox er dommer.** Vi forsøker
+  å lagre, og den positive verifiseringen fanger evt. avvisning. (GolfBox godtar f.eks. hull 1 +
+  baksida, men ikke Haugers spredte mønster – dette klarte vi ikke å gjette riktig, derfor lar vi
+  GolfBox avgjøre.) «Ikke alle hull»-popup bekreftes automatisk (JS-dialog).
+- **Positiv verifisering mot stille tap (kjernen):** etter «Lagre» sjekkes GolfBox sin røde
+  feilboks (`.alert-danger`/`.tblError`) + innloggingsside (økt-utløp). En runde markeres ALDRI
+  postet uten faktisk å ligge i GolfBox. `submit_score` → "saved"/"session"(kode 2, prøv igjen)/
+  "unsaved"(manual). Kjente GolfBox-feilkoder oversettes til lesbar norsk.
+- **Grunn i varsel:** push/mail sier nå HVORFOR («GolfBox avviste: godtar ikke dette hull-mønsteret»,
+  «Garmin mangler tee/rating ennå», «kun X av 18 hull», «klubben finnes ikke i GolfBox»).
+- **Vent vs. flagg-straks:** kode 6 (VENT) KUN ved EKTE forsinkelser – tee/rating mangler ennå,
+  eller 0 score (fortsatt opplasting). Alt annet flagges/forsøkes UMIDDELBART. Prinsipp: si ifra
+  straks med riktig årsak; vent kun når data faktisk kan komme.
 - **Farge-multisett:** «Red/Red» → «Haga RØD+RØD» (spilte samme løkke to ganger) — multisett,
   ikke sett, så gjentatt farge matcher.
 - **Garmin-backoff** ved 429/token-feil (eskalerende pause + varsel), **inkrementell state-lagring**
