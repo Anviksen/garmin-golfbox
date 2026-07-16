@@ -29,6 +29,9 @@ drift). Denne fila er *hvordan vi jobber* — prinsippene enhver økt skal følg
 Aktiver alltid `.venv` og sett `GOLFBOX_HEADLESS=1`. Sandkassen har ikke nettverk til
 GolfBox/Supabase/ntfy og kan ikke kjøre Playwright-flyten.
 
+- `python3 tests/test_logic.py` — **KJØR FØR HVER COMMIT.** Raske enhetstester på ren
+  logikk (ingen nettleser, ~0.5 sek). Fanger regresjoner umiddelbart. Legg til en test
+  når du fikser/legger til ren logikk.
 - `python3 test_rounds.py --all` — fasiten: tørr-match alle runder, viser ✓/⚠/✗.
 - `python3 debug_round.py <id>` — full dump av noter + faktisk valgt bane/tee.
 - `python3 diag_club.py "<klubb>"` — list en klubbs baner + tees live.

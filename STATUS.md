@@ -79,6 +79,25 @@ Mange generelle robusthets-fikser ble lagt til (alle mønster-fikser, verifisert
 - Debug-verktøy: `debug_round.py <id>` (ekte utfylling, poster ikke), `diag_club.py "<klubb>"`,
   env `GOLFBOX_FORCE_SUBMIT=1` + `GOLFBOX_DEBUG_SAVE=1` (dump GolfBox-respons ved lagring).
 
+## Kode-review (16. juli 2026)
+
+Gjennomført opprydding (commitet):
+- **Enhetstester** i `tests/test_logic.py` (32 stk, ingen nettleser) – kjør `python3
+  tests/test_logic.py` FØR hver commit. Dekker norm/folding, farge-multisett, n_holes,
+  `_holes_contiguous`, `_holes_postable`, dato/tid, GolfBox-feiltekst, bane-scoring.
+- **Stille except-er som skjulte logikk-feil logger nå** (fanget `_pick_reason`-typen).
+  De 54 nettleser-I/O-except-ene er bevisst stille (best-effort).
+- **Ren beslutnings-logikk trukket ut** til testbare funksjoner (`_holes_contiguous`,
+  `_holes_postable`).
+
+Dokumentert GJENSTÅENDE teknisk gjeld (egen fokusert økt, regresjon som port etter hvert uttrekk):
+- **`golfbox_post.py` er en ~1850-linjers monolitt.** Bør splittes i moduler
+  (matching / skjema-utfylling / submit / sesjon).
+- **Gud-funksjoner:** `fill_score_form` (~330 linjer) og `main` (~280) bør dekomponeres
+  (`fyll_dato/klubb/bane/hull/markør/tee`). De er lineære/lesbare nå, så dette er lesbarhet,
+  ikke korrekthet – lav hast, men viktig før multi-bruker.
+- Duplikat: `_color_set` vs `_color_multiset` (behold multisett, `_color_set` er ubrukt nå).
+
 ## Hva som er bevist å virke
 
 Live-testet fra klokka 15.07: farge-løkke-baner (Haga Red/Blue m.fl.), fler-bane-klubb (Losby
