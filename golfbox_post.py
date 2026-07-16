@@ -1491,7 +1491,7 @@ def main() -> None:
                 if status.get("tee_no_source"):
                     return "Garmin mangler tee/rating ennå"
                 if status["holes"] < status["n_holes"] and not status.get("holes_contiguous", True):
-                    _miss = [h.get("number") for h in holes if h.get("strokes") is None]
+                    _miss = status.get("holes_missing") or []
                     return (f"scorekortet mangler hull {', '.join(map(str, _miss))} midt inne "
                             f"– GolfBox krever spilte hull i rekkefølge fra hull 1. Fyll inn selv.")
                 if status["holes"] < status["n_holes"]:
