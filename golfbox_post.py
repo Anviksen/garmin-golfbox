@@ -415,6 +415,13 @@ def _color_set(text: str) -> set:
     return {_COLORS[tok] for tok in cleaned.split() if tok in _COLORS}
 
 
+def _color_multiset(text: str) -> tuple:
+    """Fargene som et sortert MULTISETT (beholder gjentakelser). «RØD+RØD» → (rød, rød),
+    «Blue/Red» → (blå, rød). Håndterer «spilte samme løkke to ganger», språk-/rekkefølge-uavh."""
+    cleaned = "".join(ch if ch.isalpha() else " " for ch in (text or "").lower())
+    return tuple(sorted(_COLORS[tok] for tok in cleaned.split() if tok in _COLORS))
+
+
 def choose_course(fr, targets, n_holes: int, garmin_pars=None, club_core: str = "",
                   garmin_course: str = ""):
     """Velg riktig bane innen valgt klubb – UTEN forhåndsspilling.
@@ -434,9 +441,9 @@ def choose_course(fr, targets, n_holes: int, garmin_pars=None, club_core: str = 
     # Farge-sett-match: fler-løkke-klubber der Garmin-navnet har en farge-kombinasjon
     # («Red/Blue») → finn GolfBox-banen med samme farge-SETT («Haga BLÅ+RØD»),
     # uavhengig av språk og rekkefølge. Generelt for alle farge-kombo-klubber.
-    gset = _color_set(garmin_course)
-    if len(gset) >= 2:
-        exact = [o for o in opts if _color_set(o["text"]) == gset]
+    gcols = _color_multiset(garmin_course)
+    if len(gcols) >= 2:
+        exact = [o for o in opts if _color_multiset(o["text"]) == gcols]
         if len(exact) == 1:
             return exact[0]["value"], "farge-sett"
 
