@@ -85,6 +85,38 @@ Mange generelle robusthets-fikser ble lagt til (alle mønster-fikser, verifisert
 - Debug-verktøy: `debug_round.py <id>` (ekte utfylling, poster ikke), `diag_club.py "<klubb>"`,
   env `GOLFBOX_FORCE_SUBMIT=1` + `GOLFBOX_DEBUG_SAVE=1` (dump GolfBox-respons ved lagring).
 
+## Multi-bruker steg 0: config parametrisert (17. juli 2026) — IKKE testet live ennå
+
+Forberedelse før flere brukere (se MULTIUSER_PLAN.md). Oppdaget at `golfbox_post.py`
+og `auto_sync.py` allerede kjører via subprocess+env (ikke direkte funksjonskall), så
+`golfbox_post.py` trengte nesten ingen endring — det er `auto_sync.py` som holdt
+global, import-tidspunkt-config.
+
+- **`auto_sync.py`:** ny `UserConfig`-dataclass + `build_legacy_config()` (bygger
+  identisk config fra `.env`/secrets som før) + `_apply_env(cfg)` (speiler cfg inn i
+  `os.environ` for varigheten av én brukers kjøring — subprosesser og `notify.py`
+  arver riktig verdier automatisk). `main()` er nå `sync_one_user(cfg)`; ny tynn
+  `main()` kaller `sync_one_user(build_legacy_config())`. Bonus-fiks: `load_dotenv()`
+  kjøres nå FØR config bygges (før ble `.env`-verdier for `GARMINTOKENS`/
+  `GOLFBOX_TEE_WAIT_TRIES` aldri lest lokalt — kun ekte env-variabler virket).
+- **`golfbox_post.py`/`fetch_garmin.py`:** ny `GOLFBOX_DATA_DIR`-env (default uendret:
+  `data/`) styrer `STATE_FILE` (økt/`golfbox_state.json`), `LOG_FILE`,
+  `last_reason.txt`, `golfbox_error.txt` og Garmin-rundedata. Uten dette ville to
+  brukeres GolfBox-økter kollidert i samme fil i en fremtidig loop. `golfbox_course_map.json`
+  (lærte bane-mappinger) er BEVISST fortsatt delt/global — nettverkseffekt, ikke per bruker.
+  Designkrav: brukere må behandles STRENGT SEKVENSIELT (aldri parallelt) siden env
+  speiles inn i samme prosess.
+- **Verifisert i sandkasse (ingen nettverkstilgang der):** `py_compile` alle tre
+  filer, `tests/test_logic.py` (32/32 bestått, uendret), og et eget smoke-test som
+  bygger både legacy-config og en simulert fremtidig bruker-config og bekrefter
+  isolasjon (ulik `data_dir`/creds/tokenstore, delt `COURSE_MAP_FILE` upåvirket).
+- **IKKE verifisert:** ekte kjøring (`python3 auto_sync.py` / `test_rounds.py --all`)
+  krever nettverk til Garmin/GolfBox/Supabase — må kjøres på Mac-en FØR commit, som
+  vanlig (se CLAUDE.md: tørr-test før commit).
+- **Neste steg mot multi-bruker:** Supabase-skjema (`users`, `user_round_state`) +
+  kryptering + en løkke som bygger én `UserConfig` per aktiv bruker og kaller
+  `sync_one_user()` sekvensielt — selve synk-logikken er nå klar for det.
+
 ## Kode-review (16. juli 2026)
 
 Gjennomført opprydding (commitet):

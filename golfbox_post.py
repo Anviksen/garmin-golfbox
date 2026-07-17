@@ -41,8 +41,14 @@ except ImportError:
         return None
 
 PROJECT_DIR = Path(__file__).resolve().parent
-STATE_FILE = PROJECT_DIR / "data" / "golfbox_state.json"
-LOG_FILE = PROJECT_DIR / "data" / "golfbox_post.log"
+# GOLFBOX_DATA_DIR lar en fremtidig multi-bruker-kjøring isolere hver brukers
+# GolfBox-økt (storage_state) og logg i egen mappe - uten dette ville to brukeres
+# økter kollidere i samme fil. Default uendret (data/) for dagens enkelt-bruker-drift.
+DATA_DIR = Path(os.getenv("GOLFBOX_DATA_DIR", str(PROJECT_DIR / "data")))
+STATE_FILE = DATA_DIR / "golfbox_state.json"
+LOG_FILE = DATA_DIR / "golfbox_post.log"
+# Lærte bane-mappinger er BEVISST delt/global (nettverkseffekt - se SENTRALISERING.md),
+# ikke per bruker.
 COURSE_MAP_FILE = PROJECT_DIR / "golfbox_course_map.json"
 
 
@@ -1535,7 +1541,7 @@ def main() -> None:
                     return "GolfBox-økt utløp under lagring – prøver igjen automatisk"
                 if submit_result == "unsaved":
                     try:
-                        _e = (PROJECT_DIR / "data" / "golfbox_error.txt").read_text(
+                        _e = (DATA_DIR / "golfbox_error.txt").read_text(
                             encoding="utf-8").strip()
                     except Exception:
                         _e = ""
@@ -1561,7 +1567,7 @@ def main() -> None:
                     return "markør ikke satt"
                 return "trenger manuell sjekk"
             try:
-                _rf = PROJECT_DIR / "data" / "last_reason.txt"
+                _rf = DATA_DIR / "last_reason.txt"
                 _rf.parent.mkdir(parents=True, exist_ok=True)
                 _rf.write_text(_pick_reason(), encoding="utf-8")
             except Exception as e:
@@ -1747,7 +1753,7 @@ def submit_score(fr) -> str:
     except Exception:
         ctx = None
     try:  # nullstill evt. gammel feiltekst
-        (PROJECT_DIR / "data" / "golfbox_error.txt").unlink()
+        (DATA_DIR / "golfbox_error.txt").unlink()
     except Exception:
         pass
 
@@ -1803,7 +1809,7 @@ def submit_score(fr) -> str:
         if err:
             log(f"  ⚠️ GolfBox avviste lagringen: «{err}». Ikke lagret – flagges manuelt.")
             try:
-                (PROJECT_DIR / "data" / "golfbox_error.txt").write_text(err, encoding="utf-8")
+                (DATA_DIR / "golfbox_error.txt").write_text(err, encoding="utf-8")
             except Exception:
                 pass
             return "unsaved"

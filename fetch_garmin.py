@@ -43,7 +43,10 @@ except ImportError:
 
 # --- Kataloger og filer -----------------------------------------------------
 PROJECT_DIR = Path(__file__).resolve().parent
-DATA_DIR = PROJECT_DIR / "data"
+# GOLFBOX_DATA_DIR lar en fremtidig multi-bruker-kjøring isolere hver brukers data
+# i egen mappe (f.eks. data/users/<id>/); default er uendret (data/) for dagens
+# enkelt-bruker-drift.
+DATA_DIR = Path(os.getenv("GOLFBOX_DATA_DIR", str(PROJECT_DIR / "data")))
 SCORECARDS_DIR = DATA_DIR / "scorecards"   # detaljert hull-for-hull per runde
 SHOTS_DIR = DATA_DIR / "shots"             # slag-for-slag per runde
 

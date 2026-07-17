@@ -21,6 +21,7 @@ import json
 import os
 import subprocess
 import sys
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -41,33 +42,118 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fetch_garmin import extract_scorecard_list, get_id  # noqa: E402
 
 PROJECT_DIR = Path(__file__).resolve().parent
-STATE_FILE = PROJECT_DIR / "data" / "posted.json"
-LOG_FILE = PROJECT_DIR / "data" / "auto_sync.log"
 FETCH_SCRIPT = PROJECT_DIR / "fetch_garmin.py"
 POST_SCRIPT = PROJECT_DIR / "golfbox_post.py"
-TOKENSTORE = os.getenv("GARMINTOKENS", "~/.garminconnect")
-# Hvor mange kjøringer vi venter på at Garmin fyller inn tee-data før vi gir opp
-# og ber brukeren fullføre selv. Garmin kan bruke god stund på tee/rating, så vi er
-# rause: 12 × ~5 min ≈ 60 min. Runden postes automatisk så snart tee-en dukker opp;
-# først etter en time gir vi opp og ber deg fullføre selv. Justerbart via env.
-MAX_TEE_WAIT = int(os.getenv("GOLFBOX_TEE_WAIT_TRIES", "12"))
+
+
+@dataclass
+class UserConfig:
+    """Alt som er PER BRUKER i en synk-kjøring. I dag bygges det kun fra
+    .env/GitHub-secrets via build_legacy_config() (én bruker = deg). Når multi-bruker
+    kommer (se MULTIUSER_PLAN.md), bygges én UserConfig per rad fra Supabase, og
+    sync_one_user() kalles i en løkke – selve synk-logikken under er allerede generell.
+
+    VIKTIG: brukere må behandles STRENGT SEKVENSIELT (én om gangen i samme prosess).
+    _apply_env() speiler cfg inn i os.environ, som både notify.py (samme prosess) og
+    fetch_garmin.py/golfbox_post.py (subprosesser) leser fra – parallell kjøring for
+    flere brukere ville race disse."""
+    user_id: str = "local"
+    label: str = "deg"                     # menneskelig navn til logglinjer
+    tokenstore: str = "~/.garminconnect"
+    golfbox_username: str | None = None
+    golfbox_password: str | None = None
+    marker_memberno: str | None = None
+    marker_name: str | None = None
+    notify_email: str | None = None
+    ntfy_topic: str | None = None
+    ntfy_server: str | None = None
+    data_dir: Path = field(default_factory=lambda: PROJECT_DIR / "data")
+    max_tee_wait: int = 12
+    # Sant kun for dagens enkelt-bruker-drift: commit+push state til det (offentlige)
+    # repoet. Multi-bruker-state hører hjemme i Supabase (user_round_state), ikke git
+    # – se MULTIUSER_PLAN.md. Sett False for enhver fremtidig multi-bruker-config.
+    persist_state_to_git: bool = True
+
+    @property
+    def state_file(self) -> Path:
+        return self.data_dir / "posted.json"
+
+    @property
+    def log_file(self) -> Path:
+        return self.data_dir / "auto_sync.log"
+
+
+def build_legacy_config() -> UserConfig:
+    """Bygger config fra dagens .env/GitHub-secrets – IDENTISK oppførsel som før
+    denne refaktoreringen. Kall load_dotenv() FØR denne, ellers leses ikke .env
+    lokalt (kun ekte env-variabler, som i skyen)."""
+    return UserConfig(
+        user_id="local",
+        label="deg",
+        tokenstore=os.getenv("GARMINTOKENS", "~/.garminconnect"),
+        golfbox_username=os.getenv("GOLFBOX_USERNAME"),
+        golfbox_password=os.getenv("GOLFBOX_PASSWORD"),
+        marker_memberno=os.getenv("GOLFBOX_MARKER_MEMBERNO"),
+        marker_name=os.getenv("GOLFBOX_MARKER_NAME"),
+        notify_email=os.getenv("NOTIFY_EMAIL"),
+        ntfy_topic=os.getenv("NTFY_TOPIC"),
+        ntfy_server=os.getenv("NTFY_SERVER"),
+        data_dir=PROJECT_DIR / "data",
+        # Hvor mange kjøringer vi venter på at Garmin fyller inn tee-data før vi gir
+        # opp og ber brukeren fullføre selv. Garmin kan bruke god stund på tee/rating,
+        # så vi er rause: 12 × ~5 min ≈ 60 min. Runden postes automatisk så snart
+        # tee-en dukker opp; først etter en time gir vi opp. Justerbart via env.
+        max_tee_wait=int(os.getenv("GOLFBOX_TEE_WAIT_TRIES", "12")),
+        persist_state_to_git=True,
+    )
+
+
+def _apply_env(cfg: UserConfig) -> None:
+    """Speil cfg inn i os.environ for varigheten av DENNE brukerens kjøring. Gjør at
+    fetch_garmin.py og golfbox_post.py (kalt som subprosess, arver os.environ) og
+    notify.py (samme prosess, leser os.getenv ved hvert kall) automatisk bruker
+    riktig bruker – uten å tre cfg gjennom hvert eneste kall. Trygt KUN fordi brukere
+    behandles strengt sekvensielt, aldri parallelt/samtidig."""
+    env_map = {
+        "GARMINTOKENS": cfg.tokenstore,
+        "GOLFBOX_USERNAME": cfg.golfbox_username,
+        "GOLFBOX_PASSWORD": cfg.golfbox_password,
+        "GOLFBOX_MARKER_MEMBERNO": cfg.marker_memberno,
+        "GOLFBOX_MARKER_NAME": cfg.marker_name,
+        "NOTIFY_EMAIL": cfg.notify_email,
+        "NTFY_TOPIC": cfg.ntfy_topic,
+        "NTFY_SERVER": cfg.ntfy_server,
+        "GOLFBOX_DATA_DIR": str(cfg.data_dir),
+    }
+    for key, value in env_map.items():
+        if value:
+            os.environ[key] = str(value)
+        else:
+            os.environ.pop(key, None)
+
+
+# Aktiv brukerkonfig for inneværende kjøring. Settes av sync_one_user() før noe annet
+# skjer – modul-globalen finnes kun for at log()/load_state()/osv. slipper å ta cfg
+# som parameter i hvert eneste kall (se docstring på UserConfig).
+CFG: UserConfig = UserConfig()
 
 
 def log(msg: str) -> None:
-    line = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  {msg}"
+    prefix = f"[{CFG.label}]  " if CFG.user_id != "local" else ""
+    line = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  {prefix}{msg}"
     print(line, flush=True)
     try:
-        LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with LOG_FILE.open("a", encoding="utf-8") as f:
+        CFG.log_file.parent.mkdir(parents=True, exist_ok=True)
+        with CFG.log_file.open("a", encoding="utf-8") as f:
             f.write(line + "\n")
     except Exception:
         pass
 
 
 def load_state() -> dict:
-    if STATE_FILE.exists():
+    if CFG.state_file.exists():
         try:
-            data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+            data = json.loads(CFG.state_file.read_text(encoding="utf-8"))
             data.setdefault("seen", [])
             data.setdefault("posted", [])
             data.setdefault("needs_manual", [])
@@ -82,8 +168,8 @@ def load_state() -> dict:
 
 
 def save_state(state: dict) -> None:
-    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    STATE_FILE.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
+    CFG.state_file.parent.mkdir(parents=True, exist_ok=True)
+    CFG.state_file.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def garmin_summary_ids() -> list[int]:
@@ -94,7 +180,7 @@ def garmin_summary_ids() -> list[int]:
     «save round» på klokka (roundInProgress=False). Da den ikke markeres som sett, blir den
     plukket opp automatisk når den er ferdigstilt."""
     client = Garmin()
-    client.login(TOKENSTORE)  # kun token – ingen passord/MFA
+    client.login(CFG.tokenstore)  # kun token – ingen passord/MFA
     summary = client.get_golf_summary(limit=50)
     ids, skipped = [], 0
     for sc in extract_scorecard_list(summary):
@@ -116,13 +202,16 @@ def persist_state_now(msg: str) -> None:
     """Commit+push state UMIDDELBART (kun i skyen). Slik er en postet runde alltid
     «husket» i repoet, selv om jobben skulle dø før slutt-steget → aldri dobbel-posting.
     Lokalt (utenfor GitHub Actions) er dette en trygg no-op. Best effort – logger ved feil."""
+    if not CFG.persist_state_to_git:
+        return  # multi-bruker-state lagres i Supabase, ikke git – se MULTIUSER_PLAN.md
     if os.getenv("GITHUB_ACTIONS") != "true":
         return
     try:
+        rel_state = str(CFG.state_file.relative_to(PROJECT_DIR))
         subprocess.run(["git", "config", "user.name", "auto-sync"], cwd=str(PROJECT_DIR), check=False)
         subprocess.run(["git", "config", "user.email", "auto-sync@users.noreply.github.com"],
                        cwd=str(PROJECT_DIR), check=False)
-        subprocess.run(["git", "add", "data/posted.json"], cwd=str(PROJECT_DIR), check=False)
+        subprocess.run(["git", "add", rel_state], cwd=str(PROJECT_DIR), check=False)
         # noe å committe?
         if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=str(PROJECT_DIR)).returncode != 0:
             subprocess.run(["git", "commit", "-m", msg], cwd=str(PROJECT_DIR), check=False)
@@ -143,7 +232,7 @@ def run(cmd: list[str], extra_env: dict | None = None) -> int:
 def round_name(rid: int) -> str:
     """Slå opp banenavn for en runde-ID fra lokal data (for varsler)."""
     try:
-        raw = json.loads((PROJECT_DIR / "data" / "all_rounds.json").read_text(encoding="utf-8"))
+        raw = json.loads((CFG.data_dir / "all_rounds.json").read_text(encoding="utf-8"))
         for r in raw.get("runder", []):
             s = r.get("summary", {})
             if s.get("id") == rid:
@@ -153,8 +242,13 @@ def round_name(rid: int) -> str:
     return str(rid)
 
 
-def main() -> None:
-    load_dotenv(PROJECT_DIR / ".env")
+def sync_one_user(cfg: UserConfig) -> None:
+    """Kjør én full synk-syklus for ÉN bruker. I dag kalt med build_legacy_config()
+    (deg). En fremtidig multi-bruker-runner kaller denne i en løkke, én UserConfig per
+    aktiv bruker fra Supabase – synk-logikken under er allerede generell."""
+    global CFG
+    CFG = cfg
+    _apply_env(cfg)
     log("=== auto_sync start ===")
 
     state = load_state()
@@ -233,7 +327,7 @@ def main() -> None:
     for rid in new_ids:
         name = round_name(rid)
         log(f"→ Sender runde {rid} ({name}) til Golfbox ...")
-        _reason_file = PROJECT_DIR / "data" / "last_reason.txt"
+        _reason_file = CFG.data_dir / "last_reason.txt"
         try:
             _reason_file.unlink()  # nullstill så vi ikke arver forrige rundes grunn
         except Exception:
@@ -269,7 +363,7 @@ def main() -> None:
             # prøv igjen neste kjøring, opp til et tak. Ingen mail ennå.
             tries = state["pending"].get(str(rid), 0) + 1
             state["pending"][str(rid)] = tries
-            if tries >= MAX_TEE_WAIT:
+            if tries >= CFG.max_tee_wait:
                 state["seen"].append(rid)
                 state["needs_manual"].append(rid)
                 state["pending"].pop(str(rid), None)
@@ -278,7 +372,7 @@ def main() -> None:
                     f"Flagger for manuell fullføring.")
             else:
                 log(f"   ⧗ Runde {rid}: venter på Garmin-data (tee/score) "
-                    f"(forsøk {tries}/{MAX_TEE_WAIT}). Prøver igjen neste kjøring.")
+                    f"(forsøk {tries}/{CFG.max_tee_wait}). Prøver igjen neste kjøring.")
         elif rc == 5:
             # Klubben finnes ikke i GolfBox (privat/utland/ikke-WHS) – ikke leverbar.
             state["seen"].append(rid)
@@ -317,6 +411,12 @@ def main() -> None:
         log(f"(varsling hoppet over: {e})")
 
     log("=== auto_sync ferdig ===")
+
+
+def main() -> None:
+    """Entry point for dagens enkelt-bruker-drift (lokalt og i GitHub Actions)."""
+    load_dotenv(PROJECT_DIR / ".env")
+    sync_one_user(build_legacy_config())
 
 
 if __name__ == "__main__":
