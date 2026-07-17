@@ -12,8 +12,14 @@ runden automatisk lagt inn i GolfBox (norsk WHS-handicap) — riktig klubb, bane
 og score — og lagt til godkjenning hos markøren. Alt kjører i skyen (GitHub Actions),
 helt uten at Mac-en din er på. Du får push på mobilen når noe skjer.
 
-Flyt: Garmin Connect → (hver ~10 min) GitHub Actions → oppdag ny runde → match
+Flyt: Garmin Connect → (hver ~5–10 min) GitHub Actions → oppdag FERDIG runde → match
 klubb/bane/tee → fyll GolfBox-skjema via Playwright → lagre → varsle (mobil + e-post).
+
+**KJERNE-REGEL:** Garmin synker en runde LIVE mens den spilles (`roundInProgress=True`,
+med delvis score). Vi behandler KUN runder der `roundInProgress=False` (du har trykket
+«save round» på klokka). Ellers ville vi prøvd å poste en halvspilt runde, feilet, og
+aldri postet den ferdige. Filtreres i `auto_sync.garmin_summary_ids()` – pågående runder
+markeres ikke som sett, så de plukkes opp automatisk når de er ferdigstilt.
 
 ## Arkitektur / nøkkelfiler
 
