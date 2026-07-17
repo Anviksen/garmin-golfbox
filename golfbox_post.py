@@ -963,9 +963,14 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
     _wait_select_stable(fr, "fld_Tee", settle=1.5, timeout=10.0)
     _ensure_tees_loaded(fr, timeout=8.0)  # tee-lista kan være tom pga async-race
     avail_tees = [o.get("text", "").strip() for o in _options(fr, "fld_Tee") if o.get("text", "").strip()]
-    tee_target = str(rnd.get("teeBox") or (override.get("tee") or "").strip() or "")
-    # Ga Garmin i det hele tatt et tee-signal? (Ofte None rett etter runden – Garmin
-    # fyller tee/rating med forsinkelse.) Da er dette en VENT-sak, ikke en match-feil.
+    garmin_tee = str(rnd.get("teeBox") or "").strip()
+    learned_tee = (override.get("tee") or "").strip()
+    tee_target = garmin_tee or learned_tee
+    # Ga Garmin i det hele tatt et tee-signal? (Ofte None rett etter runden.) Har vi en
+    # LÆRT tee for banen fra sist, bruker vi den (best-effort, flagges ⚠) i stedet for å
+    # vente/feile. Kun HELT uten tee OG uten lært tee er dette en ren VENT-sak.
+    _garmin_gave_tee = bool(garmin_tee) or (rnd.get("teeBoxRating") is not None)
+    _tee_from_learning = bool(tee_target) and not _garmin_gave_tee
     status["tee_no_source"] = (not tee_target) and (rnd.get("teeBoxRating") is None)
 
     tee_val, tee_text, how_tee = None, "", ""
@@ -1016,6 +1021,12 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
         tee_val, tee_text = tee_nearest[0], tee_nearest[1]
         how_tee = f"best-effort Δ{tee_nearest[2]}"
         status["tee_uncertain"] = True
+
+    # Kom tee-en fra en LÆRT verdi (Garmin ga ingenting)? Da er den en gjetning på din
+    # forrige tee på banen → flagg for dobbeltsjekk (du kan ha byttet tee).
+    if tee_val and _tee_from_learning:
+        status["tee_uncertain"] = True
+        how_tee = f"{how_tee} · lært (Garmin manglet tee)"
 
     if tee_val:
         if _pick_option(fr, "fld_Tee", tee_val, tee_text):
@@ -1456,6 +1467,7 @@ def main() -> None:
         notes, status = fill_score_form(target, rnd)
         for n in notes:
             log("  " + n)
+        _sel = _read_selection(target)  # les valgt klubb/bane/tee FØR lagring lukker skjemaet
 
         # Hull-antallet er AUTORITATIVT ved opplasting (score-ene lastes opp samlet fra
         # klokka). Har du lastet opp ≥10 hull, forsøker vi å poste – og lar GOLFBOX være
@@ -1481,6 +1493,15 @@ def main() -> None:
                     extra = " ⚠️ (tee valgt på skjønn – dobbeltsjekk før godkjenning!)" \
                         if status.get("tee_uncertain") else ""
                     log(f"✅ LAGRET i Golfbox – runden ligger nå til godkjennelse.{extra}")
+                    # Lær bane/tee for denne banen (sentralbasen) – så neste gang Garmin
+                    # mangler tee, gjenbruker vi den. KUN når tee-en var sikker (ikke gjettet).
+                    if not status.get("tee_uncertain") and _sel.get("tee"):
+                        try:
+                            import course_matcher
+                            course_matcher.learn(rnd.get("course", ""), rnd.get("lat"),
+                                                 rnd.get("lon"), _sel)
+                        except Exception as e:
+                            log(f"(kunne ikke lære tee: {e})")
                 elif submit_result == "session":
                     log("⏸️ AUTO: økten utløp under lagring – ingenting lagret. "
                         "Prøver igjen neste kjøring.")
@@ -1504,7 +1525,7 @@ def main() -> None:
                     f"sjekk (klubb={status['club']}, bane={status['course']}, tee={status['tee']}, "
                     f"hull={status['holes']}/{status['n_holes']}, markør={status['marker']}). "
                     f"Avslutter med kode {_code}.")
-            _log_attempt(rnd, _read_selection(target), status, notes, posted)
+            _log_attempt(rnd, _sel, status, notes, posted)
 
             # Skriv en MENNESKELIG grunn til fil, så auto_sync kan ta den med i push/mail.
             def _pick_reason():
