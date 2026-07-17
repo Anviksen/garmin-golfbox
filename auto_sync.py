@@ -87,18 +87,28 @@ def save_state(state: dict) -> None:
 
 
 def garmin_summary_ids() -> list[int]:
-    """Logg inn med lagret token og hent ID-ene til de siste rundene."""
+    """Logg inn med lagret token og hent ID-ene til FERDIGE runder.
+
+    VIKTIG: Garmin synker en runde LIVE mens den spilles (roundInProgress=True), med
+    delvis score. En slik runde skal IKKE forsøkes postet – vi venter til du har trykket
+    «save round» på klokka (roundInProgress=False). Da den ikke markeres som sett, blir den
+    plukket opp automatisk når den er ferdigstilt."""
     client = Garmin()
     client.login(TOKENSTORE)  # kun token – ingen passord/MFA
     summary = client.get_golf_summary(limit=50)
-    ids = []
+    ids, skipped = [], 0
     for sc in extract_scorecard_list(summary):
+        if sc.get("roundInProgress"):
+            skipped += 1
+            continue  # runde spilles fortsatt – hopp over til den er lagret/ferdig
         sc_id = get_id(sc)
         if sc_id is not None:
             try:
                 ids.append(int(sc_id))
             except (ValueError, TypeError):
                 pass
+    if skipped:
+        log(f"⏭️  Hoppet over {skipped} runde(r) som spilles akkurat nå (roundInProgress).")
     return ids
 
 

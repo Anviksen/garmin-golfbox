@@ -149,6 +149,7 @@ def normalize_round(entry: dict) -> dict:
         "lat": lat,
         "lon": lon,
         "date": summary.get("startTime"),
+        "roundInProgress": bool(summary.get("roundInProgress")),
         "holesCompleted": summary.get("holesCompleted"),
         "strokes": strokes,
         "par": total_par,
