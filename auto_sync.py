@@ -112,6 +112,27 @@ def garmin_summary_ids() -> list[int]:
     return ids
 
 
+def persist_state_now(msg: str) -> None:
+    """Commit+push state UMIDDELBART (kun i skyen). Slik er en postet runde alltid
+    «husket» i repoet, selv om jobben skulle dø før slutt-steget → aldri dobbel-posting.
+    Lokalt (utenfor GitHub Actions) er dette en trygg no-op. Best effort – logger ved feil."""
+    if os.getenv("GITHUB_ACTIONS") != "true":
+        return
+    try:
+        subprocess.run(["git", "config", "user.name", "auto-sync"], cwd=str(PROJECT_DIR), check=False)
+        subprocess.run(["git", "config", "user.email", "auto-sync@users.noreply.github.com"],
+                       cwd=str(PROJECT_DIR), check=False)
+        subprocess.run(["git", "add", "data/posted.json"], cwd=str(PROJECT_DIR), check=False)
+        # noe å committe?
+        if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=str(PROJECT_DIR)).returncode != 0:
+            subprocess.run(["git", "commit", "-m", msg], cwd=str(PROJECT_DIR), check=False)
+            subprocess.run(["git", "pull", "--rebase", "--autostash"], cwd=str(PROJECT_DIR), check=False)
+            subprocess.run(["git", "push"], cwd=str(PROJECT_DIR), check=False)
+            log(f"   💾 State pushet umiddelbart ({msg}).")
+    except Exception as e:
+        log(f"   (umiddelbar state-push hoppet over: {e})")
+
+
 def run(cmd: list[str], extra_env: dict | None = None) -> int:
     env = dict(os.environ)
     if extra_env:
@@ -233,6 +254,10 @@ def main() -> None:
             else:
                 posted_now.append((name, ""))
                 log(f"   ✅ Runde {rid} lagret i Golfbox (til godkjennelse).")
+            # Persister UMIDDELBART: en postet runde skal aldri kunne postes to ganger,
+            # selv om jobben dør før slutt-steget.
+            save_state(state)
+            persist_state_now(f"auto-sync: postet runde {rid}")
         elif rc == 2:
             # Golfbox-økt utløpt – ingen vits å prøve flere nå. IKKE marker som sett,
             # så den prøves igjen ved neste kjøring etter at du har fornyet økten.
