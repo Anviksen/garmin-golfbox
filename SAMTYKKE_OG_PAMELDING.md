@@ -1,9 +1,19 @@
 # Samtykketekst + påmeldingsskjema til venner
 
 Dette er innholdet du trenger for å invitere en venn inn i multi-bruker-testen.
-Bygg selve skjemaet i Google Forms (gratis, raskt, godt nok for en håndfull
-personer) og lim inn tekstene under de riktige stedene. Se
-`MULTIUSER_PLAN.md` for hvor dette passer inn i helheten.
+Skjemaet er bygget i Google Forms og publisert (18. juli 2026):
+
+**Skjema-lenke (del denne med venner):**
+https://docs.google.com/forms/d/e/1FAIpQLSfvWAstOt-xULO9NKcFQZtyr3B5eAqlU1Vm8gf3t6XdFgapYQ/viewform
+
+Delingsinnstilling: «Alle som har lenken» (ikke offentlig søkbar/indeksert) –
+matcher anbefalingen i driftsnotatet under. Sjekk selv i Innstillinger-fanen om
+«Samle inn e-postadresser» er på (krever Google-innlogging for å svare) – det
+sto som «Ikke delt» ved publisering, verdt å dobbeltsjekke om du vil ha det slik.
+
+Innholdet under er tekstene som faktisk ligger i skjemaet nå, til referanse og
+for å redigere direkte i Google Forms ved behov. Se `MULTIUSER_PLAN.md` for
+hvor dette passer inn i helheten.
 
 ---
 

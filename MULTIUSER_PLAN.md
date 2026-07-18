@@ -207,11 +207,14 @@ OG om at dette er et hobbyprosjekt uten garantier), samtykke-avkrysning
 (inkl. den ærlige Garmin-ToS-formuleringen fra tidligere i planen), full
 feltliste til selve Google-skjemaet, og et driftsnotat (slett skjema-svar med
 passord rett etter provisjonering – ikke la dem bli liggende i et regneark).
-Selve Google Forms-skjemaet er IKKE bygget ennå – det gjøres manuelt av eier
-ut fra denne fila, eller Claude kan bygge det via nettleser om ønskelig.
+**Google-skjemaet er bygget og publisert (18. juli 2026)** – se lenke og
+detaljer i `SAMTYKKE_OG_PAMELDING.md`. Delt med «alle som har lenken».
+Verifisert live i nettleser: alle felt, sikkerhetsinfo-blokk og
+samtykke-avkrysning gjengis riktig for en respondent.
 
 **Gjenstår før dette er reelt multi-bruker for VENNER (neste steg):**
-1. Bygg selve Google-skjemaet fra `SAMTYKKE_OG_PAMELDING.md`.
+1. Del skjema-lenken med første ekte venn, og provisjoner dem inn via
+   `provision_user.py` når svaret kommer inn.
 2. Garmin-token gjøres fortsatt én-og-én, i person – ikke via skjema (se de
    opprinnelige åpne spørsmålene over).
 3. Egen GitHub Actions-workflow som kjører `run_all_users.py` på en tidsplan,
