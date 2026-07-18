@@ -1,0 +1,62 @@
+name: Multi-bruker-sync (Garmin til Golfbox)
+
+# NY, SEPARAT workflow for multi-bruker-fasen - rører IKKE auto-sync.yml
+# (enkelt-bruker-jobben din kjører helt uendret ved siden av denne).
+#
+# Kun workflow_dispatch (manuell "Run workflow"-knapp) inntil dette er
+# observert å virke live i skyen minst én gang - IKKE koblet til en
+# tidsplan ennå. Se MULTIUSER_PLAN.md for veien videre.
+#
+# Ingen Garmin-/Golfbox-secrets her (i motsetning til auto-sync.yml) - hver
+# brukers creds hentes kryptert fra Supabase og dekrypteres i minnet av
+# run_all_users.py selv. Ingenting committes tilbake til repoet - state
+# skrives til Supabase (user_round_state), ikke til data/posted.json.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: multiuser-sync      # aldri to kjøringer samtidig
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30       # øk etter hvert som antall brukere vokser
+    env:
+      GOLFBOX_AUTO_SUBMIT: "0"   # DRY RUN til dere har sett en trygg kjøring i loggen.
+                                 # Sett til "1" for ekte lagring når dere stoler på den.
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+      GMAIL_USER: ${{ secrets.GMAIL_USER }}
+      GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+    steps:
+      - name: Hent koden
+        uses: actions/checkout@v4
+
+      - name: Sett opp Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer avhengigheter
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+          sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Synk sentralbasen ned (delt bane-database)
+        run: python sync_registry.py || echo "sentralbase ikke satt opp – hopper over"
+
+      - name: Kjør multi-bruker-runner (synlig nettleser under virtuell skjerm)
+        run: xvfb-run -a python run_all_users.py
+
+      - name: Last opp kjøringsloggen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-all-users-log
+          path: data/run_all_users.log
+          if-no-files-found: ignore

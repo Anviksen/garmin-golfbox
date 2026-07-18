@@ -212,12 +212,49 @@ detaljer i `SAMTYKKE_OG_PAMELDING.md`. Delt med «alle som har lenken».
 Verifisert live i nettleser: alle felt, sikkerhetsinfo-blokk og
 samtykke-avkrysning gjengis riktig for en respondent.
 
+**Steg 5 gjennomført (18. juli 2026): drift/feilsøking + skyjobb for multi-bruker.**
+Bygget som svar på konkrete spørsmål om skala/kost/drift (se chat-historikk):
+
+- **`telemetry.py`** filtrerer nå på bruker: `python3 telemetry.py <navn>` viser
+  kun én persons forsøk, og uten argument vises en «forsøk per bruker»-oversikt
+  når multi-bruker-data finnes. Slår opp visningsnavn via `user_store` (best
+  effort – virker som før hvis service-role ikke er satt opp). Verifisert i
+  sandkasse: eksakt/delvis/tvetydig navnesøk, og at manglende nettverkstilgang
+  feiler til tom liste i stedet for krasj.
+- **`run_all_users.py`** logger nå vedvarende til `data/run_all_users.log`
+  (egen fil på toppnivå, IKKE inni temp-mappa som slettes) – en kjøring kan
+  gjennomgås etterpå. Verifisert i sandkasse.
+- **`test_user_notify.py <navn-eller-id>`** – nytt verktøy: sender en EKTE
+  test-e-post + test-push til én bestemt brukers registrerte kontaktinfo, uten
+  å vente på en ekte golfrunde. Nyttig both for å bevise varslingskjeden virker
+  OG som generelt feilsøkingsverktøy («jeg fikk ikke varsel» → kjør denne).
+  Oppslags-logikken (navn/id, tvetydighet) verifisert i sandkasse; selve
+  sendingen krever ekte nettverk – kjør på Mac-en.
+- **`.github/workflows/multiuser-sync.yml`** – ny, SEPARAT skyjobb (rører ikke
+  `auto-sync.yml`). Kun `workflow_dispatch` (manuell trigger) ennå, ingen
+  tidsplan. `GOLFBOX_AUTO_SUBMIT="0"` (dry run) som standard til dere har sett
+  en trygg kjøring i loggen – bytt til `"1"` når dere stoler på den. Ingen
+  Garmin/Golfbox-secrets i workflowen (hentes kryptert fra Supabase per bruker
+  i selve scriptet). Laster opp `run_all_users.log` som nedlastbar artifact
+  etter hver kjøring. YAML-struktur verifisert i sandkasse.
+
+**Svar på driftsspørsmålene (fra chatten, til referanse):**
+- Ingen hardkodet maks-grense i koden; kun reelt bevist for 1 bruker så langt.
+- Kostnad: $0 i dag (offentlig repo = gratis Actions; Supabase gratis-plan gir
+  500 MB DB / 5 GB egress/mnd – langt unna med tekstrader for en vennegjeng).
+- Kjøring er STRENGT sekvensiell med vilje – 10 samtidige runder køer opp,
+  kolliderer ikke. Frem til `multiuser-sync.yml` faktisk trigges (manuelt
+  inntil videre), skjer ingenting automatisk for venner.
+
 **Gjenstår før dette er reelt multi-bruker for VENNER (neste steg):**
-1. Del skjema-lenken med første ekte venn, og provisjoner dem inn via
+1. Kjør `test_user_notify.py` for testbrukeren for å bevise varsling live.
+2. Trigg `multiuser-sync.yml` manuelt fra GitHub Actions-fanen, se på loggen/
+   artifacten, bekreft trygg kjøring i skyen (dry run).
+3. Del skjema-lenken med første ekte venn, og provisjoner dem inn via
    `provision_user.py` når svaret kommer inn.
-2. Garmin-token gjøres fortsatt én-og-én, i person – ikke via skjema (se de
+4. Garmin-token gjøres fortsatt én-og-én, i person – ikke via skjema (se de
    opprinnelige åpne spørsmålene over).
-3. Egen GitHub Actions-workflow som kjører `run_all_users.py` på en tidsplan,
-   når (1)–(2) er bevist trygt.
-4. (Parkert på brukerens ønske) NGF/GolfBox-kontakt om offisiell API – ikke
+5. Når (1)–(4) er bevist trygt: sett `GOLFBOX_AUTO_SUBMIT="1"` i workflowen,
+   og vurder om/når en tidsplan (schedule) skal legges til.
+6. (Parkert på brukerens ønske) NGF/GolfBox-kontakt om offisiell API – ikke
    noe tema akkurat nå, kan tas opp igjen senere ved behov.

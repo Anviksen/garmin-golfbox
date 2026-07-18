@@ -45,13 +45,29 @@ import tarfile
 import tempfile
 from pathlib import Path
 
+from datetime import datetime
+
 import auto_sync
 import user_crypto
 import user_store
 
+PROJECT_DIR = Path(__file__).resolve().parent
+# Vedvarende logg for HELE kjøringen (på tvers av alle brukere) - i motsetning
+# til CFG.log_file i auto_sync (som lever inni temp-mappa og slettes med den).
+# Slik kan en kjøring gjennomgås etterpå, ikke bare mens terminalen er åpen -
+# viktig før dette kobles til en skyjobb der du ikke sitter og ser på.
+RUNNER_LOG_FILE = PROJECT_DIR / "data" / "run_all_users.log"
+
 
 def _log(label: str, msg: str) -> None:
-    print(f"[{label}] {msg}", flush=True)
+    line = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  [{label}]  {msg}"
+    print(line, flush=True)
+    try:
+        RUNNER_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with RUNNER_LOG_FILE.open("a", encoding="utf-8") as f:
+            f.write(line + "\n")
+    except Exception:
+        pass  # best effort - logging skal aldri stoppe selve synken
 
 
 def _materialize_garmin_tokens(b64_tar: str | None, temp_home: Path) -> str:
@@ -222,7 +238,7 @@ def main() -> None:
         raise SystemExit(1)
 
     users = user_store.get_active_users()
-    print(f"Fant {len(users)} aktiv(e) bruker(e).")
+    _log("runner", f"=== run_all_users start – {len(users)} aktiv(e) bruker(e) ===")
     for user_row in users:
         try:
             run_one_user(user_row)
@@ -230,6 +246,7 @@ def main() -> None:
             # Siste skanse: selv en feil i selve orkestreringen (ikke bare i
             # sync_one_user) skal aldri stoppe de andre brukerne.
             _log(user_row.get("label", "?"), f"❌ Uventet feil (hopper til neste bruker): {e}")
+    _log("runner", "=== run_all_users ferdig ===")
 
 
 if __name__ == "__main__":
