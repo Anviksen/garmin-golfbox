@@ -134,22 +134,21 @@ og to sikkerhetsgater – nei til samtykke stopper før noe skjer, nei til
 sluttbekreftelse avbryter uten DB-kall. Ekte nettverksfeil (sandkassen har ikke
 Supabase-tilgang) feiler pent med tydelig melding, ikke krasj.
 
-**IKKE verifisert:** en ekte kjøring av `provision_user.py` mot det virkelige
-Supabase-prosjektet, og at `user_store.list_users()` faktisk kan lese tilbake
-det som ble skrevet (bør gjøres FØR du provisjonerer en ekte venn).
+**Steg 2 verifisert mot EKTE Supabase (18. juli 2026):** `provision_user.py`
+kjørt for eieren selv (egne Garmin-/GolfBox-creds, gjenbrukt – ingen ny
+Garmin-innlogging), rad opprettet (`id=daaf65d2-...`), lest tilbake med
+`python3 user_store.py`. Hele kjeden – kryptering, service-role-tilgang,
+innsetting, tilbakelesing – er nå reelt bevist, ikke bare sandkasse-simulert.
 
 **Gjenstår før dette er reelt multi-bruker (neste steg):**
-1. Kjør `provision_user.py` for DEG SELV FØRST som en ekte test (test-runde,
-   ikke en venn) – bekreft med `python3 user_store.py` at raden faktisk ligger
-   der.
-2. En runner som henter aktive brukere fra Supabase, dekrypterer, bygger én
+1. En runner som henter aktive brukere fra Supabase, dekrypterer, bygger én
    `UserConfig` per bruker, og kaller `sync_one_user()` **sekvensielt** for
    hver – selve synk-logikken er allerede klar for dette (steg 0). Må også
    skrive `user_round_state` tilbake til Supabase i stedet for `posted.json`.
-3. Migrere `_log_attempt` i `golfbox_post.py` til å sende med `user_id` (i dag
+2. Migrere `_log_attempt` i `golfbox_post.py` til å sende med `user_id` (i dag
    sendes ingen bruker-referanse – trivielt å legge til via samme
    `GOLFBOX_DATA_DIR`-mønster, men ikke gjort ennå).
-4. Onboarding: samtykketekst (brukes av `provision_user.py` sin ja/nei-sjekk –
+3. Onboarding: samtykketekst (brukes av `provision_user.py` sin ja/nei-sjekk –
    selve teksten som vises til vennen er ikke skrevet ennå) + Google Form,
    Garmin-token én-og-én (se de opprinnelige åpne spørsmålene over – disse er
    fortsatt ubesvart/manuelle).
