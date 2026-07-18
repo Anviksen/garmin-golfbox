@@ -201,12 +201,20 @@ oppførsel). `auto_sync._apply_env()` setter `GOLFBOX_USER_ID` KUN når
 variabelen, multi-bruker-kjøring setter riktig UUID, og den fjernes korrekt
 ved bytte tilbake til legacy (ingen lekkasje mellom kjøringer).
 
+**Onboarding-tekster skrevet (18. juli 2026): `SAMTYKKE_OG_PAMELDING.md`.**
+Intro, sikkerhetsinfo (plassert rett før passord-feltene – ærlig om kryptering
+OG om at dette er et hobbyprosjekt uten garantier), samtykke-avkrysning
+(inkl. den ærlige Garmin-ToS-formuleringen fra tidligere i planen), full
+feltliste til selve Google-skjemaet, og et driftsnotat (slett skjema-svar med
+passord rett etter provisjonering – ikke la dem bli liggende i et regneark).
+Selve Google Forms-skjemaet er IKKE bygget ennå – det gjøres manuelt av eier
+ut fra denne fila, eller Claude kan bygge det via nettleser om ønskelig.
+
 **Gjenstår før dette er reelt multi-bruker for VENNER (neste steg):**
-1. Onboarding: samtykketekst (brukes av `provision_user.py` sin ja/nei-sjekk –
-   selve teksten som vises til vennen er ikke skrevet ennå) + Google Form,
-   Garmin-token én-og-én (se de opprinnelige åpne spørsmålene over – disse er
-   fortsatt ubesvart/manuelle).
-2. Egen GitHub Actions-workflow som kjører `run_all_users.py` på en tidsplan,
-   når (1) er bevist trygt.
-3. (Parkert på brukerens ønske) NGF/GolfBox-kontakt om offisiell API – ikke
+1. Bygg selve Google-skjemaet fra `SAMTYKKE_OG_PAMELDING.md`.
+2. Garmin-token gjøres fortsatt én-og-én, i person – ikke via skjema (se de
+   opprinnelige åpne spørsmålene over).
+3. Egen GitHub Actions-workflow som kjører `run_all_users.py` på en tidsplan,
+   når (1)–(2) er bevist trygt.
+4. (Parkert på brukerens ønske) NGF/GolfBox-kontakt om offisiell API – ikke
    noe tema akkurat nå, kan tas opp igjen senere ved behov.
