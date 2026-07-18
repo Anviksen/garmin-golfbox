@@ -91,6 +91,76 @@ def list_users(active_only: bool = False) -> list:
         return []
 
 
+def get_active_users() -> list:
+    """Hent FULLE rader (inkl. *_enc-felt) for alle aktive brukere. KUN for
+    runneren (run_all_users.py) – dekrypter aldri disse feltene noe annet sted
+    enn i minnet under én kjøring, og skriv dem aldri til disk eller logg."""
+    if not is_configured():
+        return []
+    url = f"{SUPABASE_URL}/rest/v1/users?select=*&active=eq.true&order=id.asc"
+    try:
+        req = urllib.request.Request(url, headers=_headers())
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        print(f"(kunne ikke hente aktive brukere – {e})")
+        return []
+
+
+def update_user(user_id: str, fields: dict) -> bool:
+    """Oppdater én eller flere kolonner på én bruker (f.eks. friske
+    tokens/økt etter en kjøring, eller garmin_fails/garmin_cooldown_until).
+    `fields` skal ha *_enc-verdier allerede kryptert – krypterer ingenting selv."""
+    if not is_configured() or not fields:
+        return False
+    try:
+        req = urllib.request.Request(
+            f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
+            data=json.dumps(fields).encode("utf-8"),
+            headers=_headers({"Prefer": "return=minimal"}),
+            method="PATCH",
+        )
+        with urllib.request.urlopen(req, timeout=30):
+            return True
+    except Exception as e:
+        print(f"(kunne ikke oppdatere bruker {user_id} – {e})")
+        return False
+
+
+def get_round_state(user_id: str) -> list:
+    """Hent alle user_round_state-rader for én bruker."""
+    if not is_configured():
+        return []
+    url = f"{SUPABASE_URL}/rest/v1/user_round_state?select=*&user_id=eq.{user_id}"
+    try:
+        req = urllib.request.Request(url, headers=_headers())
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        print(f"(kunne ikke hente rundetilstand for {user_id} – {e})")
+        return []
+
+
+def upsert_round_state(rows: list) -> bool:
+    """Sett inn/oppdater user_round_state-rader – upsert på (user_id,
+    garmin_round_id), som er tabellens primærnøkkel (se
+    supabase_multiuser_schema.sql)."""
+    if not is_configured() or not rows:
+        return False
+    try:
+        req = urllib.request.Request(
+            f"{SUPABASE_URL}/rest/v1/user_round_state",
+            data=json.dumps(rows).encode("utf-8"),
+            headers=_headers({"Prefer": "resolution=merge-duplicates,return=minimal"}),
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=30):
+            return True
+    except Exception as e:
+        print(f"(kunne ikke lagre rundetilstand – {e})")
+        return False
+
+
 if __name__ == "__main__":
     if not is_configured():
         print("Ikke konfigurert. Sett SUPABASE_URL og SUPABASE_SERVICE_ROLE_KEY i .env "

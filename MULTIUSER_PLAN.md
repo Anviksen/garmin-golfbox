@@ -140,11 +140,52 @@ Garmin-innlogging), rad opprettet (`id=daaf65d2-...`), lest tilbake med
 `python3 user_store.py`. Hele kjeden – kryptering, service-role-tilgang,
 innsetting, tilbakelesing – er nå reelt bevist, ikke bare sandkasse-simulert.
 
-**Gjenstår før dette er reelt multi-bruker (neste steg):**
-1. En runner som henter aktive brukere fra Supabase, dekrypterer, bygger én
-   `UserConfig` per bruker, og kaller `sync_one_user()` **sekvensielt** for
-   hver – selve synk-logikken er allerede klar for dette (steg 0). Må også
-   skrive `user_round_state` tilbake til Supabase i stedet for `posted.json`.
+**Steg 3 (kode, IKKE kjørt live ennå): `run_all_users.py`.** Henter aktive
+brukere fra Supabase, dekrypterer, materialiserer Garmin-tokenstore
+(tar+base64, samme format som `GARMIN_TOKENS_B64`) og GolfBox-økt til en
+isolert temp-mappe per bruker, rekonstruerer `posted.json`-state fra
+`user_round_state` + `garmin_fails`/`garmin_cooldown_until` fra brukerraden,
+kaller `auto_sync.sync_one_user(cfg)`, og synkroniserer alt (state, evt.
+friske tokens/økt) tilbake til Supabase etterpå – UANSETT utfall (også ved
+`SystemExit`/uventet feil). Én brukers feil stopper aldri de andre.
+`user_store.py` fikk fire nye funksjoner: `get_active_users`, `update_user`,
+`get_round_state`, `upsert_round_state`.
+
+Erstatter IKKE dagens enkelt-bruker-workflow – `.github/workflows/auto-sync.yml`
+kjører fortsatt `build_legacy_config()` helt uendret. Dette er et separat,
+manuelt kjørbart script inntil multi-bruker-fasen er bevist trygg.
+
+Verifisert i sandkasse (ingen nettverk der): `py_compile`, `tests/test_logic.py`
+(32/32, uendret), state-konvertering begge veier (`_db_rows_to_state`/
+`_state_to_db_rows`) med håndlagde eksempler inkl. ny bruker/blandet
+seen+posted+needs_manual+pending, tar+base64-rundtur for Garmin-tokenstore
+(inkl. at en simulert token-refresh overlever rundturen), GolfBox-økt-rundtur,
+og – viktigst – et eksplisitt test som bekrefter at `_apply_env()` ALDRI lekker
+én brukers verdier inn i neste (tom felt hos bruker B fjerner faktisk bruker A
+sin gjenværende `os.environ`-verdi, testet direkte).
+
+**IKKE verifisert:** en ekte kjøring av `run_all_users.py` mot Supabase/Garmin/
+GolfBox. Gjør FØRSTE test slik (viktig rekkefølge – unngår duplikat-posting av
+runder den vanlige skyjobben allerede har postet for samme, ekte konto):
+
+```bash
+cd ~/Documents/garmin-golfbox
+source .venv/bin/activate
+echo $GOLFBOX_AUTO_SUBMIT        # MÅ være tomt/ikke satt til "1" for denne testen
+python3 run_all_users.py
+```
+
+Med `GOLFBOX_AUTO_SUBMIT` usatt fyller `golfbox_post.py` skjemaet men LAGRER
+IKKE (samme trygge standard som `GOLFBOX_FORCE_SUBMIT`-testene i
+GITHUB_OPPSETT.md). Bekreft i loggen at testbrukeren («Haakon A») behandles,
+og at `python3 user_store.py` fortsatt viser riktig bruker etterpå. Sjekk også
+i Supabase Table Editor at `user_round_state` har fått rader for testbrukeren.
+Sett `GOLFBOX_AUTO_SUBMIT=1` og kjør på nytt KUN når du er trygg på at logikken
+er riktig – da lagres ekte runder for testbrukeren (deg selv), som er trygt
+siden det er din egen, ekte konto.
+
+**Gjenstår før dette er reelt multi-bruker for VENNER (neste steg):**
+1. Kjøre testen over, live.
 2. Migrere `_log_attempt` i `golfbox_post.py` til å sende med `user_id` (i dag
    sendes ingen bruker-referanse – trivielt å legge til via samme
    `GOLFBOX_DATA_DIR`-mønster, men ikke gjort ennå).
@@ -152,3 +193,5 @@ innsetting, tilbakelesing – er nå reelt bevist, ikke bare sandkasse-simulert.
    selve teksten som vises til vennen er ikke skrevet ennå) + Google Form,
    Garmin-token én-og-én (se de opprinnelige åpne spørsmålene over – disse er
    fortsatt ubesvart/manuelle).
+4. Egen GitHub Actions-workflow som kjører `run_all_users.py` på en tidsplan,
+   når (1)–(3) er bevist trygt.
