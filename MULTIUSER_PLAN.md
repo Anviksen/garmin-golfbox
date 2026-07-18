@@ -118,16 +118,38 @@ Beslutninger tatt:
   (base64-tar av tokenstore-mappa), bare kryptert i `garmin_tokens_enc` i
   stedet for som GitHub-secret. Fortsatt KUN token, aldri Garmin-passord.
 
+**Steg 1 oppsett fullført og verifisert (18. juli 2026):** SQL kjørt i Supabase
+(`users`/`user_round_state` finnes), `ENCRYPTION_KEY` og `SUPABASE_SERVICE_ROLE_KEY`
+lagt inn i `.env` og som GitHub-secrets, bekreftet med `python3 user_crypto.py`
+(krever `.venv` aktivert – `source .venv/bin/activate` – ellers finner den ikke
+`.env` siden `python-dotenv` da ikke er installert).
+
+**Steg 2 (kode, IKKE testet mot ekte Supabase ennå):** `user_store.py`
+(service-role-klient – adskilt fra `central_registry.py` sin anon-nøkkel-klient
+for courses/attempts) + `provision_user.py` (interaktivt script som samler inn
+én brukers data, krypterer sensitive felt, viser sammendrag, og setter inn raden
+etter eksplisitt bekreftelse). Verifisert i sandkasse: syntaks, en full simulert
+kjøring (riktig kryptering, riktig None-gjennomstrømming for hoppet-over felt),
+og to sikkerhetsgater – nei til samtykke stopper før noe skjer, nei til
+sluttbekreftelse avbryter uten DB-kall. Ekte nettverksfeil (sandkassen har ikke
+Supabase-tilgang) feiler pent med tydelig melding, ikke krasj.
+
+**IKKE verifisert:** en ekte kjøring av `provision_user.py` mot det virkelige
+Supabase-prosjektet, og at `user_store.list_users()` faktisk kan lese tilbake
+det som ble skrevet (bør gjøres FØR du provisjonerer en ekte venn).
+
 **Gjenstår før dette er reelt multi-bruker (neste steg):**
-1. Kjør `supabase_multiuser_schema.sql` i Supabase SQL Editor (manuelt, én gang).
-2. Legg til to nye GitHub-secrets: `ENCRYPTION_KEY` og `SUPABASE_SERVICE_ROLE_KEY`.
-3. Et lite provisjoneringsscript (`provision_user.py`) som krypterer og setter
-   inn én rad i `users` fra et utfylt skjema/manuell input.
-4. En runner som henter aktive brukere fra Supabase, dekrypterer, bygger én
+1. Kjør `provision_user.py` for DEG SELV FØRST som en ekte test (test-runde,
+   ikke en venn) – bekreft med `python3 user_store.py` at raden faktisk ligger
+   der.
+2. En runner som henter aktive brukere fra Supabase, dekrypterer, bygger én
    `UserConfig` per bruker, og kaller `sync_one_user()` **sekvensielt** for
-   hver – selve synk-logikken er allerede klar for dette (steg 0).
-5. Migrere `_log_attempt` i `golfbox_post.py` til å sende med `user_id` (i dag
+   hver – selve synk-logikken er allerede klar for dette (steg 0). Må også
+   skrive `user_round_state` tilbake til Supabase i stedet for `posted.json`.
+3. Migrere `_log_attempt` i `golfbox_post.py` til å sende med `user_id` (i dag
    sendes ingen bruker-referanse – trivielt å legge til via samme
    `GOLFBOX_DATA_DIR`-mønster, men ikke gjort ennå).
-6. Onboarding: samtykketekst + Google Form, Garmin-token én-og-én (se de
-   opprinnelige åpne spørsmålene over – disse er fortsatt ubesvart/manuelle).
+4. Onboarding: samtykketekst (brukes av `provision_user.py` sin ja/nei-sjekk –
+   selve teksten som vises til vennen er ikke skrevet ennå) + Google Form,
+   Garmin-token én-og-én (se de opprinnelige åpne spørsmålene over – disse er
+   fortsatt ubesvart/manuelle).

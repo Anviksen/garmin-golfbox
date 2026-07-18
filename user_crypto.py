@@ -40,6 +40,10 @@ except ImportError:
     raise SystemExit(1)
 
 
+def is_configured() -> bool:
+    return bool(os.getenv("ENCRYPTION_KEY"))
+
+
 def _fernet() -> Fernet:
     key = os.getenv("ENCRYPTION_KEY")
     if not key:

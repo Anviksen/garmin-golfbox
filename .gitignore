@@ -1,5 +1,6 @@
 # Hemmeligheter – skal aldri deles
 .env
+.env.*
 .garmintokens/
 tokens/
 
