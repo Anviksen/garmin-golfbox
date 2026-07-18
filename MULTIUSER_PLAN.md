@@ -89,3 +89,45 @@ Single-user GitHub Actions skalerer ikke rent til mange. Sannsynlig retning:
 - Samtykke + enkel, ekte sletting ved opt-out.
 - Aldri commit av andres data til et offentlig repo. (Enkelt-bruker-repoet er offentlig
   fordi det bare er eierens egne, ufølsomme metadata – det gjelder IKKE flere brukere.)
+
+## Status: steg 0 og 1 gjennomført (17. juli 2026)
+
+**Steg 0 (kode, pushet):** `auto_sync.py` har en `UserConfig`-dataclass +
+`sync_one_user(cfg)` i stedet for global env-lest config. `golfbox_post.py`/
+`fetch_garmin.py` har fått `GOLFBOX_DATA_DIR` slik at GolfBox-økt, logg og
+rundedata kan isoleres per bruker. Verifisert: `tests/test_logic.py` (32/32) og
+`test_rounds.py --all` (67/79 postbare, 0 regresjoner – kjente gjenstående er
+Oustøen/Nittedal/utenlandske baner/`teeBox=None`, alle dokumentert fra før).
+Se STATUS.md for detaljer.
+
+**Steg 1 (skjema, IKKE kjørt i Supabase ennå):** `supabase_multiuser_schema.sql`
+og `user_crypto.py` er skrevet og selvtestet (kryptering/dekryptering av
+tekst, feil/manglende nøkkel gir tydelig feil – ikke stille korrupsjon).
+
+Beslutninger tatt:
+- **Kryptering:** Fernet (symmetrisk) med én nøkkel i `ENCRYPTION_KEY` (ny
+  GitHub-secret + lokal `.env`), ikke Supabase Vault – enklere, og dere
+  kontrollerer nøkkelen fullt ut. Krypterte kolonner er `text` (Fernet-tokens
+  er allerede base64), ikke `bytea` – unngår escaping-strev over PostgREST.
+- **Tilgang:** `users` og `user_round_state` har RLS PÅ og INGEN policies →
+  kun `service_role`-nøkkelen (finnes allerede i ethvert Supabase-prosjekt,
+  Project Settings → API – IKKE en ny nøkkel dere oppretter) kan lese/skrive.
+  `courses`/`attempts` forblir åpne med anon-nøkkelen, som i dag – ingen
+  persondata der. `attempts` fikk en valgfri `user_id`-kolonne.
+- **Garmin-token i DB:** samme format som dagens `GARMIN_TOKENS_B64`-secret
+  (base64-tar av tokenstore-mappa), bare kryptert i `garmin_tokens_enc` i
+  stedet for som GitHub-secret. Fortsatt KUN token, aldri Garmin-passord.
+
+**Gjenstår før dette er reelt multi-bruker (neste steg):**
+1. Kjør `supabase_multiuser_schema.sql` i Supabase SQL Editor (manuelt, én gang).
+2. Legg til to nye GitHub-secrets: `ENCRYPTION_KEY` og `SUPABASE_SERVICE_ROLE_KEY`.
+3. Et lite provisjoneringsscript (`provision_user.py`) som krypterer og setter
+   inn én rad i `users` fra et utfylt skjema/manuell input.
+4. En runner som henter aktive brukere fra Supabase, dekrypterer, bygger én
+   `UserConfig` per bruker, og kaller `sync_one_user()` **sekvensielt** for
+   hver – selve synk-logikken er allerede klar for dette (steg 0).
+5. Migrere `_log_attempt` i `golfbox_post.py` til å sende med `user_id` (i dag
+   sendes ingen bruker-referanse – trivielt å legge til via samme
+   `GOLFBOX_DATA_DIR`-mønster, men ikke gjort ennå).
+6. Onboarding: samtykketekst + Google Form, Garmin-token én-og-én (se de
+   opprinnelige åpne spørsmålene over – disse er fortsatt ubesvart/manuelle).

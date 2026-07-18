@@ -9,3 +9,6 @@ uvicorn
 
 # Fase 3 – auto-posting til Golfbox
 playwright
+
+# Fase 4 – multi-bruker (kryptering av lagrede creds/tokens)
+cryptography
