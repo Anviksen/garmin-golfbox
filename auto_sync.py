@@ -131,6 +131,15 @@ def _apply_env(cfg: UserConfig) -> None:
         else:
             os.environ.pop(key, None)
 
+    # GOLFBOX_USER_ID (telemetri, se _log_attempt i golfbox_post.py): kun satt for
+    # EKTE multi-bruker-kjøringer. "local" er ikke en gyldig UUID og ville feilet
+    # castingen mot attempts.user_id i Supabase – legacy enkelt-bruker-modus skal
+    # fortsatt logge med user_id=NULL, akkurat som før.
+    if cfg.user_id != "local":
+        os.environ["GOLFBOX_USER_ID"] = cfg.user_id
+    else:
+        os.environ.pop("GOLFBOX_USER_ID", None)
+
 
 # Aktiv brukerkonfig for inneværende kjøring. Settes av sync_one_user() før noe annet
 # skjer – modul-globalen finnes kun for at log()/load_state()/osv. slipper å ta cfg

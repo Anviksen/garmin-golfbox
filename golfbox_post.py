@@ -1298,6 +1298,9 @@ def _log_attempt(rnd, sel, status, notes, posted) -> None:
             "tee_uncertain": status.get("tee_uncertain", False),
             "posted": posted,
             "reason": reason,
+            # None i enkelt-bruker-modus (uendret oppførsel) - satt av
+            # auto_sync._apply_env() kun for ekte multi-bruker-kjøringer.
+            "user_id": os.getenv("GOLFBOX_USER_ID"),
         })
     except Exception as e:
         log(f"(telemetri-logging hoppet over: {e})")  # best-effort, men logg feilen

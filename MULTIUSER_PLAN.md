@@ -192,14 +192,21 @@ Sett `GOLFBOX_AUTO_SUBMIT=1` og kjør på nytt KUN når du er trygg på at logik
 er riktig – da lagres ekte runder for testbrukeren (deg selv), som er trygt
 siden det er din egen, ekte konto.
 
+**Steg 4 gjennomført (18. juli 2026): `_log_attempt` sender nå `user_id`.**
+`central_registry._ATTEMPT_FIELDS` fikk `user_id`. `golfbox_post.py` sender
+`os.getenv("GOLFBOX_USER_ID")` (None i enkelt-bruker-modus – uendret
+oppførsel). `auto_sync._apply_env()` setter `GOLFBOX_USER_ID` KUN når
+`cfg.user_id != "local"` (ellers ville "local" feilet UUID-castingen mot
+`attempts.user_id` i Supabase). Verifisert: legacy-kjøring setter aldri
+variabelen, multi-bruker-kjøring setter riktig UUID, og den fjernes korrekt
+ved bytte tilbake til legacy (ingen lekkasje mellom kjøringer).
+
 **Gjenstår før dette er reelt multi-bruker for VENNER (neste steg):**
-1. Kjøre testen over, live.
-2. Migrere `_log_attempt` i `golfbox_post.py` til å sende med `user_id` (i dag
-   sendes ingen bruker-referanse – trivielt å legge til via samme
-   `GOLFBOX_DATA_DIR`-mønster, men ikke gjort ennå).
-3. Onboarding: samtykketekst (brukes av `provision_user.py` sin ja/nei-sjekk –
+1. Onboarding: samtykketekst (brukes av `provision_user.py` sin ja/nei-sjekk –
    selve teksten som vises til vennen er ikke skrevet ennå) + Google Form,
    Garmin-token én-og-én (se de opprinnelige åpne spørsmålene over – disse er
    fortsatt ubesvart/manuelle).
-4. Egen GitHub Actions-workflow som kjører `run_all_users.py` på en tidsplan,
-   når (1)–(3) er bevist trygt.
+2. Egen GitHub Actions-workflow som kjører `run_all_users.py` på en tidsplan,
+   når (1) er bevist trygt.
+3. (Parkert på brukerens ønske) NGF/GolfBox-kontakt om offisiell API – ikke
+   noe tema akkurat nå, kan tas opp igjen senere ved behov.

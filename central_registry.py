@@ -88,7 +88,7 @@ def contribute(entry: dict) -> bool:
 
 _ATTEMPT_FIELDS = (
     "round_id", "garmin_course", "club", "club_ok", "course", "course_ok",
-    "tee", "tee_ok", "tee_uncertain", "posted", "reason", "country",
+    "tee", "tee_ok", "tee_uncertain", "posted", "reason", "country", "user_id",
 )
 
 
