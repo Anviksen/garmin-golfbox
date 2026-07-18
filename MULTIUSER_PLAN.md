@@ -164,9 +164,17 @@ og – viktigst – et eksplisitt test som bekrefter at `_apply_env()` ALDRI lek
 én brukers verdier inn i neste (tom felt hos bruker B fjerner faktisk bruker A
 sin gjenværende `os.environ`-verdi, testet direkte).
 
-**IKKE verifisert:** en ekte kjøring av `run_all_users.py` mot Supabase/Garmin/
-GolfBox. Gjør FØRSTE test slik (viktig rekkefølge – unngår duplikat-posting av
-runder den vanlige skyjobben allerede har postet for samme, ekte konto):
+**Steg 3 verifisert LIVE (18. juli 2026):** `run_all_users.py` kjørt mot ekte
+Supabase/Garmin for testbrukeren («Haakon A», `GOLFBOX_AUTO_SUBMIT` usatt –
+trygt). Fant 50 runder, satte baseline (riktig – `_initialized=False` for en
+fersk bruker), rørte ikke GolfBox (baseline returnerer før posting).
+Bekreftet med `user_store.get_round_state()`: 50 rader i `user_round_state`,
+alle status `seen`. HELE kjeden – kryptering, service-role, materialisering,
+sync_one_user, tilbakeskriving til Supabase – er nå bevist live, ikke bare i
+sandkasse. Neste kjøring vil oppdage NYE runder normalt (samme logikk som
+enkelt-bruker-systemet har kjørt pålitelig siden 13. juli).
+
+Fremgangsmåte som ble brukt for denne testen (til referanse for neste gang):
 
 ```bash
 cd ~/Documents/garmin-golfbox
