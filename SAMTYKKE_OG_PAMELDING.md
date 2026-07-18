@@ -37,14 +37,16 @@ hvor dette passer inn i helheten.
 
 > **Om sikkerheten – les dette før du skriver inn passord**
 >
-> - Passordet ditt (GolfBox) lagres **kryptert** i en database jeg har satt
->   opp, ikke i klartekst. Krypteringsnøkkelen ligger et helt annet sted enn
->   selve databasen – å få tak i databasen alene er ikke nok til å lese noe.
+> - GolfBox-passordet ditt lagres **kryptert** i en database jeg har satt opp,
+>   ikke i klartekst. Krypteringsnøkkelen ligger et helt annet sted enn selve
+>   databasen – å få tak i databasen alene er ikke nok til å lese noe.
 > - Databasen er låst med en egen nøkkel som KUN kjøringen som poster rundene
 >   dine har tilgang til – ikke den åpne, delte delen av systemet (bane-basen).
-> - Jeg lagrer ALDRI Garmin-passordet ditt – kun en innloggings-nøkkel
->   (token) som ikke kan brukes til å logge inn andre steder eller se
->   passordet ditt.
+> - **Garmin-passordet ditt spør jeg om under, men lagrer det ALDRI.** Det
+>   brukes kun i selve innloggings-øyeblikket for å hente en innloggings-nøkkel
+>   (token) – passordet skrives aldri til disk og forkastes rett etter. Det er
+>   tokenet (ikke passordet) som lagres kryptert, på samme måte som GolfBox-
+>   passordet.
 > - Koden er åpen og du kan se nøyaktig hva den gjør:
 >   github.com/Anviksen/garmin-golfbox
 > - **Ærlig forbehold:** dette er et hobbyprosjekt mellom venner, ikke et
@@ -65,8 +67,9 @@ hvor dette passer inn i helheten.
 >   reagere på dette er at synkroniseringen min slutter å virke – jeg har
 >   ikke sett tegn til at Garmin sperrer kontoer for denne typen personlig
 >   bruk, men det kan ikke garanteres 100 %.
-> - GolfBox-passordet mitt lagres kryptert, og Garmin-innlogging som kun en
->   token, av personen som drifter tjenesten (se sikkerhetsinfo over).
+> - GolfBox-passordet mitt lagres kryptert. Garmin-passordet mitt brukes KUN
+>   momentant til å hente en innloggings-nøkkel og lagres aldri (se
+>   sikkerhetsinfo over) – alt håndteres av personen som drifter tjenesten.
 > - Jeg kan når som helst be om å bli fjernet fra tjenesten, og få dataene
 >   mine faktisk slettet – ikke bare skjult.
 >
@@ -86,18 +89,25 @@ Rekkefølge og feltyper anbefalt:
 2. **E-post** – kort svar, påkrevd (varsling + kontakt ved problemer)
 3. *(sett inn sikkerhetsinfo-tekst fra del 2 her, som en «avsnitt»-blokk)*
 4. *(sett inn samtykke-avkrysning fra del 3 her)*
-5. **GolfBox-brukernavn** – kort svar, påkrevd
-6. **GolfBox-passord** – kort svar, påkrevd *(se driftsnotat i del 5 – dette
-   skal ALDRI bli liggende lenge i selve skjema-svarene)*
-7. **Markørens medlemsnummer** (personen du fører score sammen med, IKKE deg
+5. **Garmin-epost** – kort svar, påkrevd
+6. **Garmin-passord** – kort svar, påkrevd *(se driftsnotat i del 5 – dette
+   skal ALDRI bli liggende lenge i selve skjema-svarene, akkurat som GolfBox-
+   passordet)*
+7. **GolfBox-brukernavn** – kort svar, påkrevd
+8. **GolfBox-passord** – kort svar, påkrevd
+9. **Markørens medlemsnummer** (personen du fører score sammen med, IKKE deg
    selv) – kort svar, format «XX-XXXXX»
-8. **Markørens navn** – kort svar, valgfritt (kun hvis medlemsnr er ukjent)
-9. **Varslingspreferanse** – flervalg: «E-post», «Push-varsel (app)», «Begge»
-10. **Noe annet du vil si?** – avsnitt, valgfritt
+10. **Markørens navn** – kort svar, valgfritt (kun hvis medlemsnr er ukjent)
+11. **Varslingspreferanse** – flervalg: «E-post», «Push-varsel (app)», «Begge»
+12. **Noe annet du vil si?** – avsnitt, valgfritt
 
-**Garmin-innlogging tas IKKE med i skjemaet.** Det gjøres i person/på en
-samtale mellom dere (se `provision_user.py` sin bruksanvisning øverst i fila)
-– aldri via et skjema, og aldri automatisert i loop for flere personer samtidig.
+**Garmin-innlogging er nå MED i skjemaet** (endret 18. juli 2026 – tidligere
+krevde dette en egen i-person-økt). `provision_user.py` logger inn og fanger
+tokenet automatisk når du kjører scriptet med svarene fra skjemaet – ingen
+synkron økt med vennen lenger nødvendig. Har kontoen deres MFA (engangskode)
+på, spør scriptet om koden der og da – ha dem tilgjengelig (telefon/SMS) hvis
+du er usikker på om de har det. Fortsatt ett menneskelig sjekkpunkt: du ser et
+sammendrag og bekrefter før kontoen faktisk opprettes.
 
 ---
 
@@ -109,10 +119,16 @@ samtale mellom dere (se `provision_user.py` sin bruksanvisning øverst i fila)
   Google-kontoer, men «krev innlogging for å se» reduserer tilfeldig tilgang).
 - Så snart du har kjørt `provision_user.py` for en person og bekreftet at
   raden ligger i Supabase (`python3 user_store.py`): **slett svaret deres fra
-  Google Forms-arket**. Passordet skal ikke ligge i et regneark lenger enn
-  nødvendig – databasen (kryptert) er der det skal bo videre.
-- Slett også eventuelle midlertidige `.b64`-filer du lagde under
-  provisjonering (`rm /tmp/...`), som i sted for din egen testbruker.
+  Google Forms-arket** – BEGGE passord (Garmin og GolfBox) skal ikke ligge i
+  et regneark lenger enn nødvendig. Databasen (kryptert) er der de skal bo
+  videre.
+- Kjør `provision_user.py` for én person om gangen, aldri i loop/skript mot
+  flere Garmin-kontoer etter hverandre – se advarselen om Garmin-
+  ratelimiting i MULTIUSER_PLAN.md. Én innlogging her og nå er trygt; mange
+  etter hverandre er det som trigger Garmins bot-deteksjon.
+- Slett også eventuelle midlertidige `.b64`-filer du eventuelt lager selv
+  (kun relevant for den manuelle fil-fallbacken – normalflyten via
+  Garmin-epost/passord genererer ingen slike filer).
 
 ---
 

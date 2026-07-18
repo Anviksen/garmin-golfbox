@@ -2,35 +2,30 @@
 """
 Provisjonering: legg til ÉN ny bruker i multi-bruker-basen (Supabase `users`).
 
-Interaktivt script – spør om alt som trengs, krypterer det som skal krypteres
-(user_crypto.py), viser et sammendrag for bekreftelse, og setter inn raden via
-user_store.py (service-role-nøkkelen). Poster INGENTING til GolfBox/Garmin –
-rører kun databasen.
+Interaktivt script – spør om alt som trengs (typisk hentet rett fra et
+påmeldingsskjema, se SAMTYKKE_OG_PAMELDING.md), krypterer det som skal
+krypteres (user_crypto.py), viser et sammendrag for bekreftelse, og setter inn
+raden via user_store.py (service-role-nøkkelen). Poster INGENTING til
+GolfBox/Garmin – rører kun databasen.
 
-Før du kjører dette for en venn (vis dem samtykketeksten i MULTIUSER_PLAN.md
-FØRST), må du ha samlet inn:
+Garmin-innlogging gjøres NÅ AUTOMATISK i dette scriptet: oppgi personens
+Garmin e-post/passord (fra skjemaet), så logger scriptet inn og fanger tokenet
+selv. Passordet sendes KUN til Garmin sitt eget innloggingskall – det skrives
+aldri til disk og forkastes fra minnet rett etter. Har kontoen MFA
+(engangskode) på, spør scriptet om den interaktivt der og da – ha personen
+tilgjengelig (telefon/SMS) hvis du ikke vet om de har det.
 
-  1. Garmin-token (KUN token, ALDRI passord – se prinsippet i MULTIUSER_PLAN.md).
-     Logg inn med vedkommendes Garmin-konto i en EGEN, midlertidig tokenstore-
-     mappe. Gjør dette sammen med dem, ÉN om gangen, ALDRI i loop/automatisk
-     (se advarselen om Garmin-ratelimiting i MULTIUSER_PLAN.md):
+VIKTIG (uendret prinsipp): kjør dette ÉN bruker om gangen, aldri i loop/skript
+mot flere Garmin-kontoer etter hverandre – se advarselen om Garmin-
+ratelimiting i MULTIUSER_PLAN.md. Én innlogging her og nå er trygt; mange
+etter hverandre er det som trigger Garmins bot-deteksjon.
 
-         GARMINTOKENS=/tmp/venn_token python3 -c "
-         from garminconnect import Garmin
-         g = Garmin('deres.epost@example.com', 'deres-passord')
-         g.login()
-         print('OK – token lagret i /tmp/venn_token')"
+Fungerer fortsatt uten Garmin-epost/passord (Enter for å hoppe over) – da kan
+du i stedet oppgi filstien til et allerede fanget token (samme base64-tar-
+format som secreten GARMIN_TOKENS_B64), for manuell/edge-case bruk.
 
-     Pakk den til én base64-tekstfil (samme format som secreten GARMIN_TOKENS_B64):
-
-         tar czf - -C /tmp venn_token | base64 > /tmp/venn_garmin.b64
-
-     Slett /tmp/venn_token etterpå – passordet ble aldri lagret noe sted, kun
-     brukt momentant i minnet for selve innloggingen.
-
-  2. GolfBox-brukernavn + passord (skrives inn her, kryptert før lagring).
-
-  3. Markørens (medspillerens) medlemsnummer.
+Bekreft FØRST at personen har samtykket (vis dem samtykketeksten i
+SAMTYKKE_OG_PAMELDING.md) før du kjører dette.
 
 Bruk:
     python3 provision_user.py
@@ -38,14 +33,18 @@ Bruk:
 
 from __future__ import annotations
 
+import base64
 import getpass
+import io
+import tarfile
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
 import user_crypto
 import user_store
 
-CONSENT_VERSION = "v1-enkel-samtykketekst"  # oppdater hvis samtykketeksten endres
+CONSENT_VERSION = "v2-garmin-passord-i-skjema"  # oppdater hvis samtykketeksten endres
 
 
 def _ask(prompt: str, required: bool = False) -> str | None:
@@ -72,6 +71,45 @@ def _read_b64_file(prompt: str) -> str | None:
         print(f"   ⚠️  Fant ikke {p} – hopper over (kan legges til senere).")
         return None
     return p.read_text(encoding="utf-8").strip()
+
+
+def _login_garmin_and_capture_token(email: str, password: str) -> str | None:
+    """Logg inn på Garmin med e-post/passord og fang det resulterende tokenet,
+    pakket til samme base64-tar-format som ellers brukes (GARMIN_TOKENS_B64).
+
+    Passordet brukes KUN i selve login()-kallet under – det skrives aldri til
+    disk, og den kallende koden nuller ut variabelen sin rett etter dette
+    returnerer. Kan spørre om en MFA-engangskode interaktivt hvis kontoen har
+    det på."""
+    try:
+        from garminconnect import Garmin
+    except ImportError:
+        print("  ❌ Mangler 'garminconnect'. Kjør: pip install -r requirements.txt")
+        return None
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tokenstore = str(Path(tmp) / ".garminconnect")
+        try:
+            print("  Logger inn på Garmin ...")
+            client = Garmin(
+                email, password,
+                prompt_mfa=lambda: input("  Engangskode (MFA) fra Garmin for denne kontoen: ").strip(),
+            )
+            client.login(tokenstore)  # lagrer friske tokens i tokenstore
+        except Exception as e:
+            print(f"  ❌ Garmin-innlogging feilet: {e}")
+            return None
+
+        tokendir = Path(tokenstore)
+        if not tokendir.exists():
+            print("  ❌ Innlogging så ut til å gå bra, men fant ingen tokens på disk etterpå.")
+            return None
+
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode="w:gz") as tf:
+            tf.add(tokendir, arcname=".garminconnect")
+        print("  ✅ Garmin-token hentet og fanget.")
+        return base64.b64encode(buf.getvalue()).decode("ascii")
 
 
 def _yes(prompt: str) -> bool:
@@ -105,7 +143,18 @@ def main() -> None:
     label = _ask("Visningsnavn (til logger, f.eks. fornavn)", required=True)
 
     print("\n--- Garmin ---")
-    garmin_tokens_b64 = _read_b64_file("Base64 Garmin-token")
+    print("Oppgi Garmin-epost for å logge inn og hente tokenet automatisk (anbefalt –")
+    print("passordet lagres ALDRI, kun brukt momentant til selve innloggingen).")
+    garmin_email = _ask("Garmin-epost (Enter for å hoppe over / bruke en fil i stedet)")
+    if garmin_email:
+        garmin_password = _ask_secret("Garmin-passord (brukes kun til dette ene forsøket)")
+        garmin_tokens_b64 = _login_garmin_and_capture_token(garmin_email, garmin_password)
+        garmin_password = None  # ute av variabelen så tidlig som råd er
+        if garmin_tokens_b64 is None:
+            print("  Fortsetter uten Garmin-token – kan legges til senere ved å kjøre "
+                  "dette scriptet på nytt, eller oppdatere raden direkte.")
+    else:
+        garmin_tokens_b64 = _read_b64_file("Base64 Garmin-token (hvis allerede fanget manuelt)")
 
     print("\n--- GolfBox ---")
     golfbox_username = _ask("GolfBox-brukernavn")

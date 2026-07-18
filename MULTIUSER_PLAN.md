@@ -231,30 +231,83 @@ Bygget som svar på konkrete spørsmål om skala/kost/drift (se chat-historikk):
   Oppslags-logikken (navn/id, tvetydighet) verifisert i sandkasse; selve
   sendingen krever ekte nettverk – kjør på Mac-en.
 - **`.github/workflows/multiuser-sync.yml`** – ny, SEPARAT skyjobb (rører ikke
-  `auto-sync.yml`). Kun `workflow_dispatch` (manuell trigger) ennå, ingen
-  tidsplan. `GOLFBOX_AUTO_SUBMIT="0"` (dry run) som standard til dere har sett
-  en trygg kjøring i loggen – bytt til `"1"` når dere stoler på den. Ingen
-  Garmin/Golfbox-secrets i workflowen (hentes kryptert fra Supabase per bruker
-  i selve scriptet). Laster opp `run_all_users.log` som nedlastbar artifact
-  etter hver kjøring. YAML-struktur verifisert i sandkasse.
+  `auto-sync.yml`). Ingen Garmin/Golfbox-secrets i workflowen (hentes kryptert
+  fra Supabase per bruker i selve scriptet). Laster opp `run_all_users.log`
+  som nedlastbar artifact etter hver kjøring.
+
+**LIVE bevist i skyen (18. juli 2026):** Kjørt manuelt via «Run workflow» –
+run #1, **success, 53 sekunder**. Loggen viste korrekt oppførsel: fant 1 aktiv
+bruker, logget inn på Garmin, fant 50 runder, ingen nye (baseline satt fra
+tidligere lokal test) → «Ingen nye runder. Ferdig.» Ingen GolfBox-interaksjon
+forsøkt (korrekt – ingenting nytt å poste). Artifact med loggen lastet opp
+korrekt. HELE kjeden bevist i den faktiske cloud-runneren, ikke bare lokalt.
 
 **Svar på driftsspørsmålene (fra chatten, til referanse):**
 - Ingen hardkodet maks-grense i koden; kun reelt bevist for 1 bruker så langt.
 - Kostnad: $0 i dag (offentlig repo = gratis Actions; Supabase gratis-plan gir
   500 MB DB / 5 GB egress/mnd – langt unna med tekstrader for en vennegjeng).
 - Kjøring er STRENGT sekvensiell med vilje – 10 samtidige runder køer opp,
-  kolliderer ikke. Frem til `multiuser-sync.yml` faktisk trigges (manuelt
-  inntil videre), skjer ingenting automatisk for venner.
+  kolliderer ikke.
+
+---
+
+## Steg 6: Garmin-innlogging automatisert i provisjonering + tidsplan lagt til (18. juli 2026)
+
+**Bakgrunn:** Brukeren spurte om «alt en bruker trenger å gjøre er å fylle ut
+skjemaet, så går de live med engang» – svaret var nei, av tre grunner: (1)
+Garmin-token krevde en egen i-person-økt, (2) `multiuser-sync.yml` hadde ingen
+tidsplan (kun manuell trigger), (3) `GOLFBOX_AUTO_SUBMIT="0"` (dry run). Punkt
+(2) er nå løst (schedule lagt til, samme mønster som `auto-sync.yml` – hvert
+10. min i golf-timene). Punkt (1) er løst med en bevisst avveining – se under.
+Punkt (3) er en bevisst gjenværende brems (se «gjenstår»).
+
+**Avveining som ble diskutert og valgt:** To alternativer ble lagt fram:
+(A) owner-trigget – skjemaet samler Garmin e-post/passord, ett samlet script
+gjør innlogging + provisjonering, eier ser og bekrefter fortsatt før kontoen
+opprettes; (B) helautomatisk webhook – null menneskelig involvering, kontoen
+opprettes i samme sekund skjemaet sendes inn. Valgt: **(A) nå, med uttalt mål
+om (B) senere.** Begrunnelse: prosjektets kjerneprinsipp «sikkerhetsnett over
+dekning» tilsier å beholde ett menneskelig sjekkpunkt så lenge det er billig å
+gjøre det – webhook-automatisering er notert som fremtidig retning, ikke
+forkastet.
+
+**Endringer:**
+- **`provision_user.py`** har en ny funksjon `_login_garmin_and_capture_token
+  (email, password)` som logger inn med `garminconnect` (samme mønster som
+  `fetch_garmin.py`, inkl. MFA-håndtering via interaktiv prompt), fanger
+  tokenet, pakker til samme base64-tar-format som `GARMIN_TOKENS_B64`.
+  Passordet sendes KUN til selve login()-kallet, skrives aldri til disk, og
+  variabelen nulles ut i den kallende koden rett etter. Filsti-fallback
+  (manuell fanging) beholdt for edge-case-bruk. `CONSENT_VERSION` bumpet til
+  `v2-garmin-passord-i-skjema`. Verifisert i sandkasse: feiler pent uten
+  nettverk/med feil creds (ingen krasj, ingen lekkasje av passordet i
+  feilmeldinger), og full interaktiv flyt med korrekt feltrekkefølge.
+- **`SAMTYKKE_OG_PAMELDING.md` og det publiserte Google-skjemaet** oppdatert i
+  tandem: sikkerhetsinfo og samtykketekst nevner nå eksplisitt at
+  Garmin-passord spørres om men aldri lagres, to nye påkrevde felt
+  («Garmin-epost», «Garmin-passord») lagt til rett etter samtykke-avkrysningen
+  og før GolfBox-feltene, driftsnotatet utvidet til å dekke sletting av
+  BEGGE passord fra skjema-svar. Verifisert live i nettleseren (respondent-
+  visning): riktig rekkefølge, riktig tekst, ingen brutte referanser til at
+  Garmin «ikke er med i skjemaet» (den linjen er fjernet/endret).
+- **`.github/workflows/multiuser-sync.yml`**: `schedule: "*/10 5-20 * * *"`
+  lagt til (UTC, ≈ 07–23 norsk sommertid) – samme mønster som `auto-sync.yml`.
+  Trygt å automatisere nå fordi `GOLFBOX_AUTO_SUBMIT="0"` fortsatt gjelder.
 
 **Gjenstår før dette er reelt multi-bruker for VENNER (neste steg):**
-1. Kjør `test_user_notify.py` for testbrukeren for å bevise varsling live.
-2. Trigg `multiuser-sync.yml` manuelt fra GitHub Actions-fanen, se på loggen/
-   artifacten, bekreft trygg kjøring i skyen (dry run).
-3. Del skjema-lenken med første ekte venn, og provisjoner dem inn via
-   `provision_user.py` når svaret kommer inn.
-4. Garmin-token gjøres fortsatt én-og-én, i person – ikke via skjema (se de
-   opprinnelige åpne spørsmålene over).
-5. Når (1)–(4) er bevist trygt: sett `GOLFBOX_AUTO_SUBMIT="1"` i workflowen,
-   og vurder om/når en tidsplan (schedule) skal legges til.
+1. Kjør `test_user_notify.py` for testbrukeren for å bevise push-varsling live
+   (e-post allerede bekreftet manuelt av bruker).
+2. Del skjema-lenken med første ekte venn. Når svaret kommer inn: kjør
+   `provision_user.py`, oppgi Garmin-epost/passord fra svaret – scriptet
+   logger inn og provisjonerer i ett, ingen i-person-økt lenger nødvendig.
+   Slett skjema-svaret (begge passord) fra Google Forms-arket etterpå.
+3. La tidsplanen kjøre en syklus eller to i dry run, se loggene/artifactene i
+   Actions-fanen, bekreft at nye brukere behandles korrekt.
+4. Når (1)–(3) er bevist trygt over tid: sett `GOLFBOX_AUTO_SUBMIT="1"` –
+   dette er bevisst IKKE gjort automatisk, det er en beslutning å ta sammen.
+5. Fremtidig retning (uttalt mål, ikke bygget ennå): helautomatisk
+   webhook-provisjonering (alternativ B over) – krever en bro mellom Google
+   Forms (Apps Script) og en trigger-endepunkt, siden Google Forms ikke kan
+   kalle GitHub Actions direkte. Egen, avgrenset økt når det blir aktuelt.
 6. (Parkert på brukerens ønske) NGF/GolfBox-kontakt om offisiell API – ikke
    noe tema akkurat nå, kan tas opp igjen senere ved behov.

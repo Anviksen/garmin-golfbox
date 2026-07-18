@@ -3,9 +3,11 @@ name: Multi-bruker-sync (Garmin til Golfbox)
 # NY, SEPARAT workflow for multi-bruker-fasen - rører IKKE auto-sync.yml
 # (enkelt-bruker-jobben din kjører helt uendret ved siden av denne).
 #
-# Kun workflow_dispatch (manuell "Run workflow"-knapp) inntil dette er
-# observert å virke live i skyen minst én gang - IKKE koblet til en
-# tidsplan ennå. Se MULTIUSER_PLAN.md for veien videre.
+# Tidsplan lagt til 18. juli 2026 etter en bevist trygg manuell kjøring i
+# skyen (run #1, success, 53s) - samme mønster som auto-sync.yml (hvert 10.
+# min i golf-timene). Trygt å automatisere NÅ fordi GOLFBOX_AUTO_SUBMIT="0"
+# (dry run) under - ingenting lagres ekte til GolfBox før dere bevisst
+# skrur den til "1". Se MULTIUSER_PLAN.md for veien videre.
 #
 # Ingen Garmin-/Golfbox-secrets her (i motsetning til auto-sync.yml) - hver
 # brukers creds hentes kryptert fra Supabase og dekrypteres i minnet av
@@ -13,6 +15,8 @@ name: Multi-bruker-sync (Garmin til Golfbox)
 # skrives til Supabase (user_round_state), ikke til data/posted.json.
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "*/10 5-20 * * *"   # UTC (= ca. 07–23 norsk sommertid), som auto-sync.yml
 
 concurrency:
   group: multiuser-sync      # aldri to kjøringer samtidig
