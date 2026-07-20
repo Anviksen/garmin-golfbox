@@ -325,3 +325,37 @@ forkastet.
    kalle GitHub Actions direkte. Egen, avgrenset økt når det blir aktuelt.
 6. (Parkert på brukerens ønske) NGF/GolfBox-kontakt om offisiell API – ikke
    noe tema akkurat nå, kan tas opp igjen senere ved behov.
+
+## Ende-til-ende-test pågår (19. juli 2026)
+
+Full brukerreise gjennomført for reell test: skjema fylt ut selv (som
+«testvenn»), `provision_user.py` kjørt med ekte Garmin-/GolfBox-creds.
+`auto-sync.yml` disablet manuelt og gammel testrad slettet først, for å unngå
+duplikat-posting mens testen pågår. `GOLFBOX_AUTO_SUBMIT="1"` satt midlertidig
+i `multiuser-sync.yml` for at testen skal telle fullt ut.
+
+**Observasjon verdt å ta vare på:** Garmin-innloggingen under provisjonering
+fikk **429 (rate limited)** på to av tre interne fallback-strategier i
+`garminconnect`-biblioteket, før den tredje lyktes. Konkret bekreftelse på
+risikoen fra den tidlige ToS-diskusjonen (Garmins Cloudflare-innstramming) –
+ikke krise (det gikk bra), men et tegn på at IP-en/kontoen er nærmere Garmins
+grense enn antatt. Verdt å følge med på ved fremtidige provisjoneringer; hvis
+429 begynner å vinne over alle fallback-strategiene, er det tid for en pause
+mellom provisjoneringer, ikke bare mellom vanlige synk-kjøringer.
+
+**To ting fikset underveis i testen (avdekket av reell bruk, ikke planlagt):**
+- `provision_user.py` genererer nå selv et tilfeldig ntfy-emne (spurte
+  tidligere brukeren om å finne på en selv, uten forklaring på hvordan
+  mottakeren faktisk kobler seg på). Se punkt 6 i `SAMTYKKE_OG_PAMELDING.md`
+  for den nye guiden.
+- Bekreftet (igjen) at skjema-svar ikke leses automatisk inn i
+  `provision_user.py` – eier må kopiere fra regnearket manuelt. Notert som
+  fremtidig forbedring, ikke bygget nå.
+
+**Ny testbruker:** «Haakon Erla», id `898c6160-f3ae-4799-8eb7-8ca1fcd27df5`.
+Ingen `user_round_state` ennå → neste kjøring av `multiuser-sync.yml` vil sette
+en BASELINE (markere alle eksisterende runder som sett, poste ingenting) –
+akkurat som første kjøring alltid har gjort i enkelt-bruker-systemet. En EKTE
+ny runde spilt/registrert ETTER dette tidspunktet er det som faktisk beviser
+posting-kjeden. Gjenstår: spille/registrere en ny runde, vente 5–10 min,
+bekrefte i GolfBox + varsel + Actions-logg.
