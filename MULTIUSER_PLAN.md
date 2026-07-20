@@ -291,8 +291,22 @@ forkastet.
   visning): riktig rekkefølge, riktig tekst, ingen brutte referanser til at
   Garmin «ikke er med i skjemaet» (den linjen er fjernet/endret).
 - **`.github/workflows/multiuser-sync.yml`**: `schedule: "*/10 5-20 * * *"`
-  lagt til (UTC, ≈ 07–23 norsk sommertid) – samme mønster som `auto-sync.yml`.
-  Trygt å automatisere nå fordi `GOLFBOX_AUTO_SUBMIT="0"` fortsatt gjelder.
+  lagt til – men dette er IKKE nok alene (samme innsikt som for
+  `auto-sync.yml`: GitHubs egen `schedule`-trigger er hardt strupt på
+  gratis-nivå, reelt sett hver 2.–3. time). Den PÅLITELIGE triggeren er en
+  ny, separat **cron-job.org**-jobb («Multi-bruker-sync», klonet fra den
+  eksisterende «Golfbox auto-sync»-jobben så Authorization-headeren/PAT-en
+  ble kopiert uten at noen måtte taste den inn på nytt), som pinger
+  `multiuser-sync.yml` sitt dispatch-endepunkt hvert 5. minutt – bekreftet
+  live i cron-job.org-dashboardet (neste kjøring synkronisert med den gamle
+  jobben). Trygt å automatisere nå fordi `GOLFBOX_AUTO_SUBMIT="0"` fortsatt
+  gjelder (dry run).
+- **NB (sikkerhet):** PAT-verdien til cron-job.org-triggeren ble ved et uhell
+  limt inn i klartekst i chatten under oppsettet. Lav alvorlighet (fine-grained
+  token, kun «Actions: Read and write» på dette ene repoet – ingen kode- eller
+  hemmelighetstilgang), men bør roteres som god praksis: ny PAT på GitHub →
+  oppdater Authorization-header i BEGGE cron-job.org-jobbene → slett den gamle
+  PAT-en. Ikke gjort ennå per dags dato – enkel oppgave for en senere øyeblikk.
 
 **Gjenstår før dette er reelt multi-bruker for VENNER (neste steg):**
 1. Kjør `test_user_notify.py` for testbrukeren for å bevise push-varsling live
