@@ -36,6 +36,7 @@ from __future__ import annotations
 import base64
 import getpass
 import io
+import secrets
 import tarfile
 import tempfile
 from datetime import datetime, timezone
@@ -112,6 +113,14 @@ def _login_garmin_and_capture_token(email: str, password: str) -> str | None:
         return base64.b64encode(buf.getvalue()).decode("ascii")
 
 
+def _generate_ntfy_topic() -> str:
+    """Lag et tilfeldig, ugjettbart ntfy-emne. Selve emnenavnet ER sikkerheten
+    hos ntfy.sh (ingen kontoer/passord der - hvem som helst som kjenner
+    emnenavnet kan lese/skrive til det) - MÅ derfor være tilfeldig, aldri
+    forutsigbart (f.eks. IKKE basert på navn/e-post)."""
+    return f"golfbox-{secrets.token_hex(8)}"
+
+
 def _yes(prompt: str) -> bool:
     return _ask(prompt, required=True).lower() in ("ja", "j", "yes", "y")
 
@@ -166,7 +175,13 @@ def main() -> None:
 
     print("\n--- Varsling ---")
     notify_email = _ask("E-post for varsling (valgfritt)")
-    ntfy_topic = _ask("ntfy-emne for push (valgfritt, f.eks. golfbox-<tilfeldig>)")
+    ntfy_topic = None
+    if _yes("Vil personen ha push-varsel på mobil? (ja/nei)"):
+        ntfy_topic = _generate_ntfy_topic()
+        print(f"\n  📱 Push-emne generert: {ntfy_topic}")
+        print("     Send DENNE strengen til personen etterpå. De må selv installere")
+        print("     ntfy-appen (gratis, ingen konto) og abonnere på akkurat dette")
+        print("     emnet for faktisk å motta varsler – du kan ikke gjøre det for dem.")
 
     row = {
         "label": label,

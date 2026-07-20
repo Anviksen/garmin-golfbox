@@ -132,7 +132,31 @@ sammendrag og bekrefter før kontoen faktisk opprettes.
 
 ---
 
-## 6. Hvis noen vil melde seg av
+## 6. Push-varsel (ntfy) – slik kobler du på
+
+Skjemaet spør kun om personen VIL ha push («Varslingspreferanse»). Selve
+emne-strengen (som fungerer litt som et passord – se under) genereres nå
+automatisk av `provision_user.py` når du svarer «ja» på «Vil personen ha
+push-varsel på mobil?» under provisjonering – du trenger ikke lage den selv.
+
+**Din jobb (eier):** når provisjoneringen er ferdig, skriver scriptet ut en
+linje som `📱 Push-emne generert: golfbox-xxxxxxxxxxxxxxxx`. Send DENNE
+strengen videre til personen (SMS/melding er fint – den er ikke like sensitiv
+som et passord, men bør heller ikke postes offentlig, se hvorfor under).
+
+**Personens jobb (mottakeren):**
+1. Installer **ntfy**-appen (gratis, iOS/Android – ingen konto nødvendig).
+2. Legg til/abonner på emne-strengen du fikk tilsendt, nøyaktig som den er.
+3. Ferdig – varsler dukker opp som vanlige push-varsler fra da av.
+
+**Hvorfor emnet må være tilfeldig:** ntfy.sh har ingen brukerkontoer eller
+passord – hvem som helst som kjenner emnenavnet kan både sende til og lese fra
+det. Det er derfor `provision_user.py` genererer en lang, tilfeldig streng
+(`golfbox-` + 16 tilfeldige tegn) i stedet for noe forutsigbart som et navn.
+
+---
+
+## 7. Hvis noen vil melde seg av
 
 Ha en enkel rutine klar (kan være «send meg en melding»): sett `active =
 false` på raden deres i Supabase, og slett faktisk alt fra `users`- og
