@@ -19,6 +19,7 @@ Start slik (se README.md):
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -29,7 +30,12 @@ from fastapi.staticfiles import StaticFiles
 
 # --- Stier ------------------------------------------------------------------
 PROJECT_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = PROJECT_DIR / "data"
+# GOLFBOX_DATA_DIR lar en multi-bruker-kjøring isolere hver brukers rundedata i
+# egen mappe (samme mønster som fetch_garmin.py og golfbox_post.py) - uten
+# dette leser get_round() i golfbox_post.py (via all_normalized() under) alltid
+# fra det DELTE data/-repoet i stedet for den midlertidige per-bruker-mappa
+# fetch_garmin.py faktisk skrev til. Default uendret for enkelt-bruker-drift.
+DATA_DIR = Path(os.getenv("GOLFBOX_DATA_DIR", str(PROJECT_DIR / "data")))
 ALL_ROUNDS = DATA_DIR / "all_rounds.json"
 EXCLUDED_FILE = DATA_DIR / "excluded.json"
 FRONTEND_DIR = PROJECT_DIR / "frontend"

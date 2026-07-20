@@ -353,9 +353,45 @@ mellom provisjoneringer, ikke bare mellom vanlige synk-kjøringer.
   fremtidig forbedring, ikke bygget nå.
 
 **Ny testbruker:** «Haakon Erla», id `898c6160-f3ae-4799-8eb7-8ca1fcd27df5`.
-Ingen `user_round_state` ennå → neste kjøring av `multiuser-sync.yml` vil sette
-en BASELINE (markere alle eksisterende runder som sett, poste ingenting) –
-akkurat som første kjøring alltid har gjort i enkelt-bruker-systemet. En EKTE
-ny runde spilt/registrert ETTER dette tidspunktet er det som faktisk beviser
-posting-kjeden. Gjenstår: spille/registrere en ny runde, vente 5–10 min,
-bekrefte i GolfBox + varsel + Actions-logg.
+
+**Baseline + ny-runde-deteksjon bekreftet å virke helt automatisk, uten noe
+manuelt steg:** en tidligere automatisk 5-minutters-kjøring satte baseline
+usett (som forventet – ingen e-post/logg brukeren så direkte), og en senere
+syklus oppdaget korrekt at én runde (Tyrifjord, ID 373539533) var NY siden
+baseline. Selve deteksjons- og køprinsippet fungerer altså 100 % som i
+enkelt-bruker-systemet.
+
+**RIKTIG BUG funnet (19. juli 2026) – IKKE tee-matching, et krasj:**
+`backend/main.py` hadde en hardkodet `DATA_DIR = PROJECT_DIR / "data"` som
+aldri fikk `GOLFBOX_DATA_DIR`-støtte i steg 0 (kun `fetch_garmin.py` og
+`golfbox_post.py` sine egne stier ble dekket den gangen). `golfbox_post.py`
+sin `get_round()` henter data via `backend.main.all_normalized()`, som dermed
+lette i feil (delt/tom) mappe i steden for den midlertidige per-bruker-mappa
+`fetch_garmin.py` faktisk skrev til. Resultat: `get_round()` kastet
+`ValueError: Fant ikke runde ... i data/`, prosessen krasjet (exit-kode 1),
+og `auto_sync.py` sin catch-all «else»-gren tolket det som en vanlig kode-3
+(«bane/tee ikke bekreftet») i stedet for et ekte krasj – derav den misvisende
+varsel-teksten. Dette forklarer OGSÅ hvorfor telemetrien var tom for denne
+runden: `_log_attempt()` nås aldri når `get_round()` kaster tidlig.
+
+**Fikset:** `backend/main.py` sin `DATA_DIR` respekterer nå `GOLFBOX_DATA_DIR`,
+samme mønster som resten av kodebasen. Verifisert i sandkasse.
+
+**Mindre, ikke-hastende observasjon fra samme hendelse:** `auto_sync.py`
+skiller ikke mellom et ekte krasj (exit-kode 1, uventet) og et normalt
+kode-3-utfall (bane/tee ikke bekreftet) – begge havner i samme «else»-gren
+med samme generiske varseltekst. Ikke noe å fikse nå, men verdt å vurdere en
+egen, tydeligere håndtering av uventede exit-koder ved en senere anledning.
+
+**For å re-teste selve fiksen** (runden er allerede markert `needs_manual` i
+Supabase, så den blir ikke automatisk plukket opp på nytt uten dette):
+
+```sql
+delete from user_round_state
+where user_id = (select id from users where label = 'Haakon Erla')
+  and garmin_round_id = 373539533;
+```
+
+Kjør deretter (eller vent på neste 5-minutters-syklus), og se om runden nå
+faktisk postes til GolfBox (eller flagges med en ekte, spesifikk grunn – ikke
+et krasj).
