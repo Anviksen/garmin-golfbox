@@ -5,9 +5,12 @@ name: Multi-bruker-sync (Garmin til Golfbox)
 #
 # Tidsplan lagt til 18. juli 2026 etter en bevist trygg manuell kjøring i
 # skyen (run #1, success, 53s) - samme mønster som auto-sync.yml (hvert 10.
-# min i golf-timene). Trygt å automatisere NÅ fordi GOLFBOX_AUTO_SUBMIT="0"
-# (dry run) under - ingenting lagres ekte til GolfBox før dere bevisst
-# skrur den til "1". Se MULTIUSER_PLAN.md for veien videre.
+# min i golf-timene), reelt trigget hvert 5. min via en egen cron-job.org-jobb.
+#
+# GOLFBOX_AUTO_SUBMIT="1" satt midlertidig for en bevisst ende-til-ende-test
+# (se MULTIUSER_PLAN.md) - auto-sync.yml er disablet manuelt i mellomtiden for
+# å unngå duplikat-posting mot samme konto. HUSK å vurdere denne verdien igjen
+# når testen er unnagjort.
 #
 # Ingen Garmin-/Golfbox-secrets her (i motsetning til auto-sync.yml) - hver
 # brukers creds hentes kryptert fra Supabase og dekrypteres i minnet av
@@ -27,8 +30,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30       # øk etter hvert som antall brukere vokser
     env:
-      GOLFBOX_AUTO_SUBMIT: "0"   # DRY RUN til dere har sett en trygg kjøring i loggen.
-                                 # Sett til "1" for ekte lagring når dere stoler på den.
+      GOLFBOX_AUTO_SUBMIT: "1"   # EKTE LAGRING - satt for bevisst test 19. juli 2026.
+                                 # Sett tilbake til "0" hvis dere vil pause ekte lagring igjen.
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
