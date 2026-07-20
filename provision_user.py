@@ -36,6 +36,7 @@ from __future__ import annotations
 import base64
 import getpass
 import io
+import os
 import secrets
 import tarfile
 import tempfile
@@ -119,6 +120,43 @@ def _generate_ntfy_topic() -> str:
     emnenavnet kan lese/skrive til det) - MÅ derfor være tilfeldig, aldri
     forutsigbart (f.eks. IKKE basert på navn/e-post)."""
     return f"golfbox-{secrets.token_hex(8)}"
+
+
+def _send_welcome_email(label: str, to_email: str | None, ntfy_topic: str | None) -> None:
+    """Send en velkomst-e-post til den nye brukeren med push-oppskrift (best
+    effort – feiler ALDRI selve provisjoneringen om denne mislykkes, kontoen
+    er allerede opprettet uansett)."""
+    if not to_email:
+        return
+    try:
+        import notify
+        if not notify.is_configured():
+            print("  ℹ️  Sender ikke velkomst-e-post – GMAIL_USER/GMAIL_APP_PASSWORD "
+                  "er ikke satt opp lokalt.")
+            return
+        os.environ["NOTIFY_EMAIL"] = to_email
+        lines = [
+            f"Hei {label}!",
+            "",
+            "Du er nå registrert i Garmin → GolfBox – runder du spiller havner "
+            "automatisk til godkjenning i GolfBox, du trenger ikke gjøre noe selv.",
+        ]
+        if ntfy_topic:
+            lines += [
+                "",
+                "For å få push-varsel på mobilen når en runde er lagt inn (eller",
+                "trenger at du fullfører den selv):",
+                "  1. Installer appen «ntfy» (gratis, iOS/Android – ingen konto).",
+                f"  2. Abonner på dette emnet, nøyaktig som det står: {ntfy_topic}",
+            ]
+        else:
+            lines += ["", "Du får varsel på e-post (denne adressen) når noe trenger et blikk."]
+        lines += ["", "Mvh, golf-roboten 🏌️"]
+        ok = notify.send_email(f"Velkommen, {label}! Slik fungerer varslene dine",
+                               "\n".join(lines))
+        print(f"  {'✅' if ok else '❌'} Velkomst-e-post {'sendt' if ok else 'feilet'} til {to_email}.")
+    except Exception as e:
+        print(f"  (velkomst-e-post hoppet over: {e})")
 
 
 def _yes(prompt: str) -> bool:
@@ -220,6 +258,7 @@ def main() -> None:
     result = user_store.create_user(row)
     if result:
         print(f"\n✅ Bruker opprettet: {result.get('label')}  (id={result.get('id')})")
+        _send_welcome_email(label, notify_email, ntfy_topic)
     else:
         print("\n❌ Kunne ikke opprette bruker – se feilmelding over.")
         raise SystemExit(1)

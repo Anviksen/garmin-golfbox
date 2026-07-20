@@ -139,10 +139,13 @@ emne-strengen (som fungerer litt som et passord – se under) genereres nå
 automatisk av `provision_user.py` når du svarer «ja» på «Vil personen ha
 push-varsel på mobil?» under provisjonering – du trenger ikke lage den selv.
 
-**Din jobb (eier):** når provisjoneringen er ferdig, skriver scriptet ut en
-linje som `📱 Push-emne generert: golfbox-xxxxxxxxxxxxxxxx`. Send DENNE
-strengen videre til personen (SMS/melding er fint – den er ikke like sensitiv
-som et passord, men bør heller ikke postes offentlig, se hvorfor under).
+**Din jobb (eier):** ingenting – `provision_user.py` sender nå automatisk en
+velkomst-e-post til personen (til e-posten de oppga) rett etter at kontoen er
+opprettet, med push-emnet og instruksjonene under ferdig skrevet ut. Du kan se
+i terminalen om den gikk gjennom («✅ Velkomst-e-post sendt»). Går den ikke
+gjennom (f.eks. Gmail-oppsettet feiler), skriver scriptet fortsatt ut
+emne-strengen selv (`📱 Push-emne generert: golfbox-xxxxxxxxxxxxxxxx`) som
+reserve – da må du sende den videre manuelt (SMS er fint).
 
 **Personens jobb (mottakeren):**
 1. Installer **ntfy**-appen (gratis, iOS/Android – ingen konto nødvendig).
