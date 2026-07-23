@@ -233,3 +233,23 @@ GitHubs innebygde `schedule`-cron er hardt strupt på gratis-nivå (fyrer bare h
 - Rydde `seen`/`pending`-vekst; håndtere «falt ut av 50-vindu»-edge.
 - Undersøke Nittedal (i GolfBox eller ikke?).
 - Vurder ukentlig digest-mail som oppsummering.
+- **Utenlandske baner (idé, 20. juli 2026) – «enormt løft» ifølge brukeren,
+  egen økt senere.** GolfBox har et eget skjema for runder utenfor Norge, med
+  frittekst-felt i stedet for nedtrekksmatching mot en katalog: Land, PCC
+  (eneste dropdown, 0 til +3), Bane, Utslagssted, Banens Par, Baneverdi (CR),
+  Slopeverdi, og score per hull. Foreløpig vurdering: sannsynligvis
+  gjennomførbart – Garmin har 41 000+ baner globalt og gir oss trolig allerede
+  banenavn, par, `teeBoxRating`/`teeBoxSlope` og `teeBox`-etikett for
+  UTENLANDSKE runder også (samme felt som i dag brukes til norsk
+  tee-matching), pluss hull-for-hull score. Land er ikke fanget i dag, men
+  løsbart via Garmins egne data eller GPS-basert geokoding (samme mønster som
+  klubbmatching i Norge). **PCC kan IKKE utledes fra Garmin-data** – et
+  skjønnsspørsmål om værforhold/banetilstand den dagen. Anbefaling: aldri
+  velg denne automatisk, alltid flagg for manuell bekreftelse (default 0),
+  i tråd med sikkerhetsnett-prinsippet. Dette er en HELT EGEN fyll-ut-strategi
+  i `golfbox_post.py` (fritekst, ikke katalog-matching) – feltnavn/ID-er på
+  GolfBox sitt utenlandsskjema er ikke utforsket i kode ennå, krever live
+  inspeksjon (samme type verktøy som `diag_club.py`/`inspect_course_form`
+  bruker for norske baner). Ville løst et allerede kjent problem: de spanske
+  rundene (El Chaparral, Marbella, Los Arqueros, Calanova, Alhaurin, Santa
+  Clara) som i dag er «kan ikke leveres» fordi de ikke er norske klubber.
