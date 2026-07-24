@@ -1,0 +1,18 @@
+{
+  "27611": {
+    "country": "Sweden",
+    "courseName": "Hills Golfklubb",
+    "holeHandicaps": "150507031317090111120414180210160608",
+    "verifiedAgainst": "caddee.se (koblet til svenske MinGolf)",
+    "verifiedAt": "2026-07-24T19:39:20Z",
+    "verifiedBy": "haakon+claude 2026-07-24"
+  },
+  "28088": {
+    "country": "Sweden",
+    "courseName": "Torreby Golfklubb",
+    "holeHandicaps": "150501091707131103180804021612140610",
+    "verifiedAgainst": "caddee.se (koblet til svenske MinGolf)",
+    "verifiedAt": "2026-07-24T19:39:20Z",
+    "verifiedBy": "haakon+claude 2026-07-24"
+  }
+}

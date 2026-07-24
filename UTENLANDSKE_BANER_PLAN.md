@@ -182,6 +182,126 @@ gjennomgang av cachet Garmin-rådata for alle 6 kjente Spania-runder
   Marbella). **46/46 bestått i sandkasse (0 nettverk nødvendig), 0
   regresjoner** på de 32 eksisterende testene.
 
+### Skalerings-beslutning (24. juli 2026): tenk «mange brukere», ikke «denne runden»
+
+Etter funn 2/3 stoppet vi opp: ambisjonen er ikke bare at Håkons egne runder
+postes riktig, men et verktøy MANGE kan bruke – på sikt kanskje kommersielt,
+og ideelt godkjent av Garmin/GolfBox/forbund. Det endrer hva «riktig løsning»
+betyr: manuelt oppslag per runde (som løste Torreby-testen) skalerer ikke,
+og enkeltrunde-flagging er ikke nok alene når føringen faktisk teller på ekte
+WHS-handicap for andre folk.
+
+Bygget derfor to ting, samme kveld:
+
+1. **Automatiske sunnhetssjekker** (`_valid_hcp_set`, `_plausible_cr_slope` i
+   `golfbox_post.py`) – helt automatisk, ingen manuelt oppslag. Fanger IKKE
+   subtile avvik (som Torreby CR/Slope-saken), men fanger korrupt/umulig data
+   (duplikat stroke index, Slope utenfor 55-155 osv.) og blokkerer
+   auto-lagring for akkurat den runden i så fall (`course_info=False`).
+2. **Delt, verifisert stroke-index-cache** (`foreign_course_registry.py`,
+   speiler `course_matcher.py` sitt lærings-mønster for norske baner). Første
+   gang NOEN bekrefter riktig Hcp-rekkefølge for en bane mot en troverdig
+   kilde, lagres den i `foreign_hcp_db.json` (git-delt) OG i sentralbasen
+   (`foreign_course_hcp`-tabell, se `supabase_foreign_hcp_schema.sql` – må
+   kjøres én gang i Supabase SQL Editor, samme rutine som
+   `supabase_multiuser_schema.sql`). Deretter er banen «kjent god» for ALLE
+   fremtidige brukere, helt automatisk, ingen ny sjekk nødvendig. Hills og
+   Torreby er allerede registrert (verifisert mot caddee.se i dag).
+   `sync_registry.py` synker nå også denne tabellen ned lokalt, samme rutine
+   som klubb/bane/tee-basen.
+
+**Fortsatt åpent:** de 6 spanske rundene er ALDRI kryssjekket mot en ekte
+kilde (kun sjekket at tallene er en gyldig permutasjon – samme svake sjekk
+som nesten lurte oss på Hills). De er derfor fortsatt kun «Garmin
+best-effort, sunnhetssjekket, ikke verifisert» – posted automatisk hvis de
+består sunnhetssjekkene, men uten den sterke tilliten Hills/Torreby nå har.
+Naturlig oppfølging: finn en spansk ekvivalent til caddee.se og verifiser
+dem på samme måte.
+
+**Om offisiell godkjenning fra Garmin/GolfBox/forbund:** det er en
+forretnings-/avtale-vei (trolig til slutt en offisiell API-integrasjon i
+stedet for browser-automatisering), ikke noe flere kodefikser løser alene –
+egen, bevisst beslutning senere, se samtalen 24. juli 2026.
+
+### Live-test funn 3 (24. juli 2026): CR/Slope kan avvike litt – akseptert, flagget
+
+Torreby «Gul»-tee: Garmin ga CR 69,7/slope 131, klubbens egen side viste
+69,5/129, og to tredjepartskilder ga enda to andre tall. Ikke en systematisk
+Garmin-feil (som Hcp-alarmen), men vanlig drift – CR/Slope resertifiseres
+periodisk, ulike kilder har ulik snapshot-alder (Garmins banedatabase her:
+november 2025). Dette ER faktisk en KJENT, allerede dokumentert begrensning
+i prosjektet (`CLAUDE.md`: «Garmin-ratinger er utdaterte»), men den biter
+annerledes her: for NORSKE runder skriver vi aldri Garmins rating til
+GolfBox (GolfBox har egen lagret CR/Slope per tee) – for UTENLANDSKE runder
+ER Garmin eneste kilde, så avviket postes faktisk.
+
+**Beslutning (brukerens eksplisitte krav): alt skal fylles inn automatisk,
+ingen manuelt oppslag per runde** – ellers mister automatiseringen poenget.
+Løsning: behold Garmin som kilde (som før, ingen endring i hvilke tall som
+postes), men legg til en INFO-note i `fill_foreign_score_form()` (ikke en
+blokkerende ⚠️, siden avviket er lite og forventet) som minner om at CR/Slope
+kan avvike noe – samme mønster som PCC, bare mildere alvorlighetsgrad siden
+feilmarginen er liten og godt forstått.
+
+### Live-test funn 2 – OPPKLART 24. juli 2026: falsk alarm, Garmin hadde rett
+
+**Oppdatering samme dag:** Krysset Hcp-per-hull mot Caddee.se (svensk
+golf-app koblet til det offisielle svenske handicapsystemet MinGolf) for
+BÅDE Hills og Torreby:
+
+- **Torreby:** Garmins `tees[].holeHandicaps` stemte 100 % mot Caddee, alle
+  18 hull, PAR òg 100 %.
+- **Hills:** Garmins `tees[].holeHandicaps` stemte OGSÅ 100 % mot Caddee,
+  alle 18 hull, PAR òg 100 %.
+
+Konklusjon: alarmen under (funn 2, opprinnelig) var en falsk alarm. Kortet vi
+sammenlignet mot på Hills sin egen nettside var trolig UTDATERT – Caddee sin
+hullbeskrivelse for Hills nevner eksplisitt at banen ble bygget om («Nya hål
+nio», «Gamla hål 13 har förlångts», «nytt for 2013»), som forklarer hvorfor
+et gammelt scorekort-bilde på klubbens nettside kan vise en annen
+hull-rekkefølge enn det som faktisk gjelder i dag. Garmins
+`tees[].holeHandicaps`-felt (feltet koden vår faktisk bruker) er nå
+kryssjekket riktig på 2 av 2 svenske baner mot en troverdig, MinGolf-koblet
+kilde – i tillegg til Par som har stemt på alle 8 baner testet så langt
+(6 spanske + 2 svenske). **`_fill_and_settle` osv. i koden endres IKKE** –
+ingen kodeendring var nødvendig, kun en feilslutning i den manuelle
+sammenligningen som ble oppklart. Anbefaling: fortsett som planlagt,
+fortsatt sunn skepsis + visuell sjekk før «Lagre» (som alltid), men ingen
+egen «lær opp stroke index per bane»-mekanisme er nødvendig på nåværende
+bevisgrunnlag.
+
+### Live-test funn 2 (24. juli 2026, opprinnelig – SE OPPKLARING RETT OVER) – historikk, ikke lenger gjeldende
+
+Testet Hills Golfklubb (Sverige, runde 373781049). Par og CR/Slope stemte
+perfekt mot Hills sin egen offisielle scorekort-side. MEN: **stroke index
+(Hcp) per hull fra Garmin (`tees[].holeHandicaps`) stemmer IKKE med Hills sitt
+offisielle scorekort.** Garmin gir riktig SETT tall (odde 1-17 på front ni,
+like 2-18 på bak ni – samme struktur som ekte kort), men fordelt på FEIL hull
+– en annen permutasjon enn den klubben faktisk bruker. Eksempel: hull 13 har
+offisiell stroke index 16, Garmin ga 18. Det er ikke bare kosmetisk: siden SH
+og Jst. score (net-double-bogey-kappet score, brukes i selve
+handicap-utregningen) regnes ut av GolfBox FRA stroke index-feltet vi selv
+fylte inn, endret feilen faktisk Jst. score-verdien på hull 13 i live-testen
+(GolfBox viste Jst.=5 med vår feil-hcp=18; riktig hcp=16 ville trolig gitt
+Jst.=6). Dette er nøyaktig den typen feil CLAUDE.md prinsipp 2 advarer mot
+("post aldri feil data – flagg heller").
+
+**IKKE bekreftet ennå:** om dette er unikt for Hills, eller om de 6
+Spania-rundene (inkl. den allerede LAGREDE Santa Clara-runden) har samme
+problem – vi verifiserte den gang kun at Garmin-tallene var en gyldig
+permutasjon av 1–18, ALDRI at rekkefølgen faktisk stemte mot banens ekte
+scorekort. Det var en svakhet i den opprinnelige verifiseringen.
+
+**Konsekvens: IKKE lagre flere utenlandske runder (inkl. Hills) før dette er
+løst.** Par/CR/Slope/Bane/Land/Utslagssted/Slag er fortsatt vist pålitelige
+på tvers av 7 testede baner – det er SPESIFIKT stroke-index-feltet fra
+Garmin som ikke kan stoles på uten videre. Løsningsretning å vurdere: slutt å
+autofylle Hcp-per-hull fra Garmin (samme prinsipp som PCC – ikke gjett), la
+feltet stå tomt/flagget for manuell utfylling fra spillerens/klubbens eget
+scorekort, ELLER finn en mer pålitelig kilde. Krever avklaring av hvordan
+GolfBox oppfører seg når Hcp-per-hull står tomt (feiler lagring, eller
+aksepteres score uten net-double-bogey-kapping?) – ikke undersøkt ennå.
+
 ### Live-test funn 1 (23. juli 2026) – fikset
 
 Ekte lagring på Santa Clara-runden (356502765) gikk gjennom og alle 18 hull

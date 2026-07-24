@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import golfbox_post as gp  # noqa: E402
+import foreign_course_registry as fcr  # noqa: E402
 from backend.main import parse_hole_handicaps  # noqa: E402
 
 _passed = 0
@@ -131,10 +132,72 @@ def test_hole_handicaps():
     check("odde lengde -> tom liste (korrupt data, ikke gjett)", parse_hole_handicaps("123"), [])
 
 
+# --- Utenlandske baner: automatiske sunnhetssjekker (se "Live-test funn 2/3"
+# i UTENLANDSKE_BANER_PLAN.md – fanger korrupt/umulig data helt automatisk,
+# uten å kjenne fasiten for banen) ---
+def test_valid_hcp_set():
+    good = [{"hcp": v} for v in [14, 18, 12, 8, 10, 6, 4, 2, 16, 1, 5, 3, 9, 7, 17, 11, 15, 13]]
+    check_true("gyldig 1-18-permutasjon godkjennes", gp._valid_hcp_set(good))
+    dup = [{"hcp": 1}, {"hcp": 1}, {"hcp": 2}]
+    check("duplikat stroke index avvises", gp._valid_hcp_set(dup), False)
+    out_of_range = [{"hcp": 0}, {"hcp": 19}]
+    check("utenfor 1-18 avvises", gp._valid_hcp_set(out_of_range), False)
+    check_true("ingen hcp-data i det hele tatt -> ingenting å sjekke", gp._valid_hcp_set([{"hcp": None}]))
+    check_true("tom liste -> ingenting å sjekke", gp._valid_hcp_set([]))
+
+
+def test_plausible_cr_slope():
+    check_true("normal CR/Slope godkjennes (Torreby Gul)", gp._plausible_cr_slope(72, 69.7, 131))
+    check("slope under 55 avvises (umulig)", gp._plausible_cr_slope(72, 70, 40), False)
+    check("slope over 155 avvises (umulig)", gp._plausible_cr_slope(72, 70, 200), False)
+    check("CR langt fra par avvises", gp._plausible_cr_slope(72, 30, 130), False)
+    check("ikke-tall avvises", gp._plausible_cr_slope(72, "abc", 130), False)
+    check("None avvises", gp._plausible_cr_slope(72, None, None), False)
+
+
+def test_decode_hole_handicaps():
+    check("speiler backend.main sin dekoding",
+          gp._decode_hole_handicaps("150507031317090111120414180210160608"),
+          parse_hole_handicaps("150507031317090111120414180210160608"))
+
+
+# --- Delt, verifisert stroke-index-cache (foreign_course_registry.py) ---
+def test_foreign_course_registry():
+    import tempfile
+    from pathlib import Path
+
+    orig_file = fcr.DB_FILE
+    with tempfile.TemporaryDirectory() as tmp:
+        fcr.DB_FILE = Path(tmp) / "foreign_hcp_db_test.json"
+        try:
+            check("ukjent bane -> None", fcr.get(999999), None)
+            saved = fcr.verify(
+                course_global_id=28088, course_name="Torreby Golfklubb", country="Sweden",
+                hole_handicaps="150501091707131103180804021612140610",
+                verified_against="caddee.se", verified_by="test",
+            )
+            check_true("verify() returnerer oppføring", saved is not None)
+            got = fcr.get(28088)
+            check_true("get() finner nylig verifisert bane", got is not None)
+            check("holeHandicaps lagret riktig", (got or {}).get("holeHandicaps"),
+                  "150501091707131103180804021612140610")
+            check("get(str) og get(int) samme resultat", fcr.get("28088"), fcr.get(28088))
+            threw = False
+            try:
+                fcr.verify(1, "x", "y", "ikketall", "z")
+            except ValueError:
+                threw = True
+            check_true("ugyldig hole_handicaps kaster feil (ikke stille feil)", threw)
+        finally:
+            fcr.DB_FILE = orig_file
+
+
 def main():
     for fn in [test_norm, test_colors, test_n_holes, test_datetime,
                test_gb_error, test_course_scoring, test_holes_decision,
-               test_foreign_detection, test_hole_handicaps]:
+               test_foreign_detection, test_hole_handicaps, test_valid_hcp_set,
+               test_plausible_cr_slope, test_decode_hole_handicaps,
+               test_foreign_course_registry]:
         fn()
     print(f"\n{'='*40}\n{_passed} bestått, {_failed} feilet")
     sys.exit(1 if _failed else 0)

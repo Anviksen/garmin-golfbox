@@ -127,6 +127,48 @@ def log_attempt(data: dict) -> bool:
         return False
 
 
+_FOREIGN_HCP_FIELDS = (
+    "course_global_id", "courseName", "country", "holeHandicaps",
+    "verifiedAgainst", "verifiedBy", "verifiedAt",
+)
+
+
+def fetch_foreign_hcp() -> list:
+    """Hent alle bekreftede utenlandske stroke-index-oppføringer. Tom liste
+    hvis ikke konfigurert / feil. Se foreign_course_registry.py."""
+    if not is_configured():
+        return []
+    url = f"{SUPABASE_URL}/rest/v1/foreign_course_hcp?select={','.join(_FOREIGN_HCP_FIELDS)}"
+    try:
+        req = urllib.request.Request(url, headers=_headers())
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        print(f"(sentralbase: kunne ikke lese foreign_course_hcp – {e})")
+        return []
+
+
+def contribute_foreign_hcp(entry: dict) -> bool:
+    """Send én bekreftet utenlandsk bane opp til sentralbasen (best effort).
+    Bruker upsert (on_conflict=course_global_id) – samme bane kan bekreftes
+    på nytt uten å lage duplikater."""
+    if not is_configured() or not entry.get("course_global_id") or not entry.get("holeHandicaps"):
+        return False
+    row = {k: entry.get(k) for k in _FOREIGN_HCP_FIELDS}
+    try:
+        req = urllib.request.Request(
+            f"{SUPABASE_URL}/rest/v1/foreign_course_hcp?on_conflict=course_global_id",
+            data=json.dumps(row).encode("utf-8"),
+            headers=_headers({"Prefer": "resolution=merge-duplicates,return=minimal"}),
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=30):
+            return True
+    except Exception as e:
+        print(f"(sentralbase: kunne ikke bidra foreign_course_hcp – {e})")
+        return False
+
+
 if __name__ == "__main__":
     if not is_configured():
         print("Sentralbasen er IKKE konfigurert. Sett SUPABASE_URL og SUPABASE_ANON_KEY i .env.")

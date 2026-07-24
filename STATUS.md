@@ -254,3 +254,16 @@ GitHubs innebygde `schedule`-cron er hardt strupt på gratis-nivå (fyrer bare h
   `seen`-liste fra tidligere «kan ikke leveres»-forsøk og postes derfor IKKE
   automatisk – må kjøres manuelt én gang hver (`python3 golfbox_post.py
   <id>`), se plandokumentet for eksakt kommando.
+  **24. juli 2026 (skalering – tenk «mange brukere», ikke enkeltrunder):** to
+  nye sikkerhetslag, se UTENLANDSKE_BANER_PLAN.md «Skalerings-beslutning».
+  (1) Automatiske sunnhetssjekker (`_valid_hcp_set`, `_plausible_cr_slope`) –
+  blokkerer auto-lagring helt automatisk hvis Hcp ikke er en gyldig
+  1-18-permutasjon eller CR/Slope er fysisk umulig, ingen manuelt oppslag.
+  (2) Delt, verifisert stroke-index-cache (`foreign_course_registry.py` +
+  `foreign_hcp_db.json`, ny Supabase-tabell `foreign_course_hcp` – kjør
+  `supabase_foreign_hcp_schema.sql` i Supabase SQL Editor, samme rutine som
+  multi-bruker-skjemaet). Speiler `course_matcher.py` sitt lærings-mønster:
+  first bekreftet bane er kjent god for alle brukere for alltid.
+  `sync_registry.py` synker nå ned begge tabeller. Hills og Torreby
+  (Sverige) er verifisert mot caddee.se og registrert.
+  `tests/test_logic.py` 64/64 grønt.

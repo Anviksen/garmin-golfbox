@@ -13,14 +13,10 @@ from __future__ import annotations
 
 import course_matcher
 import central_registry
+import foreign_course_registry
 
 
-def main() -> None:
-    if not central_registry.is_configured():
-        print("Sentralbasen er ikke satt opp. Sett SUPABASE_URL / SUPABASE_ANON_KEY i .env "
-              "(se SENTRALISERING.md).")
-        return
-
+def _sync_courses() -> None:
     remote = central_registry.fetch_all()
     print(f"Sentralbasen har {len(remote)} baner. Fletter inn lokalt ...")
 
@@ -53,6 +49,44 @@ def main() -> None:
 
     course_matcher._save_db(local)
     print(f"✅ Synket. {added} nye baner lagt til. course_db.json har nå {len(local)} baner.")
+
+
+def _sync_foreign_hcp() -> None:
+    remote = central_registry.fetch_foreign_hcp()
+    print(f"Sentralbasen har {len(remote)} bekreftede utenlandske baner. Fletter inn lokalt ...")
+
+    local = foreign_course_registry.load_db()
+    added = 0
+    for e in remote:
+        cid = e.get("course_global_id")
+        hcp = e.get("holeHandicaps")
+        if not cid or not hcp:
+            continue
+        key = str(cid)
+        if key not in local:
+            local[key] = {
+                "courseName": e.get("courseName", ""),
+                "country": e.get("country", ""),
+                "holeHandicaps": hcp,
+                "verifiedAgainst": e.get("verifiedAgainst", ""),
+                "verifiedBy": e.get("verifiedBy", ""),
+                "verifiedAt": e.get("verifiedAt", ""),
+            }
+            added += 1
+
+    foreign_course_registry._save_db(local)
+    print(f"✅ Synket. {added} nye bekreftede baner lagt til. "
+          f"foreign_hcp_db.json har nå {len(local)} baner.")
+
+
+def main() -> None:
+    if not central_registry.is_configured():
+        print("Sentralbasen er ikke satt opp. Sett SUPABASE_URL / SUPABASE_ANON_KEY i .env "
+              "(se SENTRALISERING.md).")
+        return
+
+    _sync_courses()
+    _sync_foreign_hcp()
 
 
 if __name__ == "__main__":

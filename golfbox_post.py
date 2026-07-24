@@ -27,6 +27,7 @@ from datetime import datetime
 from pathlib import Path
 
 import course_matcher  # universell koordinat-matcher (samme mappe)
+import foreign_course_registry  # delt, verifisert stroke-index-cache for utenlandske baner
 
 try:
     from playwright.sync_api import sync_playwright
@@ -709,6 +710,50 @@ def _is_foreign_round(rnd: dict) -> bool:
     return bool(country) and country not in ("norway", "norge")
 
 
+def _decode_hole_handicaps(s: str) -> list:
+    """Speiler backend.main.parse_hole_handicaps (2 sifre per hull). Duplisert
+    lokalt (i stedet for å importere backend.main her) fordi golfbox_post.py
+    bevisst holder backend-avhengigheten lazy/valgfri, se get_round()."""
+    if not s or len(s) % 2:
+        return []
+    try:
+        return [int(s[i:i + 2]) for i in range(0, len(s), 2)]
+    except ValueError:
+        return []
+
+
+def _valid_hcp_set(holes: list) -> bool:
+    """Sunnhets-sjekk: er stroke-index-verdiene vi har (fra Garmin ELLER den
+    verifiserte cachen) i det hele tatt en gyldig fordeling – ingen
+    duplikater, alle innenfor 1-18? Fanger korrupt/tullete data helt
+    automatisk, UTEN å kjenne fasiten for banen. Fanger IKKE feil REKKEFØLGE
+    (det krever ekte kryssjekk, se foreign_course_registry.py) – bare grovt
+    ødelagt data."""
+    vals = [h.get("hcp") for h in holes if h.get("hcp") is not None]
+    if not vals:
+        return True  # ingenting å sjekke ennå – mangler helt, fanges annet sted
+    if any(v < 1 or v > 18 for v in vals):
+        return False
+    return len(set(vals)) == len(vals)
+
+
+def _plausible_cr_slope(par, cr, slope) -> bool:
+    """Sunnhets-sjekk: er CR/Slope fysisk mulig? Slope er per definisjon
+    55-155 (USGA/R&A-systemet, absolutt). CR sjekkes med sjenerøs margin
+    rundt par – fanger åpenbart korrupte/feilplasserte tall, IKKE subtile
+    avvik (det er en annen, kjent og akseptert begrensning, se
+    UTENLANDSKE_BANER_PLAN.md «Live-test funn 3»)."""
+    try:
+        cr_f, slope_f = float(cr), float(slope)
+    except (TypeError, ValueError):
+        return False
+    if not (55 <= slope_f <= 155):
+        return False
+    if par and not (par * 0.8 <= cr_f <= par + 15):
+        return False
+    return True
+
+
 def _fill_and_settle(fr, sel_id: str, value) -> None:
     """Fyll et felt og etterlign en ekte bruker sin tastatur/blur-sekvens
     (input+keyup+change+blur). GolfBox sine gamle ASP-skjemaer regner ut
@@ -767,8 +812,27 @@ def fill_foreign_score_form(fr, rnd: dict, for_test: bool = False):
     status = {
         "course_info": False, "holes": 0, "n_holes": n_holes, "marker": False,
         "holes_missing": [], "scores_missing": False, "holes_contiguous": True,
-        "pcc_default": True, "foreign": True,
+        "pcc_default": True, "foreign": True, "hcp_verified": False, "hcp_suspect": False,
     }
+
+    # Delt, verifisert stroke-index-cache (se foreign_course_registry.py): har
+    # NOEN allerede bekreftet riktig rekkefølge for denne banen mot en
+    # troverdig ekstern kilde? Da stoler vi FULLT på den i stedet for Garmins
+    # rå tall – ellers Garmins beste forsøk, med sunnhetssjekk lenger ned.
+    verified = foreign_course_registry.get(rnd.get("courseId"))
+    if verified and verified.get("holeHandicaps"):
+        decoded = _decode_hole_handicaps(verified["holeHandicaps"])
+        if decoded:
+            holes = [dict(h) for h in holes]  # ikke muter rnd sin egen liste
+            for h in holes:
+                num = h.get("number")
+                if num and num <= len(decoded):
+                    h["hcp"] = decoded[num - 1]
+            status["hcp_verified"] = True
+            notes.append(
+                f"✅ Stroke index bekreftet mot {verified.get('verifiedAgainst') or 'kjent kilde'} "
+                f"({verified.get('verifiedAt', '')[:10]}) – full tillit, ingen gjetning."
+            )
 
     # 1) Rundetype = Selskapsrunde (2)
     try:
@@ -839,6 +903,29 @@ def fill_foreign_score_form(fr, rnd: dict, for_test: bool = False):
     ok_par = _fill_text("#fld_CoursePar", rnd.get("roundPar") or rnd.get("par"), "Banens par")
     ok_cr = _fill_text("#fld_CourseRating", rnd.get("teeBoxRating"), "Baneverdi (CR)")
     ok_slope = _fill_text("#fld_Slope", rnd.get("teeBoxSlope"), "Slopeverdi")
+    if ok_cr and ok_slope:
+        if _plausible_cr_slope(rnd.get("roundPar") or rnd.get("par"),
+                                rnd.get("teeBoxRating"), rnd.get("teeBoxSlope")):
+            # Kjent begrensning (samme som for norske runder, se CLAUDE.md
+            # "Garmin-ratinger er utdaterte"): CR/Slope resertifiseres periodisk
+            # av forbundet, og Garmins banedatabase kan henge noe etter andre
+            # kilder. For norske runder er dette ufarlig (GolfBox har egen CR/
+            # Slope, vi skriver aldri Garmins tall dit) – for utenlandske runder
+            # ER Garmin eneste kilde, så tallet postes faktisk. Vi automatiserer
+            # likevel fullt ut (ingen manuelt oppslag per runde), men flagger
+            # for et raskt blikk, samme mønster som PCC.
+            notes.append("ℹ️ CR/Slope er hentet fra Garmins banedatabase – kan i sjeldne "
+                          "tilfeller avvike litt fra nyeste offisielle tall (samme kjente "
+                          "begrensning som Garmin-rating for norske runder). Verdt et raskt "
+                          "blikk ved godkjenning, men fylles og postes automatisk som normalt.")
+        else:
+            # Grovt utenfor fysisk mulig område (Slope må være 55-155) – dette er
+            # ikke «vanlig drift» som avviket over, men korrupt/feil data. Ikke
+            # gjett – flagg og hindre auto-lagring (sikkerhetsnett-prinsippet).
+            notes.append("❗ CR/Slope fra Garmin ser fysisk umulig ut (utenfor gyldig "
+                          "område) – IKKE til å stole på. Kan ikke auto-lagres før dette "
+                          "er sjekket og rettet manuelt.")
+            ok_cr = ok_slope = False
 
     # PCC: ALDRI automatisk – skjønnsspørsmål om forholdene DEN dagen. Sett til 0,
     # flagg alltid for dobbeltsjekk (se UTENLANDSKE_BANER_PLAN.md).
@@ -879,6 +966,14 @@ def fill_foreign_score_form(fr, rnd: dict, for_test: bool = False):
         notes.append(f"Hull-scorer (par/hcp/slag) fylt inn: {filled}/{n_holes}")
         if missing_hcp:
             notes.append(f"⚠️ Mangler stroke index (HCP) fra Garmin for {missing_hcp} hull – dobbeltsjekk scorekortet.")
+        if not status["hcp_verified"] and not _valid_hcp_set(holes):
+            # Ikke en «bekreftet god» bane, og tallene vi FIKK er ikke engang en
+            # gyldig 1-18-fordeling (duplikater/utenfor rekkevidde) – korrupt
+            # data, ikke bare potensielt utdatert. Ikke gjett, ikke auto-lagre.
+            status["hcp_suspect"] = True
+            notes.append("❗ Stroke index (Hcp) fra Garmin ser korrupt ut (duplikater eller "
+                          "utenfor 1-18) – IKKE til å stole på. Kan ikke auto-lagres før dette "
+                          "er sjekket og rettet manuelt.")
         status["holes_contiguous"] = _holes_contiguous(holes)
         if filled == 0:
             status["scores_missing"] = True
@@ -890,6 +985,12 @@ def fill_foreign_score_form(fr, rnd: dict, for_test: bool = False):
                 notes.append(f"Ufullstendig runde: {filled}/18 (hull 1–{filled}) – postes som delrunde.")
             else:
                 notes.append(f"❗ Mangler hull {', '.join(map(str, missing))} MIDT INNE – kan ikke leveres automatisk.")
+
+    # Hcp-sunnhetssjekken over kjøres etter at course_info ble satt (den trenger
+    # de utfylte hullene) – etterjuster her, samme prinsipp som resten: ikke
+    # auto-lagre på mistenkelig data, uansett hvor i funksjonen det oppdages.
+    if status.get("hcp_suspect"):
+        status["course_info"] = False
 
     # 7) Markør (delt logikk, se _fill_marker).
     _m_notes, _m_ok = _fill_marker(fr, for_test)
