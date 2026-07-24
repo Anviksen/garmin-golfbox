@@ -67,6 +67,23 @@ def parse_pars(hole_pars: str | None) -> list[int]:
     return [int(c) for c in hole_pars if c.isdigit()]
 
 
+def parse_hole_handicaps(hcp_str: str | None) -> list[int]:
+    """Gjør om handicap-strengen "141812081006..." til en liste [14,18,12,8,10,6,...].
+
+    Dette er hullets vanskelighetsgrad/stroke index (1=vanskeligst), IKKE
+    spillerens handicap. Garmin/GolfBox bruker TO sifre per hull her (i
+    motsetning til par-strengen over som bruker ett siffer per hull) – f.eks.
+    "08" for hull med stroke index 8. Brukes for utenlandske runder, der
+    GolfBox sitt frittekst-skjema krever stroke index per hull manuelt
+    (norske baner har dette allerede lagret i GolfBox sin egen banedatabase)."""
+    if not hcp_str or len(hcp_str) % 2:
+        return []
+    try:
+        return [int(hcp_str[i:i + 2]) for i in range(0, len(hcp_str), 2)]
+    except ValueError:
+        return []
+
+
 def get_detail_scorecard(detail) -> dict | None:
     """Grav ut selve scorecard-objektet fra detalj-strukturen."""
     if not isinstance(detail, dict):
@@ -92,6 +109,14 @@ def normalize_round(entry: dict) -> dict:
     course_id = scorecard.get("courseGlobalId")
     lat = lon = None
     longest_m = sc_detail.get("longestShotInMeters") if sc_detail else None
+    # Land + stroke index (HCP) per hull – kun tilgjengelig via courseSnapshots
+    # (ikke summary). Brukes for baner utenfor Norge (se UTENLANDSKE_BANER_PLAN.md):
+    # `country` avgjør norsk/utenlandsk flyt, `hole_handicaps` fylles inn manuelt
+    # i GolfBox sitt frittekst-skjema for utenlandske runder (norske baner har
+    # dette allerede lagret i GolfBox sin egen banedatabase, så det trengs ikke der).
+    country = None
+    round_par = None
+    hole_handicaps: list[int] = []
     if sc_detail:
         snaps = detail.get("courseSnapshots") if isinstance(detail, dict) else None
         if isinstance(snaps, list) and snaps:
@@ -99,11 +124,25 @@ def normalize_round(entry: dict) -> dict:
             hole_pars = snap.get("holePars", hole_pars)
             course_name = snap.get("name", course_name)
             course_id = snap.get("courseGlobalId", course_id)
+            country = snap.get("country")
+            round_par = snap.get("roundPar")
             # Garmin lagrer koordinater som heltall i mikrograder (÷ 1 000 000).
             if snap.get("lat") is not None:
                 lat = snap["lat"] / 1_000_000
             if snap.get("lon") is not None:
                 lon = snap["lon"] / 1_000_000
+            # holeHandicaps ligger PER TEE (kan variere litt tee til tee), så match
+            # på samme tee-navn som scorecard.teeBox. Fallback: første tee i lista
+            # (bedre enn ingenting – flagges uansett for manuell dobbeltsjekk der
+            # dette brukes, se golfbox_post.py sin utenlandsk-gren).
+            tee_name = (scorecard.get("teeBox") or "").strip().lower()
+            tees = snap.get("tees") or []
+            tee_match = next(
+                (t for t in tees if (t.get("name") or "").strip().lower() == tee_name),
+                None,
+            ) or (tees[0] if tees else None)
+            if tee_match:
+                hole_handicaps = parse_hole_handicaps(tee_match.get("holeHandicaps"))
     pars = parse_pars(hole_pars)
 
     # Fairway-utfall per hull fra detaljene.
@@ -117,11 +156,13 @@ def normalize_round(entry: dict) -> dict:
         num = h.get("number")
         strokes = h.get("strokes")
         par = pars[num - 1] if num and num <= len(pars) else None
+        hcp = hole_handicaps[num - 1] if num and num <= len(hole_handicaps) else None
         to_par = (strokes - par) if (strokes is not None and par) else None
         holes.append(
             {
                 "number": num,
                 "par": par,
+                "hcp": hcp,
                 "strokes": strokes,
                 "toPar": to_par,
                 "fairway": fairway_by_hole.get(num),
@@ -152,6 +193,8 @@ def normalize_round(entry: dict) -> dict:
         "id": summary.get("id"),
         "course": course_name or "Ukjent bane",
         "courseId": course_id,
+        "country": country,
+        "roundPar": round_par or total_par,
         "lat": lat,
         "lon": lon,
         "date": summary.get("startTime"),

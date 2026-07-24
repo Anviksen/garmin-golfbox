@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import golfbox_post as gp  # noqa: E402
+from backend.main import parse_hole_handicaps  # noqa: E402
 
 _passed = 0
 _failed = 0
@@ -105,9 +106,35 @@ def test_holes_decision():
     check_true("9/9 postbar", gp._holes_postable(9, 9))
 
 
+# --- Utenlandske baner: landdeteksjon (se UTENLANDSKE_BANER_PLAN.md) ---
+def test_foreign_detection():
+    check("Spania -> utenlandsk", gp._is_foreign_round({"country": "Spain"}), True)
+    check("Norge -> norsk", gp._is_foreign_round({"country": "Norway"}), False)
+    check("norge (små bokstaver) -> norsk", gp._is_foreign_round({"country": "norway"}), False)
+    check("mangler country -> norsk (bakoverkompatibelt)", gp._is_foreign_round({}), False)
+    check("tom country -> norsk", gp._is_foreign_round({"country": ""}), False)
+    check("None country -> norsk", gp._is_foreign_round({"country": None}), False)
+    check("Sverige -> utenlandsk", gp._is_foreign_round({"country": "Sweden"}), True)
+
+
+# --- Utenlandske baner: stroke index (HCP) per hull, ekte Garmin-data (Santa
+# Clara Golf Club Marbella, cachet i data/scorecards/356502765.json) ---
+def test_hole_handicaps():
+    real = "141812081006040216010503090717111513"
+    got = parse_hole_handicaps(real)
+    check("18 hull dekodet", len(got), 18)
+    check("er en permutasjon av 1-18", sorted(got), list(range(1, 19)))
+    check("hull 1 = stroke index 14", got[0], 14)
+    check("hull 10 = stroke index 1 (vanskeligst)", got[9], 1)
+    check("None -> tom liste", parse_hole_handicaps(None), [])
+    check("tom streng -> tom liste", parse_hole_handicaps(""), [])
+    check("odde lengde -> tom liste (korrupt data, ikke gjett)", parse_hole_handicaps("123"), [])
+
+
 def main():
     for fn in [test_norm, test_colors, test_n_holes, test_datetime,
-               test_gb_error, test_course_scoring, test_holes_decision]:
+               test_gb_error, test_course_scoring, test_holes_decision,
+               test_foreign_detection, test_hole_handicaps]:
         fn()
     print(f"\n{'='*40}\n{_passed} bestått, {_failed} feilet")
     sys.exit(1 if _failed else 0)

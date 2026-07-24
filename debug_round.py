@@ -34,8 +34,11 @@ def _sel_text(fr, sel_id):
 def main() -> None:
     rid = sys.argv[1] if len(sys.argv) > 1 else "336115654"
     rnd = gp.get_round(rid)
-    print("Runde:", rnd.get("course"), "| teeBox:", rnd.get("teeBox"),
-          "| rating:", rnd.get("teeBoxRating"), "| slope:", rnd.get("teeBoxSlope"))
+    foreign = gp._is_foreign_round(rnd)
+    print("Runde:", rnd.get("course"), "| land:", rnd.get("country"),
+          "| teeBox:", rnd.get("teeBox"),
+          "| rating:", rnd.get("teeBoxRating"), "| slope:", rnd.get("teeBoxSlope"),
+          "| utenlandsk:", foreign)
     gb_user, gb_pass = os.getenv("GOLFBOX_USERNAME"), os.getenv("GOLFBOX_PASSWORD")
     with sync_playwright() as p:
         b = p.chromium.launch(headless=os.getenv("GOLFBOX_HEADLESS") == "1")
@@ -50,18 +53,25 @@ def main() -> None:
             return
         # for_test=False → fyller faktisk inn score + markør (som live), men vi
         # LAGRER aldri (kaller ikke submit_score). Så vi ser ekte holes-tall.
-        notes, status = gp.fill_score_form(fr, rnd, for_test=False)
-        cv, ct = _sel_text(fr, "fld_Course")
-        tv, tt = _sel_text(fr, "fld_Tee")
-        tees = [o.get("text", "").strip() for o in gp._options(fr, "fld_Tee") if o.get("value")]
+        if foreign:
+            notes, status = gp.fill_foreign_score_form(fr, rnd, for_test=False)
+            cv = ct = tv = tt = ""
+            tees = []
+            print("\n(utenlandsk runde – frittekst-skjema, ingen bane/tee-nedtrekk å lese ut)")
+        else:
+            notes, status = gp.fill_score_form(fr, rnd, for_test=False)
+            cv, ct = _sel_text(fr, "fld_Course")
+            tv, tt = _sel_text(fr, "fld_Tee")
+            tees = [o.get("text", "").strip() for o in gp._options(fr, "fld_Tee") if o.get("value")]
         b.close()
     print("\n--- ALLE NOTER ---")
     for n in notes:
         print("  " + n)
-    print("\n--- FAKTISK VALGT I SKJEMA ---")
-    print(f"  Bane:  value={cv!r}  text={ct!r}")
-    print(f"  Tee:   value={tv!r}  text={tt!r}")
-    print(f"  Tee-liste nå: {tees}")
+    if not foreign:
+        print("\n--- FAKTISK VALGT I SKJEMA ---")
+        print(f"  Bane:  value={cv!r}  text={ct!r}")
+        print(f"  Tee:   value={tv!r}  text={tt!r}")
+        print(f"  Tee-liste nå: {tees}")
     print(f"  status: {status}")
 
 

@@ -698,6 +698,298 @@ def _holes_postable(scored: int, n_holes: int) -> bool:
     return scored == n_holes or (n_holes == 18 and scored >= 10)
 
 
+def _is_foreign_round(rnd: dict) -> bool:
+    """True hvis runden er spilt utenfor Norge. Avgjøres av Garmins eget
+    `country`-felt (courseSnapshots, satt i backend/main.py sin normalize_round) –
+    IKKE av GPS/geokoding, se UTENLANDSKE_BANER_PLAN.md. Mangler country (f.eks.
+    eldre cachet data fra før dette feltet ble hentet ut), regnes runden som
+    NORSK – bakoverkompatibelt, uendret oppførsel for alt som virker i dag. Vi
+    gjetter aldri «utenlandsk»; det er kun IKKE Norge som trigger den nye grenen."""
+    country = (rnd.get("country") or "").strip().lower()
+    return bool(country) and country not in ("norway", "norge")
+
+
+def _fill_and_settle(fr, sel_id: str, value) -> None:
+    """Fyll et felt og etterlign en ekte bruker sin tastatur/blur-sekvens
+    (input+keyup+change+blur). GolfBox sine gamle ASP-skjemaer regner ut
+    avledede felt (f.eks. «SH»/spillehandicap og «Just. score» per hull) via
+    egne JS-handlere bundet til disse hendelsene – fyller vi kun verdien uten
+    å trigge dem, lar GolfBox stå igjen med NaN/tomt der den skulle regnet
+    selv. `fr.fill()` alene er ikke nok for disse feltene (oppdaget i live
+    test 23. juli 2026, se UTENLANDSKE_BANER_PLAN.md)."""
+    fr.fill(sel_id, "" if value is None else str(value))
+    for ev in ("input", "keyup", "change"):
+        try:
+            fr.dispatch_event(sel_id, ev)
+        except Exception:
+            pass
+    try:
+        fr.eval_on_selector(sel_id, "el => el.blur()")
+    except Exception:
+        pass
+
+
+def _fill_foreign_hole(fr, idx: int, h: dict) -> bool:
+    """Fyll Par-<idx>/HCP-<idx>/Strokes-<idx> (1-indeksert) for ett hull i GolfBox
+    sitt utenlandsskjema. Par/HCP fylles kun når Garmin faktisk ga oss verdien –
+    vi gjetter aldri (sikkerhetsnett-prinsippet). Alle tre felt trigges med full
+    hendelses-sekvens (se _fill_and_settle) – «Just. score»-kolonnen i GolfBox
+    regnes ut av GolfBox sin egen JS ut fra par+hcp+slag, og trigges ikke uten
+    ekte input/keyup-hendelser (viste seg som NaN i live test)."""
+    try:
+        if h.get("par") is not None:
+            _fill_and_settle(fr, f"#Par-{idx}", h["par"])
+        if h.get("hcp") is not None:
+            _fill_and_settle(fr, f"#HCP-{idx}", h["hcp"])
+        _fill_and_settle(fr, f"#Strokes-{idx}", h["strokes"])
+        return True
+    except Exception:
+        return False
+
+
+def fill_foreign_score_form(fr, rnd: dict, for_test: bool = False):
+    """Fyll ut GolfBox sitt EGNE frittekst-skjema for runder spilt utenfor Norge
+    («Banen finnes ikke i GolfBox!»). Se UTENLANDSKE_BANER_PLAN.md for feltkartet
+    (bekreftet live mot faktisk GolfBox-skjema 23.07.2026) og bakgrunn.
+
+    All baneinfo (land/bane/utslagssted/par/CR/slope) og par+HCP+slag per hull
+    kommer fra Garmins egen banedatabase (courseSnapshots, via normalize_round i
+    backend/main.py) – ingen katalog-matching, alt er fritekst. PCC (banetilstand/
+    vær DEN dagen) kan IKKE utledes fra Garmin-data – settes ALLTID til 0 og
+    flagges for manuell dobbeltsjekk, aldri gjettet (jf. CLAUDE.md prinsipp 2).
+
+    Returnerer (notater, status) på samme «form» som fill_score_form, men med
+    course_info i stedet for club/course/tee (de begrepene gir ikke mening når
+    banen ikke finnes i GolfBox sin katalog)."""
+    notes: list = []
+    holes = rnd.get("holes", []) or []
+    n_holes = _round_n_holes(rnd)
+    status = {
+        "course_info": False, "holes": 0, "n_holes": n_holes, "marker": False,
+        "holes_missing": [], "scores_missing": False, "holes_contiguous": True,
+        "pcc_default": True, "foreign": True,
+    }
+
+    # 1) Rundetype = Selskapsrunde (2)
+    try:
+        fr.select_option("#roundTypeSelect", value="2")
+        notes.append("Rundetype: Selskapsrunde")
+    except Exception:
+        pass
+
+    # 2) Dato + klokkeslett (identisk med norsk flyt).
+    ddmmyyyy = iso_to_ddmmyyyy(rnd.get("date"))
+    if ddmmyyyy:
+        try:
+            fr.fill("#fld_ScoreDate", ddmmyyyy)
+            fr.dispatch_event("#fld_ScoreDate", "change")
+            notes.append(f"Dato: {ddmmyyyy}")
+        except Exception as e:
+            notes.append(f"⚠️ Dato feilet ({e})")
+    hhmm = iso_to_hhmm(rnd.get("date"))
+    if hhmm:
+        try:
+            fr.fill("#fld_ScoreTime", hhmm)
+            fr.dispatch_event("#fld_ScoreTime", "change")
+            notes.append(f"Tid: {hhmm}")
+        except Exception:
+            pass
+
+    # 3) Huk av «Banen finnes ikke i GolfBox!» FØRST – bytter skjemaet til
+    #    frittekst-modus (Land/PCC/Bane/Utslagssted/Par/CR/Slope synlige).
+    try:
+        checked = fr.eval_on_selector("#chk_UnknownCourse", "el => el.checked")
+        if not checked:
+            fr.check("#chk_UnknownCourse")
+        fr.wait_for_selector("#fld_ManualCountryName", timeout=8000)
+    except Exception as e:
+        notes.append(f"❌ Klarte ikke huke av «Banen finnes ikke i GolfBox!» ({e}) – kan ikke fortsette.")
+        return notes, status
+
+    # 4) Antall hull (bygger om score-tabellen til Par-N/HCP-N/Strokes-N).
+    try:
+        fr.select_option("#fld_HolesPlayed", value=str(n_holes))
+        fr.wait_for_selector("#Strokes-1", timeout=8000)
+        notes.append(f"Hull: {n_holes}")
+    except Exception as e:
+        notes.append(f"⚠️ Klarte ikke sette antall hull ({e})")
+
+    # 5) Baneinfo – alt fritekst, alt fra Garmin. Fylles KUN når Garmin faktisk
+    #    ga oss verdien; mangler noe kritisk, flagges det i stedet for å gjette.
+    def _fill_text(sel_id: str, value, label: str, required: bool = True) -> bool:
+        if value in (None, ""):
+            if required:
+                notes.append(f"❗ Mangler «{label}» fra Garmin – må fylles inn manuelt.")
+            return False
+        try:
+            # _fill_and_settle (ikke bare fr.fill) – GolfBox regner ut «SH»
+            # (spillehandicap) fra Par/CR/Slope via egne JS-handlere som
+            # trenger ekte input/keyup/blur-hendelser, ellers står SH tomt
+            # (oppdaget i live test 23. juli 2026).
+            _fill_and_settle(fr, sel_id, value)
+            notes.append(f"{label}: {value}")
+            return True
+        except Exception as e:
+            notes.append(f"⚠️ «{label}» feilet ({e})")
+            return False
+
+    ok_country = _fill_text("#fld_ManualCountryName", (rnd.get("country") or "").strip(), "Land")
+    ok_course = _fill_text("#fld_ManualCourseName", (rnd.get("course") or "").strip(), "Bane")
+    _fill_text("#fld_ManualTee", (rnd.get("teeBox") or "").strip(), "Utslagssted", required=False)
+    ok_par = _fill_text("#fld_CoursePar", rnd.get("roundPar") or rnd.get("par"), "Banens par")
+    ok_cr = _fill_text("#fld_CourseRating", rnd.get("teeBoxRating"), "Baneverdi (CR)")
+    ok_slope = _fill_text("#fld_Slope", rnd.get("teeBoxSlope"), "Slopeverdi")
+
+    # PCC: ALDRI automatisk – skjønnsspørsmål om forholdene DEN dagen. Sett til 0,
+    # flagg alltid for dobbeltsjekk (se UTENLANDSKE_BANER_PLAN.md).
+    try:
+        fr.select_option("#fld_PCC", value="0")
+        notes.append("PCC: 0 ⚠️ DOBBELTSJEKK (værforhold/banetilstand den dagen – ikke utledet fra Garmin, må vurderes manuelt)")
+    except Exception as e:
+        notes.append(f"⚠️ Klarte ikke sette PCC ({e})")
+
+    status["course_info"] = bool(ok_country and ok_course and ok_par and ok_cr and ok_slope)
+    if not status["course_info"]:
+        notes.append("❗ Baneinfo ufullstendig – runden kan ikke auto-lagres, må fullføres manuelt.")
+
+    # 6) Hull-scorer: Par-N / HCP-N / Strokes-N (1-indeksert). Samme 9-hulls
+    #    posisjonerings-logikk som norsk flyt (back-nine havner i felt 1-9).
+    if for_test:
+        status["holes"] = status["n_holes"]
+    else:
+        scored = [h for h in holes if h.get("strokes") is not None]
+        filled = 0
+        missing_hcp = 0
+        if n_holes == 9:
+            for idx, h in enumerate(scored[:9], start=1):
+                if _fill_foreign_hole(fr, idx, h):
+                    filled += 1
+                if h.get("hcp") is None:
+                    missing_hcp += 1
+        else:
+            for h in holes:
+                num, strokes = h.get("number"), h.get("strokes")
+                if not num or strokes is None:
+                    continue
+                if _fill_foreign_hole(fr, num, h):
+                    filled += 1
+                if h.get("hcp") is None:
+                    missing_hcp += 1
+        status["holes"] = filled
+        notes.append(f"Hull-scorer (par/hcp/slag) fylt inn: {filled}/{n_holes}")
+        if missing_hcp:
+            notes.append(f"⚠️ Mangler stroke index (HCP) fra Garmin for {missing_hcp} hull – dobbeltsjekk scorekortet.")
+        status["holes_contiguous"] = _holes_contiguous(holes)
+        if filled == 0:
+            status["scores_missing"] = True
+            notes.append("❗ Ingen hull-score fra Garmin ennå (synkes trolig straks) – venter.")
+        elif n_holes == 18 and filled < n_holes:
+            missing = [h.get("number") for h in holes if h.get("strokes") is None]
+            status["holes_missing"] = missing
+            if status["holes_contiguous"]:
+                notes.append(f"Ufullstendig runde: {filled}/18 (hull 1–{filled}) – postes som delrunde.")
+            else:
+                notes.append(f"❗ Mangler hull {', '.join(map(str, missing))} MIDT INNE – kan ikke leveres automatisk.")
+
+    # 7) Markør (delt logikk, se _fill_marker).
+    _m_notes, _m_ok = _fill_marker(fr, for_test)
+    notes.extend(_m_notes)
+    status["marker"] = _m_ok
+
+    return notes, status
+
+
+def _fill_marker(fr, for_test: bool = False) -> tuple[list, bool]:
+    """Fyll ut markør (fra .env). Delt mellom norsk og utenlandsk skjema – GolfBox
+    bruker samme markør-felt-ID-er uansett «Banen finnes ikke i GolfBox!»-modus.
+    Hoppes over i test-modus (påvirker ikke matching). Returnerer (notater, ok)."""
+    notes: list = []
+    marker_no = None if for_test else os.getenv("GOLFBOX_MARKER_MEMBERNO")
+    marker_name = None if for_test else os.getenv("GOLFBOX_MARKER_NAME")
+    marker_ok = False
+    if marker_no:
+        def _cur_guid() -> str:
+            try:
+                return (fr.eval_on_selector("#fld_MarkerMemberGUID", "el => el.value") or "").strip()
+            except Exception:
+                return ""
+
+        def _do_marker_search() -> None:
+            # Setter dropdown=Medlemsnr., nummer, låser mot reset, og kjører søket.
+            try:
+                fr.evaluate(
+                    """(num) => {
+                        try { window.DontResetMarker = true; } catch (e) {}
+                        var dd = document.getElementById('markerChoiceDropdown');
+                        if (dd) { dd.value = '1'; dd.dispatchEvent(new Event('change', {bubbles:true})); }
+                        try { if (typeof markerDropdown !== 'undefined' && markerDropdown) markerDropdown.value = '1'; } catch (e) {}
+                        var inp = document.getElementById('fld_MarkerMemberNumber');
+                        if (inp) { inp.removeAttribute('disabled'); inp.value = num;
+                                   inp.dispatchEvent(new Event('input', {bubbles:true})); }
+                        var btn = document.getElementById('searchMarkerButton');
+                        if (btn) btn.removeAttribute('disabled');
+                        if (typeof searchMarker === 'function') { searchMarker(); }
+                        else if (btn) { btn.click(); }
+                    }""",
+                    marker_no,
+                )
+            except Exception:
+                pass
+
+        # Golfbox laster «medspillere» asynkront når banen velges, og kan OVERSKRIVE
+        # markøren vår. Vent til det har skjedd, sett markøren SIST, og forsvar den til
+        # den står stabilt i et par sekunder.
+        time.sleep(2.5)
+        guid = ""
+        for _attempt in range(6):
+            _do_marker_search()
+            # vent på at søket fyller GUID
+            for _ in range(10):
+                time.sleep(0.5)
+                guid = _cur_guid()
+                if guid:
+                    break
+            if not guid:
+                continue
+            # holder markøren seg (ingen asynkron overskriving) i ~2s?
+            held = True
+            for _ in range(4):
+                time.sleep(0.5)
+                if _cur_guid() != guid:
+                    held = False
+                    break
+            if held:
+                break
+
+        err = ""
+        if not guid:
+            try:
+                err = fr.eval_on_selector("#markerSearchErrorText", "el => el.textContent") or ""
+            except Exception:
+                err = ""
+        marker_ok = bool(guid)
+        if marker_ok:
+            notes.append(f"Markør ({marker_no}): bekreftet ✓")
+        else:
+            notes.append(
+                f"Markør ({marker_no}): IKKE bekreftet"
+                + (f" – Golfbox sier: «{err.strip()}»" if err.strip() else "")
+            )
+    elif marker_name:
+        try:
+            fr.eval_on_selector(
+                "#markerChoiceDropdown",
+                "el => { el.value = '0'; el.dispatchEvent(new Event('change', {bubbles:true})); }",
+            )
+            fr.fill("#fld_MarkerMemberName", marker_name)
+        except Exception:
+            pass
+        notes.append(f"Markør (navn): {marker_name} – trykk «Søk» for å bekrefte")
+    else:
+        notes.append("Markør: ikke satt – legg inn manuelt.")
+    return notes, marker_ok
+
+
 def fill_score_form(fr, rnd: dict, for_test: bool = False):
     """Fyll ut skjemaet i ramme `fr`. Returnerer (notater, status).
     status forteller hva som ble trygt matchet – brukes til å avgjøre auto-lagring.
@@ -869,89 +1161,10 @@ def fill_score_form(fr, rnd: dict, for_test: bool = False):
                 notes.append(f"❗ Mangler hull {', '.join(map(str, missing))} MIDT INNE – GolfBox "
                              f"krever spilte hull i rekkefølge fra hull 1. Kan ikke leveres automatisk.")
 
-    # 7) Markør (fra .env). Hoppes over i test-modus (påvirker ikke matching).
-    marker_no = None if for_test else os.getenv("GOLFBOX_MARKER_MEMBERNO")
-    marker_name = None if for_test else os.getenv("GOLFBOX_MARKER_NAME")
-    if marker_no:
-        def _cur_guid() -> str:
-            try:
-                return (fr.eval_on_selector("#fld_MarkerMemberGUID", "el => el.value") or "").strip()
-            except Exception:
-                return ""
-
-        def _do_marker_search() -> None:
-            # Setter dropdown=Medlemsnr., nummer, låser mot reset, og kjører søket.
-            try:
-                fr.evaluate(
-                    """(num) => {
-                        try { window.DontResetMarker = true; } catch (e) {}
-                        var dd = document.getElementById('markerChoiceDropdown');
-                        if (dd) { dd.value = '1'; dd.dispatchEvent(new Event('change', {bubbles:true})); }
-                        try { if (typeof markerDropdown !== 'undefined' && markerDropdown) markerDropdown.value = '1'; } catch (e) {}
-                        var inp = document.getElementById('fld_MarkerMemberNumber');
-                        if (inp) { inp.removeAttribute('disabled'); inp.value = num;
-                                   inp.dispatchEvent(new Event('input', {bubbles:true})); }
-                        var btn = document.getElementById('searchMarkerButton');
-                        if (btn) btn.removeAttribute('disabled');
-                        if (typeof searchMarker === 'function') { searchMarker(); }
-                        else if (btn) { btn.click(); }
-                    }""",
-                    marker_no,
-                )
-            except Exception:
-                pass
-
-        # Golfbox laster «medspillere» asynkront når banen velges, og kan OVERSKRIVE
-        # markøren vår. Vent til det har skjedd, sett markøren SIST, og forsvar den til
-        # den står stabilt i et par sekunder.
-        time.sleep(2.5)
-        guid = ""
-        for _attempt in range(6):
-            _do_marker_search()
-            # vent på at søket fyller GUID
-            for _ in range(10):
-                time.sleep(0.5)
-                guid = _cur_guid()
-                if guid:
-                    break
-            if not guid:
-                continue
-            # holder markøren seg (ingen asynkron overskriving) i ~2s?
-            held = True
-            for _ in range(4):
-                time.sleep(0.5)
-                if _cur_guid() != guid:
-                    held = False
-                    break
-            if held:
-                break
-
-        err = ""
-        if not guid:
-            try:
-                err = fr.eval_on_selector("#markerSearchErrorText", "el => el.textContent") or ""
-            except Exception:
-                err = ""
-        status["marker"] = bool(guid)
-        if status["marker"]:
-            notes.append(f"Markør ({marker_no}): bekreftet ✓")
-        else:
-            notes.append(
-                f"Markør ({marker_no}): IKKE bekreftet"
-                + (f" – Golfbox sier: «{err.strip()}»" if err.strip() else "")
-            )
-    elif marker_name:
-        try:
-            fr.eval_on_selector(
-                "#markerChoiceDropdown",
-                "el => { el.value = '0'; el.dispatchEvent(new Event('change', {bubbles:true})); }",
-            )
-            fr.fill("#fld_MarkerMemberName", marker_name)
-        except Exception:
-            pass
-        notes.append(f"Markør (navn): {marker_name} – trykk «Søk» for å bekrefte")
-    else:
-        notes.append("Markør: ikke satt – legg inn manuelt.")
+    # 7) Markør (delt logikk, se _fill_marker).
+    _m_notes, _m_ok = _fill_marker(fr, for_test)
+    notes.extend(_m_notes)
+    status["marker"] = _m_ok
 
     # 8) TEE – ALLTID fra Garmin-runden, satt HELT TIL SLUTT så GolfBox sin sene
     #    getTeeOptions-omlasting ikke overskriver den til standard-tee.
@@ -1473,10 +1686,21 @@ def main() -> None:
             log("🔎 INSPECT ferdig. Lukk vinduet.")
             return
 
-        notes, status = fill_score_form(target, rnd)
+        # Land avgjør skjema: Garmins courseSnapshots-land != Norge → GolfBox sitt
+        # frittekst-skjema for utenlandske runder (se UTENLANDSKE_BANER_PLAN.md).
+        # Mangler landfeltet, faller vi tilbake til vanlig norsk katalog-matching
+        # (bakoverkompatibelt – uendret oppførsel for alt som virker i dag).
+        foreign = _is_foreign_round(rnd)
+        if foreign:
+            log(f"🌍 Utenlandsk runde oppdaget (land: «{rnd.get('country')}») – "
+                f"bruker GolfBox sitt frittekst-skjema, ikke katalog-matching.")
+            notes, status = fill_foreign_score_form(target, rnd)
+        else:
+            notes, status = fill_score_form(target, rnd)
         for n in notes:
             log("  " + n)
-        _sel = _read_selection(target)  # les valgt klubb/bane/tee FØR lagring lukker skjemaet
+        # klubb/bane/tee-nedtrekkene brukes ikke i frittekst-modus – ingenting å lære.
+        _sel = {} if foreign else _read_selection(target)
 
         # Hull-antallet er AUTORITATIVT ved opplasting (score-ene lastes opp samlet fra
         # klokka). Har du lastet opp ≥10 hull, forsøker vi å poste – og lar GOLFBOX være
@@ -1487,10 +1711,15 @@ def main() -> None:
         holes_ok = _holes_postable(status["holes"], status["n_holes"])
         if os.getenv("GOLFBOX_FORCE_SUBMIT") == "1":
             holes_ok = True  # DEBUG: tving submit for å fange GolfBox sin respons
-        safe = (
-            status["club"] and status["course"] and status["tee"]
-            and holes_ok and status["marker"]
-        )
+        if foreign:
+            # Ingen klubb/bane/tee-matching å bekrefte – course_info (Land/Bane/
+            # Utslagssted/Par/CR/Slope) erstatter club+course+tee her.
+            safe = status["course_info"] and holes_ok and status["marker"]
+        else:
+            safe = (
+                status["club"] and status["course"] and status["tee"]
+                and holes_ok and status["marker"]
+            )
 
         if auto:
             posted = False
@@ -1499,12 +1728,15 @@ def main() -> None:
                 submit_result = submit_score(target)
                 posted = (submit_result == "saved")
                 if posted:
-                    extra = " ⚠️ (tee valgt på skjønn – dobbeltsjekk før godkjenning!)" \
-                        if status.get("tee_uncertain") else ""
+                    if foreign:
+                        extra = " ⚠️ (PCC satt til 0 – dobbeltsjekk banetilstand/vær DEN dagen!)"
+                    else:
+                        extra = " ⚠️ (tee valgt på skjønn – dobbeltsjekk før godkjenning!)" \
+                            if status.get("tee_uncertain") else ""
                     log(f"✅ LAGRET i Golfbox – runden ligger nå til godkjennelse.{extra}")
-                    # Lær bane/tee for denne banen (sentralbasen) – så neste gang Garmin
-                    # mangler tee, gjenbruker vi den. KUN når tee-en var sikker (ikke gjettet).
-                    if not status.get("tee_uncertain") and _sel.get("tee"):
+                    # Lær bane/tee for denne banen (sentralbasen) – KUN norsk katalog-matching.
+                    # Utenlandske runder er rein fritekst, ingenting å lære.
+                    if not foreign and not status.get("tee_uncertain") and _sel.get("tee"):
                         try:
                             import course_matcher
                             course_matcher.learn(rnd.get("course", ""), rnd.get("lat"),
@@ -1523,22 +1755,31 @@ def main() -> None:
                 # ENDELIG (klokka laster opp alle registrerte hull samlet) → vi venter IKKE,
                 # men flagger med en gang så brukeren får riktig grunn umiddelbart.
                 _waiting = (status.get("tee_no_source") or status.get("scores_missing"))
-                if not status["club"]:
-                    _code = 5
-                elif _waiting:
-                    _code = 6
+                if foreign:
+                    _code = 6 if _waiting else 3  # ingen klubb-katalog å bomme på → aldri 5
+                    log(f"ℹ️ AUTO: utenlandsk runde ikke lagret. Runden er fylt ut, men trenger "
+                        f"manuell sjekk (baneinfo={status['course_info']}, "
+                        f"hull={status['holes']}/{status['n_holes']}, markør={status['marker']}). "
+                        f"Avslutter med kode {_code}.")
                 else:
-                    _code = 3
-                reason = "auto-lagring av" if not auto_submit else "usikker match –"
-                log(f"ℹ️ AUTO: {reason} ikke lagret. Runden er fylt ut, men trenger manuell "
-                    f"sjekk (klubb={status['club']}, bane={status['course']}, tee={status['tee']}, "
-                    f"hull={status['holes']}/{status['n_holes']}, markør={status['marker']}). "
-                    f"Avslutter med kode {_code}.")
+                    if not status["club"]:
+                        _code = 5
+                    elif _waiting:
+                        _code = 6
+                    else:
+                        _code = 3
+                    reason = "auto-lagring av" if not auto_submit else "usikker match –"
+                    log(f"ℹ️ AUTO: {reason} ikke lagret. Runden er fylt ut, men trenger manuell "
+                        f"sjekk (klubb={status['club']}, bane={status['course']}, tee={status['tee']}, "
+                        f"hull={status['holes']}/{status['n_holes']}, markør={status['marker']}). "
+                        f"Avslutter med kode {_code}.")
             _log_attempt(rnd, _sel, status, notes, posted)
 
             # Skriv en MENNESKELIG grunn til fil, så auto_sync kan ta den med i push/mail.
             def _pick_reason():
                 if posted:
+                    if foreign:
+                        return "PCC satt til 0 – dobbeltsjekk banetilstand/vær den dagen"
                     return "tee valgt på skjønn – dobbeltsjekk" if status.get("tee_uncertain") else ""
                 if submit_result == "session":
                     return "GolfBox-økt utløp under lagring – prøver igjen automatisk"
@@ -1549,6 +1790,21 @@ def main() -> None:
                     except Exception:
                         _e = ""
                     return f"GolfBox avviste: {_e}" if _e else "GolfBox avviste lagringen – sjekk manuelt"
+                if foreign:
+                    if not status["course_info"]:
+                        return "mangler baneinfo (land/bane/par/CR/slope) fra Garmin – fyll inn selv"
+                    if status.get("scores_missing"):
+                        return "Garmin har ikke synket scorene ennå"
+                    if status["holes"] < status["n_holes"] and not status.get("holes_contiguous", True):
+                        _miss = status.get("holes_missing") or []
+                        return (f"scorekortet mangler hull {', '.join(map(str, _miss))} midt inne "
+                                f"– GolfBox krever spilte hull i rekkefølge fra hull 1. Fyll inn selv.")
+                    if status["holes"] < status["n_holes"]:
+                        return (f"kun {status['holes']} av {status['n_holes']} hull registrert "
+                                f"– GolfBox krever minst 10. Fyll inn selv.")
+                    if not status["marker"]:
+                        return "markør ikke satt"
+                    return "trenger manuell sjekk (utenlandsk runde)"
                 if not status["club"]:
                     return "klubben finnes ikke i GolfBox (privat bane/utland)"
                 if status.get("scores_missing"):
@@ -1577,16 +1833,25 @@ def main() -> None:
                 log(f"(kunne ikke skrive grunn til fil: {e})")  # logg, ikke svelg
 
             if posted:
-                # kode 4 = lagret, men tee valgt på skjønn (bør dobbeltsjekkes)
+                # Utenlandske runder: PCC er ALLTID et skjønnsspørsmål → alltid kode 4
+                # (dobbeltsjekk), aldri 0 (jf. sikkerhetsnett-prinsippet). Norske runder:
+                # kode 4 kun ved usikker tee, ellers 0.
+                if foreign:
+                    raise SystemExit(4)
                 raise SystemExit(4 if status.get("tee_uncertain") else 0)
             if submit_result == "session":
                 # Økt utløpt under lagring – forbigående. Kode 2 = ikke marker som sett,
                 # prøv igjen neste kjøring (auto-login fornyer økten da).
                 raise SystemExit(2)
             # Ikke postet – skill kategoriene:
-            #   kode 5 = klubben finnes ikke i GolfBox (ikke leverbar)
+            #   kode 5 = klubben finnes ikke i GolfBox (ikke leverbar) [kun norsk flyt –
+            #            utenlandske runder har ingen klubb-katalog å bomme på]
             #   kode 6 = Garmin-data ufullstendig ennå (tee/score/delvis hull) → VENT
-            #   kode 3 = klubb OK, data komplett, men bane/tee ikke bekreftet (kan fullføres)
+            #   kode 3 = data komplett, men noe kunne ikke bekreftes automatisk
+            if foreign:
+                if status.get("scores_missing"):
+                    raise SystemExit(6)
+                raise SystemExit(3)
             if not status["club"]:
                 raise SystemExit(5)
             if status.get("tee_no_source") or status.get("scores_missing"):
