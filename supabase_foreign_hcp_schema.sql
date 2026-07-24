@@ -16,3 +16,17 @@ create table if not exists foreign_course_hcp (
   "verifiedAt" timestamptz,
   created_at timestamptz not null default now()
 );
+
+-- Nye tabeller arver IKKE alltid anon/authenticated sine standard-rettigheter
+-- i Supabase (i motsetning til `courses`/`attempts`, satt opp tidlig i
+-- prosjektet) – uten denne feiler skriving med "401 Unauthorized" selv om
+-- SUPABASE_ANON_KEY er riktig. Trygt å kjøre på nytt om tabellen alt finnes.
+grant select, insert, update on foreign_course_hcp to anon, authenticated;
+
+-- Nyere Supabase-prosjekter slår noen ganger PÅ Row Level Security som
+-- standard på tabeller laget i SQL Editor. Denne tabellen er ÅPEN med
+-- vilje – samme sikkerhetsmodell som `courses`/`attempts` (se
+-- supabase_multiuser_schema.sql): ingen persondata, kun bane-/
+-- stroke-index-data. RLS PÅ uten policies ville blokkert anon-nøkkelen
+-- helt uansett GRANT over.
+alter table foreign_course_hcp disable row level security;
