@@ -56,6 +56,29 @@ def _resolve_user_filter(arg: str, labels: dict) -> str | None:
     return None
 
 
+def aggregate_course_outcomes(rows: list) -> dict:
+    """Ren aggregering (ingen I/O): grupper attempts-rader per Garmin-bane,
+    spor siste utfall. `rows` MÅ være nyeste-først (slik central_registry.
+    fetch_attempts() allerede returnerer dem) – da er første forekomst per
+    bane det siste faktiske utfallet. Delt mellom telemetry.py (CLI) og
+    admin_dashboard.py (HTML), se UTENLANDSKE_BANER_PLAN.md-tankegangen om
+    ikke å duplisere logikk mellom verktøy."""
+    agg = {}
+    for r in rows:
+        key = (r.get("garmin_course") or "?").strip()
+        a = agg.setdefault(key, {"n": 0, "posted": 0, "uncertain": 0,
+                                 "last_ok": None, "last_reason": ""})
+        a["n"] += 1
+        if r.get("posted"):
+            a["posted"] += 1
+        if r.get("tee_uncertain"):
+            a["uncertain"] += 1
+        if a["last_ok"] is None:
+            a["last_ok"] = bool(r.get("club_ok") and r.get("course_ok") and r.get("tee_ok"))
+            a["last_reason"] = (r.get("reason") or "").strip()
+    return agg
+
+
 def main() -> None:
     if not central_registry.is_configured():
         print("Sentralbasen er ikke satt opp (SUPABASE_URL/ANON_KEY i .env).")
@@ -91,19 +114,7 @@ def main() -> None:
 
     # rows er nyeste først → første forekomst per bane = siste utfall.
     # «matchet» = klubb+bane+tee resolvert (ville postet). «posted» = faktisk lagret.
-    agg = {}
-    for r in rows:
-        key = (r.get("garmin_course") or "?").strip()
-        a = agg.setdefault(key, {"n": 0, "posted": 0, "uncertain": 0,
-                                 "last_ok": None, "last_reason": ""})
-        a["n"] += 1
-        if r.get("posted"):
-            a["posted"] += 1
-        if r.get("tee_uncertain"):
-            a["uncertain"] += 1
-        if a["last_ok"] is None:
-            a["last_ok"] = bool(r.get("club_ok") and r.get("course_ok") and r.get("tee_ok"))
-            a["last_reason"] = (r.get("reason") or "").strip()
+    agg = aggregate_course_outcomes(rows)
 
     total = len(rows)
     baner = len(agg)

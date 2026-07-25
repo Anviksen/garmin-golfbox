@@ -454,3 +454,34 @@ dette ble rettet – `_owner_notify` stubbes nå eksplisitt bort i testene).
 Supabase-tabellen opprettes (kjør `supabase_pending_signups_schema.sql`) og
 Apps Script kobles til (se `WEBHOOK_ONBOARDING.md` steg for steg), begge
 utenfor det som kan gjøres fra denne økten.
+
+**Oppdatering (25. juli 2026): testet ende-til-ende, virker.** Skjema → Apps
+Script → `pending_signups` → `process-signups.yml` bekreftet live (en
+fiktiv test-påmelding «Nora» gikk gjennom hele kjeden, feilet forventet på
+Garmin-innlogging siden dataen var fiktiv, ble korrekt markert `failed`, og
+et eier-varsel ble forsøkt sendt). To reelle bugs funnet og fikset underveis:
+`e.namedValues` i Apps Script viste seg upålitelig tomt i praksis – byttet
+til `e.response.getItemResponses()` (den offisielle FormResponse-APIen, mer
+robust). Push-varsel med emoji i tittelen krasjet ntfy-sendingen
+("latin-1 codec can't encode...") – fikset i `notify._push()` ved å alltid
+rense tittelen for ikke-ASCII-tegn, uansett hvem som kaller den.
+
+## Steg 7: Admin-dashbord (25. juli 2026)
+
+Bygget som svar på ønske om oversikt: hvor mange bruker systemet, hvordan
+går det, hvor bør neste kodetime brukes. `admin_dashboard.py` (nytt) leser
+`users`/`user_round_state`/`pending_signups` (nye funksjoner i
+`user_store.py`: `list_users_admin`, `get_all_round_states`,
+`list_pending_signups_admin` – sistnevnte henter BEVISST ALDRI passord-
+kolonnene, selv om tabellen har dem) + `attempts`-telemetrien (gjenbruker
+`telemetry.aggregate_course_outcomes`, trukket ut som egen funksjon for
+gjenbruk i stedet for duplisering) + den delte utenlandsk-bane-cachen.
+
+**Bevisst arkitekturvalg (spurt via AskUserQuestion, ikke gjettet):** KUN
+lokal statisk HTML-generering (`python3 admin_dashboard.py`, åpner i
+nettleser), ikke en hostet/live nettside. Begrunnelse: dashbordet må lese med
+`SUPABASE_SERVICE_ROLE_KEY` (samme nøkkel som omgår alle RLS-sperrer for
+`users`) – den skal aldri eksponeres i noe klientside-JS eller noe som kunne
+havnet i det offentlige repoet. Ren aggregeringslogikk holdt adskilt fra
+nettverkskall (samme mønster som resten av prosjektet) – 4 nye tester, 79
+totalt, alle grønne.

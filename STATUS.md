@@ -238,6 +238,17 @@ KUN gjennom Google Apps Script (private logger), aldri gjennom GitHub.
 **Gjenstår:** kjøre `supabase_pending_signups_schema.sql` i Supabase og koble
 til Apps Script (begge utenfor sandkassen) – se `WEBHOOK_ONBOARDING.md`.
 
+## Admin-dashbord (25. juli 2026)
+
+`python3 admin_dashboard.py` genererer en lokal, statisk HTML-rapport
+(`data/admin_dashboard.html`, åpnes automatisk i nettleser): antall
+brukere/runder/suksessrate, feilkø per bane (gjenbruker
+`telemetry.aggregate_course_outcomes`), onboarding-trakt fra
+`pending_signups` (vanligste feilårsaker), og bekreftede utenlandske baner
+per land. Bevisst KUN lokalt (ikke en live nettside) – leser med
+`SUPABASE_SERVICE_ROLE_KEY`, som aldri skal havne i noe nettleserkjørt eller
+i det offentlige repoet. Se `MULTIUSER_PLAN.md` for detaljer.
+
 ## Neste steg / idéer
 
 - Hostet fullførings-flyt (så sky-brukere uten Mac kan fullføre needs_manual).

@@ -75,6 +75,59 @@ def create_user(row: dict) -> dict | None:
         return None
 
 
+def list_users_admin() -> list:
+    """Alle brukere med driftsrelevante felt for admin-dashbordet – FORTSATT
+    INGEN *_enc-hemmeligheter. `garmin_fails`/`garmin_cooldown_until` avslører
+    kontoer med gjentatte Garmin-innloggingsproblemer."""
+    if not is_configured():
+        return []
+    url = (f"{SUPABASE_URL}/rest/v1/users?select=id,label,active,created_at,"
+           f"garmin_fails,garmin_cooldown_until,notify_email,ntfy_topic&order=created_at.asc")
+    try:
+        req = urllib.request.Request(url, headers=_headers())
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        print(f"(kunne ikke hente brukere til dashbord – {e})")
+        return []
+
+
+def get_all_round_states() -> list:
+    """ALLE user_round_state-rader, alle brukere – til admin-dashbordets
+    per-bruker-statistikk (aggregeres i Python, ikke i SQL – god nok skala
+    for «noen venner»-fasen, se MULTIUSER_PLAN.md)."""
+    if not is_configured():
+        return []
+    url = f"{SUPABASE_URL}/rest/v1/user_round_state?select=*"
+    try:
+        req = urllib.request.Request(url, headers=_headers())
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        print(f"(kunne ikke hente rundetilstander til dashbord – {e})")
+        return []
+
+
+def list_pending_signups_admin() -> list:
+    """ALLE pending_signups (uansett status – pending/processing/failed), men
+    KUN trygge felt til admin-dashbordet. Henter BEVISST ALDRI
+    garmin_password/golfbox_password her, selv om tabellen har dem – ingen
+    hemmelighet skal noensinne rulle inn i dashbord-koden, selv ved en
+    fremtidig feilskrevet visning."""
+    if not is_configured():
+        return []
+    url = (f"{SUPABASE_URL}/rest/v1/pending_signups?"
+           f"select=id,created_at,label,status,error_message,attempts"
+           f"&order=created_at.desc")
+    try:
+        req = urllib.request.Request(url, headers=_headers())
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        print(f"(kunne ikke hente påmeldinger til dashbord – {e})")
+        return []
+
+
 def list_users(active_only: bool = False) -> list:
     """Hent brukere UTEN å dekryptere noe (kun rå metadata) – til oversikt/debug."""
     if not is_configured():

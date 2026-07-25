@@ -17,6 +17,7 @@ import foreign_course_registry as fcr  # noqa: E402
 import process_pending_signups as pps  # noqa: E402
 import provision_user  # noqa: E402
 import user_store  # noqa: E402
+import admin_dashboard as ad  # noqa: E402
 from backend.main import parse_hole_handicaps  # noqa: E402
 
 _passed = 0
@@ -262,13 +263,66 @@ def test_process_signup_max_attempts():
           (statuses, len(incremented)), (["failed"], 0))
 
 
+# --- Admin-dashbord: ren aggregeringslogikk (ingen nettverk) ---
+def test_aggregate_user_rounds():
+    users = [
+        {"id": "u1", "label": "Haakon", "active": True, "garmin_fails": 0, "garmin_cooldown_until": None},
+        {"id": "u2", "label": "Marius", "active": True, "garmin_fails": 2, "garmin_cooldown_until": None},
+        {"id": "u3", "label": "NyBruker", "active": True, "garmin_fails": 0, "garmin_cooldown_until": None},
+    ]
+    round_states = [
+        {"user_id": "u1", "status": "posted"}, {"user_id": "u1", "status": "posted"},
+        {"user_id": "u1", "status": "needs_manual"},
+        {"user_id": "u2", "status": "posted"}, {"user_id": "u2", "status": "pending"},
+    ]
+    rows = ad.aggregate_user_rounds(round_states, users)
+    by_label = {r["label"]: r for r in rows}
+    check("Haakon: 2 postet, 1 trenger hjelp -> 67% suksess", by_label["Haakon"]["success_rate"], 67)
+    check("Marius: 1 postet, 0 trenger hjelp -> 100%", by_label["Marius"]["success_rate"], 100)
+    check("NyBruker uten runder -> ingen suksessrate ennå", by_label["NyBruker"]["success_rate"], None)
+    check("NyBruker tas med selv uten runder (0-rad)", by_label["NyBruker"]["total"], 0)
+    check("sortert med flest runder øverst", rows[0]["label"], "Haakon")
+
+
+def test_aggregate_signup_funnel():
+    signups = [
+        {"status": "failed", "error_message": "Garmin-innlogging feilet"},
+        {"status": "failed", "error_message": "Garmin-innlogging feilet"},
+        {"status": "failed", "error_message": "Mangler felt"},
+        {"status": "pending", "error_message": None},
+    ]
+    funnel = ad.aggregate_signup_funnel(signups)
+    check("riktig totalt", funnel["total"], 4)
+    check("riktig antall pending", funnel["pending"], 1)
+    check("riktig antall failed", funnel["failed"], 3)
+    check("vanligste feil øverst", funnel["top_errors"][0], ("Garmin-innlogging feilet", 2))
+
+
+def test_aggregate_foreign_courses():
+    entries = {
+        "27611": {"courseName": "Hills Golfklubb", "country": "Sweden"},
+        "28088": {"courseName": "Torreby Golfklubb", "country": "Sweden"},
+        "24458": {"courseName": "Marbella Golf y Country Club", "country": "Spain"},
+    }
+    grouped = ad.aggregate_foreign_courses(entries)
+    check("Sverige har 2 baner", len(grouped["Sweden"]), 2)
+    check("Spania har 1 bane", grouped["Spain"], ["Marbella Golf y Country Club"])
+
+
+def test_render_html_no_crash():
+    html = ad.render_html([], {"total": 0, "pending": 0, "processing": 0, "failed": 0, "top_errors": []}, {}, {})
+    check_true("gyldig HTML selv med tom data", "<html" in html and "</html>" in html)
+
+
 def main():
     for fn in [test_norm, test_colors, test_n_holes, test_datetime,
                test_gb_error, test_course_scoring, test_holes_decision,
                test_foreign_detection, test_hole_handicaps, test_valid_hcp_set,
                test_plausible_cr_slope, test_decode_hole_handicaps,
                test_foreign_course_registry, test_mfa_not_supported,
-               test_process_signup_missing_fields, test_process_signup_max_attempts]:
+               test_process_signup_missing_fields, test_process_signup_max_attempts,
+               test_aggregate_user_rounds, test_aggregate_signup_funnel,
+               test_aggregate_foreign_courses, test_render_html_no_crash]:
         fn()
     print(f"\n{'='*40}\n{_passed} bestått, {_failed} feilet")
     sys.exit(1 if _failed else 0)
