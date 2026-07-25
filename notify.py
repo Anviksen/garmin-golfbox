@@ -45,12 +45,18 @@ def is_push_configured() -> bool:
 
 def _push(title: str, message: str, tags: str = "", priority: str = "default") -> bool:
     """Send én push til mobilen via ntfy.sh. Best effort. Tittelen holdes ASCII
-    (HTTP-headere tåler ikke æøå/emoji trygt); meldingskroppen kan ha norske tegn."""
+    (HTTP-headere tåler ikke æøå/emoji trygt); meldingskroppen kan ha norske tegn.
+
+    Tittelen renses her (ikke bare ved hvert kallsted) – oppdaget 25. juli
+    2026 at process_pending_signups.py sendte emoji i tittelen og krasjet
+    med "'latin-1' codec can't encode..." før dette ble lagt til. Renner
+    ALLTID tittelen gjennom denne, uansett hvem som kaller _push()."""
     topic = os.getenv("NTFY_TOPIC")
     if not topic:
         return False
+    safe_title = title.encode("ascii", errors="ignore").decode("ascii").strip() or "Golf-varsel"
     server = os.getenv("NTFY_SERVER", "https://ntfy.sh").rstrip("/")
-    headers = {"Title": title, "Priority": priority}
+    headers = {"Title": safe_title, "Priority": priority}
     if tags:
         headers["Tags"] = tags  # emoji via ntfy sine kortkoder, f.eks. "white_check_mark"
     try:
