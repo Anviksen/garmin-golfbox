@@ -64,6 +64,14 @@ def _push(title: str, message: str, tags: str = "", priority: str = "default") -
         return False
 
 
+def send_push(title: str, message: str, tags: str = "", priority: str = "default") -> bool:
+    """Offentlig innpakning rundt _push() – for varsler som ikke handler om
+    postede runder (f.eks. process_pending_signups.py sitt eier-varsel om nye
+    påmeldinger). Bruker EIERENS EGEN NTFY_TOPIC (fra env/secrets) – varsler
+    aldri den nye brukeren via denne."""
+    return _push(title, message, tags, priority)
+
+
 def notify_push(needs_manual: list, review: list, posted: list,
                 not_postable: list | None = None) -> bool:
     """Push til mobil: én bekreftelse ved suksess + én ved noe som trenger et blikk."""

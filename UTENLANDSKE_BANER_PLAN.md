@@ -182,6 +182,28 @@ gjennomgang av cachet Garmin-rådata for alle 6 kjente Spania-runder
   Marbella). **46/46 bestått i sandkasse (0 nettverk nødvendig), 0
   regresjoner** på de 32 eksisterende testene.
 
+### Live-test funn 4 (24. juli 2026): GolfBox overskriver CR/Slope i etterkant – fikset
+
+El Chaparral: terminalloggen viste at vi fylte inn KORREKT CR/Slope (70,2/137,
+bekreftet riktig av brukeren mot klubbens egne tall). Likevel viste selve
+GolfBox-skjemaet en STUND SENERE 70,7/133 – nøyaktig samme tall som forrige
+test-runde (Hills). Konklusjon: GolfBox sitt frittekst-skjema husker/gjenbruker
+sist manuelt innskrevne CR/Slope (trolig via localStorage, som overlever på
+tvers av script-kjøringer siden vi gjenbruker samme GolfBox-økt/
+`storage_state`), og kan overskrive feltene våre EN GOD STUND etter at vi
+fylte dem inn riktig. Dette er samme grunnleggende problem som GolfBox sin
+allerede kjente async-reset for bane/tee i norsk flyt (se `CLAUDE.md`
+«Tekniske fallgruver») – bare et nytt sted det rammer.
+
+**Fiks:** ny `_reassert_foreign_fields()` i `golfbox_post.py` – leser tilbake
+Land/Bane/Par/CR/Slope fra DOM-en og retter dem hvis GolfBox har overskrevet
+noe. Kalles tre steder: (1) rett etter utfylling i `fill_foreign_score_form`,
+(2) rett før auto-lagring i `main()` (auto-modus), og (3) PERIODISK (hvert 5.
+sekund) i `_observe_and_idle` mens vinduet står åpent for manuell gjennomgang
+– siden overskrivingen kan skje mens brukeren bare sitter og ser på skjemaet,
+ikke bare i selve utfyllings-øyeblikket. Ikke enhetstestet (krever ekte
+nettleser/GolfBox-sesjon) – bekreftet ved neste live-kjøring på El Chaparral.
+
 ### Skalerings-beslutning (24. juli 2026): tenk «mange brukere», ikke «denne runden»
 
 Etter funn 2/3 stoppet vi opp: ambisjonen er ikke bare at Håkons egne runder

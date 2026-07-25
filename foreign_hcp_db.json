@@ -1,4 +1,36 @@
 {
+  "24458": {
+    "country": "Spain",
+    "courseName": "Marbella Golf y Country Club",
+    "holeHandicaps": "050717091501031311081002160604121814",
+    "verifiedAgainst": "higueronmarbellagolfresort.com/score-card (klubbens offisielle side)",
+    "verifiedAt": "2026-07-25T15:48:14Z",
+    "verifiedBy": "haakon 2026-07-24"
+  },
+  "24479": {
+    "country": "Spain",
+    "courseName": "Calanova Golf Club",
+    "holeHandicaps": "090513110107151703060418120208101614",
+    "verifiedAgainst": "brukerens egen sjekk mot klubbens kort",
+    "verifiedAt": "2026-07-25T16:29:20Z",
+    "verifiedBy": "haakon 2026-07-24"
+  },
+  "24545": {
+    "country": "Spain",
+    "courseName": "Los Arqueros Golf",
+    "holeHandicaps": "111705131503070109041002061808161214",
+    "verifiedAgainst": "brukerens egen sjekk mot klubbens kort",
+    "verifiedAt": "2026-07-25T16:53:35Z",
+    "verifiedBy": "haakon 2026-07-24"
+  },
+  "24626": {
+    "country": "Spain",
+    "courseName": "El Chaparral Golf Club",
+    "holeHandicaps": "070901031513110517140608120416180210",
+    "verifiedAgainst": "brukerens egen sjekk mot klubbens kort",
+    "verifiedAt": "2026-07-25T16:14:03Z",
+    "verifiedBy": "haakon 2026-07-24"
+  },
   "27611": {
     "country": "Sweden",
     "courseName": "Hills Golfklubb",

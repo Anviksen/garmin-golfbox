@@ -75,28 +75,45 @@ def _read_b64_file(prompt: str) -> str | None:
     return p.read_text(encoding="utf-8").strip()
 
 
-def _login_garmin_and_capture_token(email: str, password: str) -> str | None:
+def _mfa_not_supported():
+    """prompt_mfa-erstatning for ikke-interaktiv bruk (se
+    process_pending_signups.py) – MFA krever en ekte person ved telefonen der
+    og da, noe en skyjobb aldri kan gi. Kaster umiddelbart i stedet for å
+    henge på input() uten stdin (ville bare timet ut stille i CI)."""
+    raise RuntimeError(
+        "Denne Garmin-kontoen krever MFA (engangskode) – ikke støttet i "
+        "automatisk registrering. Må provisjoneres manuelt (python3 "
+        "provision_user.py) der en person kan taste inn koden."
+    )
+
+
+def _login_garmin_and_capture_token(email: str, password: str, interactive: bool = True) -> str | None:
     """Logg inn på Garmin med e-post/passord og fang det resulterende tokenet,
     pakket til samme base64-tar-format som ellers brukes (GARMIN_TOKENS_B64).
 
     Passordet brukes KUN i selve login()-kallet under – det skrives aldri til
     disk, og den kallende koden nuller ut variabelen sin rett etter dette
     returnerer. Kan spørre om en MFA-engangskode interaktivt hvis kontoen har
-    det på."""
+    det på (interactive=True, standard – manuell bruk her og i
+    process_pending_signups.py sitt fallback). interactive=False (automatisk
+    onboarding via skyjobb) feiler i stedet raskt og tydelig hvis MFA trengs –
+    se _mfa_not_supported()."""
     try:
         from garminconnect import Garmin
     except ImportError:
         print("  ❌ Mangler 'garminconnect'. Kjør: pip install -r requirements.txt")
         return None
 
+    prompt_mfa = (
+        (lambda: input("  Engangskode (MFA) fra Garmin for denne kontoen: ").strip())
+        if interactive else _mfa_not_supported
+    )
+
     with tempfile.TemporaryDirectory() as tmp:
         tokenstore = str(Path(tmp) / ".garminconnect")
         try:
             print("  Logger inn på Garmin ...")
-            client = Garmin(
-                email, password,
-                prompt_mfa=lambda: input("  Engangskode (MFA) fra Garmin for denne kontoen: ").strip(),
-            )
+            client = Garmin(email, password, prompt_mfa=prompt_mfa)
             client.login(tokenstore)  # lagrer friske tokens i tokenstore
         except Exception as e:
             print(f"  ❌ Garmin-innlogging feilet: {e}")

@@ -395,3 +395,62 @@ where user_id = (select id from users where label = 'Haakon Erla')
 Kjør deretter (eller vent på neste 5-minutters-syklus), og se om runden nå
 faktisk postes til GolfBox (eller flagges med en ekte, spesifikk grunn – ikke
 et krasj).
+
+## Steg 6b: «alternativ B» bygget – helautomatisk webhook-onboarding (24. juli 2026)
+
+Utløst av et konkret ønske: eier vil slippe å måtte være på Mac-en for å
+kjøre `provision_user.py` for hver ny venn. Se `WEBHOOK_ONBOARDING.md` for
+full arkitektur og oppsett-oppskrift – kort oppsummert her:
+
+**Ny flyt:** Google-skjema → Google Apps Script (`google_apps_script_signup.gs`)
+sender svaret DIREKTE til en ny Supabase-tabell `pending_signups`
+(`supabase_pending_signups_schema.sql`, samme RLS-mønster som
+`users`/`user_round_state` – kun service-role-nøkkelen kommer til) → ny
+skyjobb (`.github/workflows/process-signups.yml`, hvert 15. min) kjører
+`process_pending_signups.py`, som gjenbruker `provision_user.py` sine
+hjelpefunksjoner (Garmin-innlogging, kryptering, ntfy-generering,
+velkomst-e-post) til å faktisk opprette brukeren, og sletter
+`pending_signups`-raden (klartekst-passordene) umiddelbart etterpå.
+
+**Sikkerhetsvalg (viktig):** repoet er offentlig, så GitHub Actions-logger
+ville også vært det – klartekst-passord går derfor ALDRI gjennom GitHub i
+denne flyten. De passerer kun gjennom Apps Script (kjører i eierens eget
+Google-miljø, private logger) rett til Supabase. GitHub-siden ser kun
+kryptert/allerede-behandlet data via `SUPABASE_SERVICE_ROLE_KEY`, akkurat som
+`run_all_users.py` alltid har gjort.
+
+**Bevisste valg (spurt via AskUserQuestion i chatten, ikke gjettet):**
+eieren varsles (push/e-post) HVER gang en ny bruker legges til automatisk
+eller feiler; en helt ny brukers aller første synk-runde går rett i full
+automatikk (ingen egen dry-run-fase kun for nye kontoer).
+
+**MFA-håndtering:** `provision_user._login_garmin_and_capture_token` fikk et
+nytt `interactive`-flagg (bakoverkompatibelt, default `True` = uendret
+oppførsel for manuell bruk). `interactive=False` (brukt av
+`process_pending_signups.py`) feiler RASKT og tydelig hvis kontoen krever
+MFA, i stedet for å henge på `input()` uten stdin i en skyjobb – slike
+påmeldinger flagges `failed` med tydelig beskjed om å kjøre
+`provision_user.py` manuelt i stedet.
+
+**Rate-limit-hensyn (uendret prinsipp):** kun ÉN ventende påmelding
+behandles per kjøring av `process_pending_signups.py`, uansett hvor mange
+som venter i køen – samme forsiktighet som alltid har vært rundt
+Garmin-innlogging i denne planen.
+
+**Feilhåndtering:** en påmelding som feiler (feil passord, MFA, Garmin nede,
+manglende felt) markeres `failed` i `pending_signups` (IKKE slettet) og
+prøves ALDRI automatisk på nytt utover `MAX_SIGNUP_ATTEMPTS` (2) – unngår evig
+loop mot en permanent ødelagt påmelding. Eieren varsles med årsak og kan følge
+opp manuelt (kjøre `provision_user.py` selv, eller fikse og sette status
+tilbake til `pending`).
+
+**Testet:** 3 nye rene enhetstester (`test_mfa_not_supported`,
+`test_process_signup_missing_fields`, `test_process_signup_max_attempts`) –
+kontrollflyt verifisert med nettverkskall monkey-patchet bort, ingen ekte
+Supabase/Garmin/e-post-kall i testene (viktig funn underveis: testene sendte
+initialt en EKTE test-e-post/push via eierens egne `.env`-credentials før
+dette ble rettet – `_owner_notify` stubbes nå eksplisitt bort i testene).
+**IKKE testet ende-til-ende med et ekte skjema-svar ennå** – krever at
+Supabase-tabellen opprettes (kjør `supabase_pending_signups_schema.sql`) og
+Apps Script kobles til (se `WEBHOOK_ONBOARDING.md` steg for steg), begge
+utenfor det som kan gjøres fra denne økten.

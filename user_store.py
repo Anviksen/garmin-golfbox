@@ -161,6 +161,83 @@ def upsert_round_state(rows: list) -> bool:
         return False
 
 
+def list_pending_signups(limit: int = 5) -> list:
+    """Hent ventende påmeldinger (nyeste først). Inneholder KLARTEKST-passord
+    – KUN for process_pending_signups.py, aldri logg/skriv disse feltene noe
+    sted. `limit` holder dette lite med vilje (se rate-limit-advarselen i
+    MULTIUSER_PLAN.md – vi behandler bevisst ÉN om gangen uansett hvor mange
+    som venter)."""
+    if not is_configured():
+        return []
+    url = (f"{SUPABASE_URL}/rest/v1/pending_signups?select=*"
+           f"&status=eq.pending&order=created_at.asc&limit={limit}")
+    try:
+        req = urllib.request.Request(url, headers=_headers())
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        print(f"(kunne ikke hente ventende påmeldinger – {e})")
+        return []
+
+
+def mark_pending_signup(signup_id: str, status: str, error: str = "") -> bool:
+    """Sett status ('processing'/'failed') + evt. feilmelding, og øk
+    forsøksteller. Brukes for å unngå at en feilende rad prøves i evig loop
+    hver kjøring (se MAX_SIGNUP_ATTEMPTS i process_pending_signups.py)."""
+    if not is_configured():
+        return False
+    try:
+        req = urllib.request.Request(
+            f"{SUPABASE_URL}/rest/v1/pending_signups?id=eq.{signup_id}",
+            data=json.dumps({
+                "status": status, "error_message": error or None,
+            }).encode("utf-8"),
+            headers=_headers({"Prefer": "return=minimal"}),
+            method="PATCH",
+        )
+        with urllib.request.urlopen(req, timeout=30):
+            return True
+    except Exception as e:
+        print(f"(kunne ikke oppdatere påmelding {signup_id} – {e})")
+        return False
+
+
+def increment_signup_attempts(signup_id: str, current_attempts: int) -> None:
+    """Øk attempts-telleren ett hakk (best effort - feiler stille)."""
+    if not is_configured():
+        return
+    try:
+        req = urllib.request.Request(
+            f"{SUPABASE_URL}/rest/v1/pending_signups?id=eq.{signup_id}",
+            data=json.dumps({"attempts": current_attempts + 1}).encode("utf-8"),
+            headers=_headers({"Prefer": "return=minimal"}),
+            method="PATCH",
+        )
+        with urllib.request.urlopen(req, timeout=30):
+            pass
+    except Exception:
+        pass
+
+
+def delete_pending_signup(signup_id: str) -> bool:
+    """Slett en ferdigbehandlet (eller forkastet) påmelding – FJERNER
+    klartekst-passordene fra basen for godt. Kalles rett etter vellykket
+    create_user(), eller manuelt hvis en påmelding skal forkastes."""
+    if not is_configured():
+        return False
+    try:
+        req = urllib.request.Request(
+            f"{SUPABASE_URL}/rest/v1/pending_signups?id=eq.{signup_id}",
+            headers=_headers({"Prefer": "return=minimal"}),
+            method="DELETE",
+        )
+        with urllib.request.urlopen(req, timeout=30):
+            return True
+    except Exception as e:
+        print(f"(kunne ikke slette påmelding {signup_id} – {e})")
+        return False
+
+
 if __name__ == "__main__":
     if not is_configured():
         print("Ikke konfigurert. Sett SUPABASE_URL og SUPABASE_SERVICE_ROLE_KEY i .env "

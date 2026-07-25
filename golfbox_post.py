@@ -774,6 +774,44 @@ def _fill_and_settle(fr, sel_id: str, value) -> None:
         pass
 
 
+def _reassert_foreign_fields(fr, rnd: dict) -> list:
+    """GolfBox sitt utenlandsskjema ser ut til å HUSKE/gjenbruke sist manuelt
+    innskrevne CR/Slope (og trolig andre frittekst-felt) – trolig via
+    localStorage, som overlever på tvers av kjøringer siden vi gjenbruker
+    samme GolfBox-økt (`STATE_FILE`/storage_state). Det kan stille overskrive
+    feltene våre en god stund ETTER at vi fylte dem inn riktig (oppdaget i
+    live test 24. juli 2026 på El Chaparral – viste Hills sine FORRIGE
+    CR/Slope-tall, ikke El Chaparrals egne). Dette er samme grunnleggende
+    problem som GolfBox sin kjente async-reset for bane/tee i norsk flyt (se
+    CLAUDE.md «Tekniske fallgruver») – løsningen er den samme: RE-ASSERTER
+    rett før lagring, uansett hva som skjedde i mellomtiden. Kalles både rett
+    før auto-lagring OG periodisk mens vinduet står åpent for manuell
+    gjennomgang (se _observe_and_idle). Returnerer liste over felt som måtte
+    rettes (tom liste = alt sto riktig)."""
+    fixed = []
+    checks = [
+        ("#fld_ManualCountryName", (rnd.get("country") or "").strip()),
+        ("#fld_ManualCourseName", (rnd.get("course") or "").strip()),
+        ("#fld_CoursePar", rnd.get("roundPar") or rnd.get("par")),
+        ("#fld_CourseRating", rnd.get("teeBoxRating")),
+        ("#fld_Slope", rnd.get("teeBoxSlope")),
+    ]
+    for sel_id, want in checks:
+        if want in (None, ""):
+            continue
+        try:
+            cur = fr.eval_on_selector(sel_id, "el => el.value")
+        except Exception:
+            continue  # feltet finnes ikke (f.eks. ikke i utenlandsk-modus lenger)
+        if cur is not None and str(cur).strip() != str(want).strip():
+            try:
+                _fill_and_settle(fr, sel_id, want)
+                fixed.append(f"{sel_id}: GolfBox hadde «{cur}», rettet tilbake til «{want}»")
+            except Exception:
+                pass
+    return fixed
+
+
 def _fill_foreign_hole(fr, idx: int, h: dict) -> bool:
     """Fyll Par-<idx>/HCP-<idx>/Strokes-<idx> (1-indeksert) for ett hull i GolfBox
     sitt utenlandsskjema. Par/HCP fylles kun når Garmin faktisk ga oss verdien –
@@ -996,6 +1034,16 @@ def fill_foreign_score_form(fr, rnd: dict, for_test: bool = False):
     _m_notes, _m_ok = _fill_marker(fr, for_test)
     notes.extend(_m_notes)
     status["marker"] = _m_ok
+
+    # 8) Re-assert baneinfo HELT TIL SLUTT – GolfBox kan i mellomtiden ha
+    # gjenbrukt/overskrevet CR/Slope (og evt. andre felt) med en tidligere
+    # runde sine verdier (se _reassert_foreign_fields). Gjøres igjen rett før
+    # lagring i main() (auto-modus) og periodisk i _observe_and_idle
+    # (manuell modus), siden dette kan skje SENERE enn her også.
+    _fixed = _reassert_foreign_fields(fr, rnd)
+    if _fixed:
+        notes.append("↻ GolfBox hadde overskrevet felt etter utfylling – rettet automatisk:")
+        notes.extend(f"   {f}" for f in _fixed)
 
     return notes, status
 
@@ -1826,6 +1874,14 @@ def main() -> None:
             posted = False
             submit_result = None
             if auto_submit and safe:
+                if foreign:
+                    # Siste sjanse til å fange at GolfBox har overskrevet
+                    # CR/Slope o.l. med en tidligere runde sine verdier (se
+                    # _reassert_foreign_fields) – rett FØR vi trykker Lagre.
+                    _late_fix = _reassert_foreign_fields(target, rnd)
+                    if _late_fix:
+                        for f in _late_fix:
+                            log(f"  ↻ Rettet rett før lagring: {f}")
                 submit_result = submit_score(target)
                 posted = (submit_result == "saved")
                 if posted:
@@ -2015,11 +2071,25 @@ def _save_learned_mapping(garmin_course: str, sel: dict) -> None:
 def _observe_and_idle(ctx, fr, rnd) -> None:
     """Hold vinduet åpent, følg med på brukerens klubb/bane/tee-valg, og lær av det."""
     last = {}
+    foreign = _is_foreign_round(rnd)
+    _last_reassert = 0.0
     try:
         while ctx.pages:
             sel = _read_selection(fr)
             if sel.get("club") and sel.get("course"):
                 last = sel
+            # Utenlandske runder: GolfBox kan overskrive CR/Slope o.l. med en
+            # tidligere runde sine verdier MENS du sitter og ser på skjemaet
+            # (se _reassert_foreign_fields) – sjekk med jevne mellomrom helt
+            # til du trykker Lagre selv, ikke bare rett etter utfylling.
+            if foreign and time.time() - _last_reassert > 5:
+                try:
+                    _fixed = _reassert_foreign_fields(fr, rnd)
+                    for f in _fixed:
+                        log(f"  ↻ GolfBox overskrev et felt mens du så på skjemaet – rettet: {f}")
+                except Exception:
+                    pass
+                _last_reassert = time.time()
             time.sleep(2)
     except Exception:
         pass

@@ -14,6 +14,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import golfbox_post as gp  # noqa: E402
 import foreign_course_registry as fcr  # noqa: E402
+import process_pending_signups as pps  # noqa: E402
+import provision_user  # noqa: E402
+import user_store  # noqa: E402
 from backend.main import parse_hole_handicaps  # noqa: E402
 
 _passed = 0
@@ -192,12 +195,80 @@ def test_foreign_course_registry():
             fcr.DB_FILE = orig_file
 
 
+# --- Helautomatisk onboarding: ren kontrollflyt-logikk (nettverkskall
+# monkey-patchet bort, se WEBHOOK_ONBOARDING.md for hele bildet) ---
+def test_mfa_not_supported():
+    threw = False
+    try:
+        provision_user._mfa_not_supported()
+    except RuntimeError:
+        threw = True
+    check_true("MFA-prompt kaster i stedet for å henge på input()", threw)
+
+
+def _patch(obj, name, fn):
+    orig = getattr(obj, name)
+    setattr(obj, name, fn)
+    return orig
+
+
+def test_process_signup_missing_fields():
+    statuses = []
+    orig_mark = _patch(user_store, "mark_pending_signup",
+                        lambda signup_id, status, error="": statuses.append(status))
+    orig_inc = _patch(user_store, "increment_signup_attempts", lambda *a, **k: None)
+    login_calls = []
+    orig_login = _patch(provision_user, "_login_garmin_and_capture_token",
+                         lambda *a, **k: login_calls.append(1))
+    # _owner_notify ellers ville sendt en EKTE e-post/push hvis maskinen som
+    # kjører testen tilfeldigvis har GMAIL_USER/NTFY_TOPIC satt i .env (sant
+    # for prosjekt-eierens egen Mac!) – tester skal ALDRI ha ekte
+    # side-effekter avhengig av ambient miljø, derfor stubbet helt bort her.
+    orig_notify = _patch(pps, "_owner_notify", lambda *a, **k: None)
+    try:
+        pps._process_one({
+            "id": "test-1", "label": "Test Person", "attempts": 0,
+            "garmin_email": "test@example.com", "garmin_password": None,  # mangler passord
+            "golfbox_username": "testuser", "golfbox_password": "hunter2",
+        })
+    finally:
+        user_store.mark_pending_signup = orig_mark
+        user_store.increment_signup_attempts = orig_inc
+        provision_user._login_garmin_and_capture_token = orig_login
+        pps._owner_notify = orig_notify
+    check("markerer 'processing' så 'failed', uten å prøve Garmin-innlogging",
+          (statuses, len(login_calls)), (["processing", "failed"], 0))
+
+
+def test_process_signup_max_attempts():
+    statuses = []
+    orig_mark = _patch(user_store, "mark_pending_signup",
+                        lambda signup_id, status, error="": statuses.append(status))
+    incremented = []
+    orig_inc = _patch(user_store, "increment_signup_attempts",
+                       lambda *a, **k: incremented.append(1))
+    orig_notify = _patch(pps, "_owner_notify", lambda *a, **k: None)  # se kommentar over
+    try:
+        pps._process_one({
+            "id": "test-2", "label": "Test Person", "attempts": pps.MAX_SIGNUP_ATTEMPTS,
+            "garmin_email": "test@example.com", "garmin_password": "x",
+            "golfbox_username": "testuser", "golfbox_password": "x",
+        })
+    finally:
+        user_store.mark_pending_signup = orig_mark
+        user_store.increment_signup_attempts = orig_inc
+        pps._owner_notify = orig_notify
+    check("gir opp direkte ('failed'), uten å øke forsøkstelleren igjen",
+          (statuses, len(incremented)), (["failed"], 0))
+
+
 def main():
     for fn in [test_norm, test_colors, test_n_holes, test_datetime,
                test_gb_error, test_course_scoring, test_holes_decision,
                test_foreign_detection, test_hole_handicaps, test_valid_hcp_set,
                test_plausible_cr_slope, test_decode_hole_handicaps,
-               test_foreign_course_registry]:
+               test_foreign_course_registry, test_mfa_not_supported,
+               test_process_signup_missing_fields, test_process_signup_max_attempts]:
         fn()
     print(f"\n{'='*40}\n{_passed} bestått, {_failed} feilet")
     sys.exit(1 if _failed else 0)

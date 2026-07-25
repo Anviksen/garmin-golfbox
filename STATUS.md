@@ -225,6 +225,19 @@ GitHubs innebygde `schedule`-cron er hardt strupt på gratis-nivå (fyrer bare h
   oppdater `GOLFBOX_STATE_B64`-secret. (Auto-login fra brukernavn/passord finnes også.)
 - **Git fra Mac:** ved «diverged» pga. skyens auto-commits: `git pull --rebase && git push`.
 
+## Multi-bruker: helautomatisk onboarding (24. juli 2026)
+
+Google-skjema → Google Apps Script → Supabase (`pending_signups`) → ny skyjobb
+`.github/workflows/process-signups.yml` (`process_pending_signups.py`) gjør
+resten: Garmin-innlogging, kryptering, oppretter bruker, sletter klartekst-
+passord. Eieren trenger ikke lenger kjøre `provision_user.py` manuelt for
+hver ny venn. Se `WEBHOOK_ONBOARDING.md` for full arkitektur/oppsett og
+`MULTIUSER_PLAN.md` steg 6b for detaljer. Viktig sikkerhetsvalg: siden repoet
+er offentlig (og dermed også GitHub Actions-logger), går klartekst-passord
+KUN gjennom Google Apps Script (private logger), aldri gjennom GitHub.
+**Gjenstår:** kjøre `supabase_pending_signups_schema.sql` i Supabase og koble
+til Apps Script (begge utenfor sandkassen) – se `WEBHOOK_ONBOARDING.md`.
+
 ## Neste steg / idéer
 
 - Hostet fullførings-flyt (så sky-brukere uten Mac kan fullføre needs_manual).
