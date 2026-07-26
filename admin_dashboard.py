@@ -160,37 +160,48 @@ def render_html(user_rows: list, funnel: dict, course_outcomes: dict,
                  foreign_by_country: dict, recent: list) -> str:
     total_users = len(user_rows)
     active_users = sum(1 for r in user_rows if r["active"])
-    total_rounds = sum(r["total"] for r in user_rows)
     total_posted = sum(r["posted"] for r in user_rows)
     total_needs_manual = sum(r["needs_manual"] for r in user_rows)
     global_rate = round(100 * total_posted / (total_posted + total_needs_manual)) \
         if (total_posted + total_needs_manual) else None
-    last_activity = _fmt_dt(recent[0]["created_at"]) if recent and recent[0].get("created_at") else "–"
 
     failing = sorted(
         [(k, a) for k, a in course_outcomes.items() if not a["last_ok"]],
         key=lambda x: -x[1]["n"],
     )
     alerts = build_alerts(user_rows, funnel, failing)
+    needs_attention = len(alerts)
+
+    # --- Brukere: én kompakt "Runder"-celle i stedet for fire kolonner ------
+    def _round_summary(r: dict) -> str:
+        if r["total"] == 0:
+            return '<span class="muted">Ingen runder ennå</span>'
+        parts = [f"{r['posted']} postet"]
+        if r["needs_manual"]:
+            parts.append(f"{r['needs_manual']} trenger hjelp")
+        if r["pending"]:
+            parts.append(f"{r['pending']} venter")
+        return f"<strong>{r['total']}</strong><div class='muted small'>{' · '.join(parts)}</div>"
 
     def _user_row(r: dict) -> str:
         rate = f"{r['success_rate']}%" if r["success_rate"] is not None else "–"
-        fails = f"⚠️ {r['garmin_fails']}×" if r["garmin_fails"] else "–"
         badge = '<span class="pill ok">aktiv</span>' if r["active"] else '<span class="pill off">pauset</span>'
+        if r["garmin_fails"]:
+            badge += f'<div class="muted small">⚠️ {r["garmin_fails"]}× Garmin-feil</div>'
         toggle_label = "Pause" if r["active"] else "Aktiver"
         return (
-            f"<tr><td>{_esc(r['label'])}</td><td>{badge}</td>"
-            f"<td>{_fmt_dt(r.get('created_at'))}</td>"
-            f"<td>{r['total']}</td><td>{r['posted']}</td><td>{r['needs_manual']}</td>"
-            f"<td>{r['pending']}</td><td>{rate}</td><td>{fails}</td>"
+            f"<tr><td>{_esc(r['label'])}<div class='muted small'>Ble med {_fmt_dt(r.get('created_at'))}</div></td>"
+            f"<td>{badge}</td>"
+            f"<td>{_round_summary(r)}</td>"
+            f"<td>{rate}</td>"
             f"<td class='actions'>"
             f"<button class='btn small' onclick=\"toggleUser('{r['id']}', {str(not r['active']).lower()})\">{toggle_label}</button> "
-            f"<button class='btn small ghost' onclick=\"resendWelcome('{r['id']}')\">Send velkomst på nytt</button>"
+            f"<button class='btn small ghost' onclick=\"resendWelcome('{r['id']}')\">Velkomst-e-post</button>"
             f"</td></tr>"
         )
 
     user_table_rows = "".join(_user_row(r) for r in user_rows) \
-        or "<tr><td colspan=10>Ingen brukere ennå.</td></tr>"
+        or "<tr><td colspan=5>Ingen brukere ennå.</td></tr>"
 
     failing_rows = "".join(
         f"<tr><td>{_esc(k)}</td><td>{a['n']}</td><td>{_esc(a['last_reason'])[:110]}</td>"
@@ -220,7 +231,7 @@ def render_html(user_rows: list, funnel: dict, course_outcomes: dict,
 
     alerts_html = (
         "".join(f'<div class="alert">{_esc(a)}</div>' for a in alerts)
-        if alerts else '<div class="alert ok">✅ Ingen ting trenger oppmerksomhet akkurat nå.</div>'
+        if alerts else '<div class="alert ok">✅ Ingen ting trenger oppmerksomhet akkurat nå. Alt kjører som det skal.</div>'
     )
 
     workflow_buttons = "".join(
@@ -240,24 +251,31 @@ def render_html(user_rows: list, funnel: dict, course_outcomes: dict,
   :root {{ color-scheme: dark; }}
   * {{ box-sizing: border-box; }}
   body {{ font-family: -apple-system, "SF Pro Text", Segoe UI, Roboto, sans-serif;
-          background:#0b0f18; color:#e6e9ef; margin:0; padding:28px 36px 60px; }}
-  h1 {{ font-size:21px; margin:0 0 4px; display:flex; align-items:center; gap:8px; }}
-  .sub {{ color:#7a8299; font-size:12.5px; margin-bottom:24px; }}
+          background:#0b0f18; color:#e6e9ef; margin:0; padding:0 0 60px; }}
+  header {{ position:sticky; top:0; z-index:10; background:#0d1220ee; backdrop-filter:blur(6px);
+            border-bottom:1px solid #1a2233; padding:16px 32px 0; }}
+  h1 {{ font-size:17px; margin:0 0 2px; display:flex; align-items:center; gap:8px; font-weight:600; }}
+  .sub {{ color:#69708a; font-size:11.5px; margin-bottom:14px; }}
   .sub code {{ background:#181f30; padding:1px 6px; border-radius:4px; }}
-  .kpis {{ display:flex; gap:14px; flex-wrap:wrap; margin-bottom:22px; }}
-  .kpi {{ background:linear-gradient(180deg,#161d2e,#121826); border:1px solid #1f2638;
-          border-radius:12px; padding:14px 18px; min-width:128px; }}
-  .kpi .n {{ font-size:24px; font-weight:700; letter-spacing:-0.02em; }}
-  .kpi .l {{ font-size:11.5px; color:#7a8299; margin-top:3px; }}
-  .alerts {{ margin-bottom:28px; display:flex; flex-direction:column; gap:6px; }}
-  .alert {{ background:#241a17; border:1px solid #4a2e22; color:#f0c4a8; border-radius:8px;
-            padding:9px 14px; font-size:13px; }}
-  .alert.ok {{ background:#132018; border-color:#1e3a28; color:#8fd9ab; }}
-  section {{ margin-bottom:34px; }}
-  h2 {{ font-size:14px; color:#c7cbe0; border-bottom:1px solid #1f2638; padding-bottom:8px;
-        margin-bottom:10px; font-weight:600; }}
+  .chips {{ display:flex; gap:10px; margin-bottom:14px; }}
+  .chip {{ display:flex; align-items:baseline; gap:6px; background:#141a29; border:1px solid #1f2638;
+           border-radius:9px; padding:7px 13px; font-size:12px; }}
+  .chip b {{ font-size:15px; }}
+  .chip.warn {{ border-color:#4a2e22; }}
+  .chip.warn b {{ color:#f0a878; }}
+  .chip.good b {{ color:#7fd99a; }}
+  nav {{ display:flex; gap:4px; }}
+  nav button {{ background:none; border:none; color:#7a8299; font-size:13px; padding:10px 16px;
+                cursor:pointer; border-bottom:2px solid transparent; font-family:inherit; }}
+  nav button:hover {{ color:#c7cbe0; }}
+  nav button.active {{ color:#e6e9ef; border-bottom-color:#3d6fe0; font-weight:600; }}
+  main {{ padding:24px 32px; }}
+  .tab {{ display:none; }}
+  .tab.active {{ display:block; }}
+  section {{ margin-bottom:30px; }}
+  h2 {{ font-size:13px; color:#c7cbe0; margin:0 0 12px; font-weight:600; }}
   table {{ width:100%; border-collapse:collapse; font-size:12.5px; }}
-  th, td {{ text-align:left; padding:8px 10px; border-bottom:1px solid #171d2b; vertical-align:middle; }}
+  th, td {{ text-align:left; padding:9px 10px; border-bottom:1px solid #171d2b; vertical-align:middle; }}
   th {{ color:#7a8299; font-weight:600; font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; }}
   tr:hover td {{ background:#111726; }}
   code {{ background:#181f30; padding:1px 6px; border-radius:4px; font-size:11.5px; }}
@@ -270,81 +288,118 @@ def render_html(user_rows: list, funnel: dict, course_outcomes: dict,
   .btn.small {{ padding:4px 10px; font-size:11.5px; }}
   .btn.ghost {{ background:transparent; border-color:#2c3346; color:#9aa3ba; }}
   .actions {{ white-space:nowrap; }}
-  .muted {{ color:#7a8299; font-size:12.5px; }}
+  .muted {{ color:#7a8299; }}
+  .muted.small {{ font-size:11px; margin-top:2px; }}
+  .alerts {{ display:flex; flex-direction:column; gap:6px; }}
+  .alert {{ background:#241a17; border:1px solid #4a2e22; color:#f0c4a8; border-radius:8px;
+            padding:10px 14px; font-size:13px; }}
+  .alert.ok {{ background:#132018; border-color:#1e3a28; color:#8fd9ab; }}
   .toast {{ position:fixed; bottom:20px; right:20px; background:#1e2942; border:1px solid #2c3a5c;
             border-radius:8px; padding:12px 18px; font-size:13px; display:none; max-width:340px; }}
   .toast.show {{ display:block; }}
   .controls-row {{ display:flex; gap:10px; flex-wrap:wrap; }}
 </style></head>
 <body>
-  <h1>🏌️ Garmin → GolfBox — admin</h1>
-  <div class="sub">Generert {generated} · <code>http://127.0.0.1:{PORT}/</code> · oppdater siden (⌘R) for ferske tall</div>
+<header>
+  <h1>🏌️ Garmin → GolfBox</h1>
+  <div class="sub">Generert {generated} · oppdater siden for ferske tall</div>
+  <div class="chips">
+    <div class="chip {'warn' if needs_attention else 'good'}"><b>{needs_attention}</b> trenger oppmerksomhet</div>
+    <div class="chip"><b>{f"{global_rate}%" if global_rate is not None else "–"}</b> suksessrate</div>
+    <div class="chip"><b>{active_users}/{total_users}</b> aktive brukere</div>
+  </div>
+  <nav>
+    <button class="tab-btn active" data-tab="oversikt" onclick="showTab('oversikt')">Oversikt</button>
+    <button class="tab-btn" data-tab="brukere" onclick="showTab('brukere')">Brukere</button>
+    <button class="tab-btn" data-tab="feilsok" onclick="showTab('feilsok')">Feilsøk</button>
+    <button class="tab-btn" data-tab="onboarding" onclick="showTab('onboarding')">Onboarding</button>
+    <button class="tab-btn" data-tab="baner" onclick="showTab('baner')">Baner</button>
+    <button class="tab-btn" data-tab="kontroller" onclick="showTab('kontroller')">Kontroller</button>
+  </nav>
+</header>
 
-  <div class="alerts">{alerts_html}</div>
-
-  <div class="kpis">
-    <div class="kpi"><div class="n">{active_users}/{total_users}</div><div class="l">Aktive brukere</div></div>
-    <div class="kpi"><div class="n">{total_rounds}</div><div class="l">Runder totalt</div></div>
-    <div class="kpi"><div class="n">{total_posted}</div><div class="l">Postet automatisk</div></div>
-    <div class="kpi"><div class="n">{f"{global_rate}%" if global_rate is not None else "–"}</div><div class="l">Suksessrate</div></div>
-    <div class="kpi"><div class="n">{funnel['pending']}</div><div class="l">Ventende påmeldinger</div></div>
-    <div class="kpi"><div class="n">{last_activity}</div><div class="l">Siste aktivitet</div></div>
+<main>
+  <div class="tab active" id="tab-oversikt">
+    <section>
+      <h2>Trenger din oppmerksomhet</h2>
+      <div class="alerts">{alerts_html}</div>
+    </section>
   </div>
 
-  <section>
-    <h2>👥 Brukere</h2>
-    <table>
-      <tr><th>Navn</th><th>Status</th><th>Ble med</th><th>Runder</th><th>Postet</th>
-          <th>Trenger hjelp</th><th>Venter</th><th>Suksessrate</th><th>Garmin-feil</th><th></th></tr>
-      {user_table_rows}
-    </table>
-  </section>
+  <div class="tab" id="tab-brukere">
+    <section>
+      <h2>👥 Brukere</h2>
+      <table>
+        <tr><th>Navn</th><th>Status</th><th>Runder</th><th>Suksessrate</th><th></th></tr>
+        {user_table_rows}
+      </table>
+    </section>
+  </div>
 
-  <section>
-    <h2>🕒 Siste aktivitet</h2>
-    <table>
-      <tr><th>Tidspunkt</th><th>Bane</th><th>Postet</th><th>Grunn</th></tr>
-      {recent_rows}
-    </table>
-  </section>
+  <div class="tab" id="tab-feilsok">
+    <section>
+      <h2>🔴 Feilkø (baner som ikke går gjennom – prioritert etter hyppighet)</h2>
+      <table>
+        <tr><th>Bane</th><th>Forsøk</th><th>Siste grunn</th><th>Debug</th></tr>
+        {failing_rows}
+      </table>
+    </section>
+    <section>
+      <h2>🕒 Siste aktivitet</h2>
+      <table>
+        <tr><th>Tidspunkt</th><th>Bane</th><th>Postet</th><th>Grunn</th></tr>
+        {recent_rows}
+      </table>
+    </section>
+  </div>
 
-  <section>
-    <h2>🔴 Feilkø (baner som ikke går gjennom – prioritert etter hyppighet)</h2>
-    <table>
-      <tr><th>Bane</th><th>Forsøk</th><th>Siste grunn</th><th>Debug</th></tr>
-      {failing_rows}
-    </table>
-  </section>
+  <div class="tab" id="tab-onboarding">
+    <section>
+      <h2>📝 Onboarding</h2>
+      <div class="chips">
+        <div class="chip"><b>{funnel['total']}</b> sendt inn totalt</div>
+        <div class="chip"><b>{funnel['pending']}</b> venter på behandling</div>
+        <div class="chip {'warn' if funnel['failed'] else 'good'}"><b>{funnel['failed']}</b> feilet</div>
+      </div>
+      <table>
+        <tr><th>Navn</th><th>Sendt inn</th><th>Feilårsak</th><th></th></tr>
+        {failed_signup_rows}
+      </table>
+    </section>
+  </div>
 
-  <section>
-    <h2>📝 Onboarding-trakt</h2>
-    <div class="kpis">
-      <div class="kpi"><div class="n">{funnel['total']}</div><div class="l">Totalt sendt inn</div></div>
-      <div class="kpi"><div class="n">{funnel['pending']}</div><div class="l">Venter på behandling</div></div>
-      <div class="kpi"><div class="n">{funnel['failed']}</div><div class="l">Feilet (trenger deg)</div></div>
-    </div>
-    <table>
-      <tr><th>Navn</th><th>Sendt inn</th><th>Feilårsak</th><th></th></tr>
-      {failed_signup_rows}
-    </table>
-  </section>
+  <div class="tab" id="tab-baner">
+    <section>
+      <h2>🌍 Bekreftede utenlandske baner (delt cache)</h2>
+      <table>
+        <tr><th>Land</th><th>Antall baner</th><th>Baner</th></tr>
+        {foreign_rows}
+      </table>
+    </section>
+  </div>
 
-  <section>
-    <h2>🌍 Bekreftede utenlandske baner (delt cache)</h2>
-    <table>
-      <tr><th>Land</th><th>Antall baner</th><th>Baner</th></tr>
-      {foreign_rows}
-    </table>
-  </section>
-
-  <section>
-    <h2>🎛 Kontroller</h2>
-    <div class="controls-row">{workflow_buttons}</div>
-  </section>
+  <div class="tab" id="tab-kontroller">
+    <section>
+      <h2>🎛 Kjør en skyjobb nå (utenom tidsplan)</h2>
+      <div class="controls-row">{workflow_buttons}</div>
+    </section>
+  </div>
+</main>
 
   <div class="toast" id="toast"></div>
 
 <script>
+function showTab(name) {{
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelector('.tab-btn[data-tab="' + name + '"]').classList.add('active');
+  sessionStorage.setItem('activeTab', name);
+}}
+(function() {{
+  const last = sessionStorage.getItem('activeTab');
+  if (last) showTab(last);
+}})();
 function toast(msg) {{
   const t = document.getElementById('toast');
   t.textContent = msg;
