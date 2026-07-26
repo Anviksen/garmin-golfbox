@@ -485,3 +485,32 @@ nettleser), ikke en hostet/live nettside. Begrunnelse: dashbordet må lese med
 havnet i det offentlige repoet. Ren aggregeringslogikk holdt adskilt fra
 nettverkskall (samme mønster som resten av prosjektet) – 4 nye tester, 79
 totalt, alle grønne.
+
+### Steg 7b: v2 – lokal server med handlingsknapper (25. juli 2026)
+
+Brukeren ville også kunne GJØRE noe fra dashbordet, ikke bare se på det.
+`admin_dashboard.py` bygget om fra «skriv én HTML-fil» til en LOKAL server
+(`http.server`, bundet KUN til `127.0.0.1` – ingen nye avhengigheter, ingen
+nettverkseksponering). Nettleseren snakker bare med denne lokale prosessen;
+`SUPABASE_SERVICE_ROLE_KEY` forlater aldri Python-prosessen, akkurat som før.
+
+**Nye handlinger (alle server-side, ingen hemmeligheter i nettleser-JS):**
+- «Prøv på nytt» på en mislykket påmelding (`user_store.reset_pending_signup`)
+- Aktiver/pause en bruker (`user_store.set_user_active`) – BEVISST myk/
+  reversibel; ekte sletting (opt-out) er fortsatt manuelt i Supabase, se
+  `SAMTYKKE_OG_PAMELDING.md` del 7 – for personvern-sensitivt til ett klikk.
+- Send velkomst-e-post på nytt (gjenbruker `provision_user._send_welcome_email`)
+- «Kjør nå» på en av de tre skyjobbene, via ny `github_actions.py` (egen,
+  minimal GitHub-klient, `GITHUB_PAT` fine-grained med KUN
+  «Actions: Read and write» på dette repoet – allow-list på hvilke
+  workflow-filer som kan trigges, ikke fritekst)
+
+**Nytt i visningen:** «trenger din oppmerksomhet nå»-varselbanner
+(cooldown/gjentatte Garmin-feil/mislykkede påmeldinger/feilkø, ren funksjon
+`build_alerts`), siste-aktivitet-feed, kopierbar debug-kommando per
+feilende bane, medlem-siden per bruker.
+
+Alt testet med monkey-patchet/stub-data (server-ruting verifisert med ekte
+HTTP-kall mot en lokal instans i sandkassen – GET /, POST til alle tre
+handlings-endepunktene, 404 på ukjent sti). 84 tester totalt, alle grønne.
+**IKKE testet mot ekte Supabase/GitHub ennå** – neste steg for brukeren.

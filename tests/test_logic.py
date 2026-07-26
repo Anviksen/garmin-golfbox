@@ -310,8 +310,31 @@ def test_aggregate_foreign_courses():
 
 
 def test_render_html_no_crash():
-    html = ad.render_html([], {"total": 0, "pending": 0, "processing": 0, "failed": 0, "top_errors": []}, {}, {})
+    empty_funnel = {"total": 0, "pending": 0, "processing": 0, "failed": 0,
+                    "failed_rows": [], "top_errors": []}
+    html = ad.render_html([], empty_funnel, {}, {}, [])
     check_true("gyldig HTML selv med tom data", "<html" in html and "</html>" in html)
+
+
+def test_build_alerts():
+    users_ok = [{"label": "Haakon", "active": True, "garmin_fails": 0, "garmin_cooldown_until": None}]
+    funnel_ok = {"failed": 0}
+    check("ingen varsler når alt er bra", ad.build_alerts(users_ok, funnel_ok, []), [])
+
+    users_bad = [{"label": "Marius", "active": True, "garmin_fails": 3, "garmin_cooldown_until": None}]
+    alerts = ad.build_alerts(users_bad, funnel_ok, [])
+    check_true("varsler ved 3+ Garmin-feil", any("Marius" in a for a in alerts))
+
+    funnel_bad = {"failed": 2}
+    alerts2 = ad.build_alerts(users_ok, funnel_bad, [])
+    check_true("varsler ved mislykkede påmeldinger", any("2 påmelding" in a for a in alerts2))
+
+
+def test_aggregate_recent_activity():
+    attempts = [{"id": i} for i in range(30)]
+    recent = ad.aggregate_recent_activity(attempts, limit=20)
+    check("begrenser til limit", len(recent), 20)
+    check("beholder rekkefølge (nyeste først, uendret)", recent[0]["id"], 0)
 
 
 def main():
@@ -322,7 +345,8 @@ def main():
                test_foreign_course_registry, test_mfa_not_supported,
                test_process_signup_missing_fields, test_process_signup_max_attempts,
                test_aggregate_user_rounds, test_aggregate_signup_funnel,
-               test_aggregate_foreign_courses, test_render_html_no_crash]:
+               test_aggregate_foreign_courses, test_render_html_no_crash,
+               test_build_alerts, test_aggregate_recent_activity]:
         fn()
     print(f"\n{'='*40}\n{_passed} bestått, {_failed} feilet")
     sys.exit(1 if _failed else 0)

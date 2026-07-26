@@ -272,6 +272,57 @@ def increment_signup_attempts(signup_id: str, current_attempts: int) -> None:
         pass
 
 
+def reset_pending_signup(signup_id: str) -> bool:
+    """Sett en mislykket påmelding tilbake til 'pending' med nullstilt
+    forsøksteller/feilmelding – for «Prøv på nytt»-knappen i admin-dashbordet.
+    Brukes etter at eieren har rettet det underliggende problemet (f.eks.
+    tastet feil passord inn på nytt et annet sted, eller bekreftet at MFA nå
+    er håndtert manuelt)."""
+    if not is_configured():
+        return False
+    try:
+        req = urllib.request.Request(
+            f"{SUPABASE_URL}/rest/v1/pending_signups?id=eq.{signup_id}",
+            data=json.dumps({
+                "status": "pending", "error_message": None, "attempts": 0,
+            }).encode("utf-8"),
+            headers=_headers({"Prefer": "return=minimal"}),
+            method="PATCH",
+        )
+        with urllib.request.urlopen(req, timeout=30):
+            return True
+    except Exception as e:
+        print(f"(kunne ikke nullstille påmelding {signup_id} – {e})")
+        return False
+
+
+def get_user_contact(user_id: str) -> dict | None:
+    """Hent KUN ikke-sensitive kontaktfelt for én bruker (label/notify_email/
+    ntfy_topic er IKKE kryptert i utgangspunktet – se
+    supabase_multiuser_schema.sql) – til «Send velkomst-e-post på nytt» i
+    admin-dashbordet. Rører aldri *_enc-kolonnene."""
+    if not is_configured():
+        return None
+    url = f"{SUPABASE_URL}/rest/v1/users?select=id,label,notify_email,ntfy_topic&id=eq.{user_id}"
+    try:
+        req = urllib.request.Request(url, headers=_headers())
+        with urllib.request.urlopen(req, timeout=30) as r:
+            rows = json.loads(r.read().decode("utf-8"))
+            return rows[0] if rows else None
+    except Exception as e:
+        print(f"(kunne ikke hente kontaktinfo for {user_id} – {e})")
+        return None
+
+
+def set_user_active(user_id: str, active: bool) -> bool:
+    """Aktiver/deaktiver en bruker (myk, reversibel handling – til
+    admin-dashbordets bryter-knapp). MERK: dette sletter INGENTING – et ekte
+    opt-out/slette-ønske skal fortsatt håndteres manuelt i Supabase, se
+    SAMTYKKE_OG_PAMELDING.md del 7 (sletting er bevisst IKKE en
+    dashbord-knapp – for irreversibelt/personvern-sensitivt til ett klikk)."""
+    return update_user(user_id, {"active": active})
+
+
 def delete_pending_signup(signup_id: str) -> bool:
     """Slett en ferdigbehandlet (eller forkastet) påmelding – FJERNER
     klartekst-passordene fra basen for godt. Kalles rett etter vellykket

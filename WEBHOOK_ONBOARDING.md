@@ -103,6 +103,28 @@ satt opp allerede for `auto-sync.yml`.
   mange som venter – samme forsiktighetsprinsipp som
   `MULTIUSER_PLAN.md` alltid har hatt for Garmin-innlogging.
 
+## Admin-dashbord: «Kjør nå»-knapper (valgfritt)
+
+`admin_dashboard.py` kan trigge en skyjobb manuelt (utenom tidsplanen) med en
+knapp, via `github_actions.py`. Krever en egen GitHub-token:
+
+1. GitHub → innstillinger for kontoen din → **Developer settings** →
+   **Fine-grained tokens** → **Generate new token**.
+2. Sett **Repository access** til KUN `garmin-golfbox` (ikke alle repoer).
+3. Under **Permissions** → **Actions**: sett til **Read and write**. Ingen
+   andre rettigheter trengs.
+4. Kopier tokenet og legg det i `.env`:
+   ```
+   GITHUB_PAT=github_pat_...
+   ```
+5. Uten dette satt: dashbordet fungerer helt fint, men skjuler
+   «Kjør nå»-knappene i stedet for å vise noe som ville feilet.
+
+Samme type token (og samme minste-privilegium-prinsipp) som cron-job.org
+allerede bruker for å trigge `auto-sync.yml` – grei anledning til også å
+rotere den gamle PAT-en som ved et uhell havnet i klartekst i chatten
+tidligere (se `MULTIUSER_PLAN.md` steg 6, notert som ugjort).
+
 ## Driftsnotat (uendret prinsipp, se `SAMTYKKE_OG_PAMELDING.md` del 5)
 
 Selv om onboardingen nå er automatisk, bør du fortsatt jevnlig slette gamle
