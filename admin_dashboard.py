@@ -27,6 +27,7 @@ import webbrowser
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse, parse_qs
 
 import central_registry
 import foreign_course_registry
@@ -39,6 +40,32 @@ PORT = 8877
 
 
 # --- Ren aggregering (testbar uten nettverk) --------------------------------
+
+def filter_since(rows: list, since: str | None, field: str = "created_at") -> list:
+    """Behold kun rader fra og med `since` (en 'YYYY-MM-DD'-streng). `since`
+    er None/tom -> ingen filtrering (vis alt). Brukt til dashbordets
+    dato-filter – IKKE en sletting, bare en VISNING (se chat 26. juli 2026:
+    mye reell test-/utviklingsdata før lansering skal ikke se ut som en høy
+    feilrate i produksjon, uten å faktisk slette den ekte historikken)."""
+    if not since:
+        return rows
+    try:
+        cutoff = datetime.fromisoformat(since).replace(tzinfo=timezone.utc)
+    except ValueError:
+        return rows
+    out = []
+    for r in rows:
+        ts = r.get(field)
+        if not ts:
+            continue
+        try:
+            dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if dt >= cutoff:
+            out.append(r)
+    return out
+
 
 def aggregate_user_rounds(round_states: list, users: list) -> list:
     """Per-bruker rundestatistikk. `round_states` = alle user_round_state-
@@ -157,7 +184,7 @@ def _fmt_dt(iso: str | None) -> str:
 
 
 def render_html(user_rows: list, funnel: dict, course_outcomes: dict,
-                 foreign_by_country: dict, recent: list) -> str:
+                 foreign_by_country: dict, recent: list, since: str | None = None) -> str:
     total_users = len(user_rows)
     active_users = sum(1 for r in user_rows if r["active"])
     total_posted = sum(r["posted"] for r in user_rows)
@@ -298,15 +325,24 @@ def render_html(user_rows: list, funnel: dict, course_outcomes: dict,
             border-radius:8px; padding:12px 18px; font-size:13px; display:none; max-width:340px; }}
   .toast.show {{ display:block; }}
   .controls-row {{ display:flex; gap:10px; flex-wrap:wrap; }}
+  .date-filter {{ display:flex; align-items:center; gap:7px; margin-left:auto; font-size:12px; }}
+  .date-filter input[type=date] {{ background:#141a29; border:1px solid #1f2638; color:#e6e9ef;
+            border-radius:7px; padding:5px 9px; font-size:12px; font-family:inherit; }}
 </style></head>
 <body>
 <header>
   <h1>🏌️ Garmin → GolfBox</h1>
-  <div class="sub">Generert {generated} · oppdater siden for ferske tall</div>
+  <div class="sub">Generert {generated} · {"viser fra " + _esc(since) if since else "viser ALL historikk"} · oppdater siden for ferske tall</div>
   <div class="chips">
     <div class="chip {'warn' if needs_attention else 'good'}"><b>{needs_attention}</b> trenger oppmerksomhet</div>
     <div class="chip"><b>{f"{global_rate}%" if global_rate is not None else "–"}</b> suksessrate</div>
     <div class="chip"><b>{active_users}/{total_users}</b> aktive brukere</div>
+    <div class="date-filter">
+      <span class="muted">Viser fra</span>
+      <input type="date" id="since-input" value="{_esc(since) if since else ''}">
+      <button class="btn small" onclick="applySinceFilter()">Bruk</button>
+      {'<button class="btn small ghost" onclick="showAllData()">Vis alt</button>' if since else ''}
+    </div>
   </div>
   <nav>
     <button class="tab-btn active" data-tab="oversikt" onclick="showTab('oversikt')">Oversikt</button>
@@ -424,17 +460,32 @@ function triggerWorkflow(name) {{
   if (!confirm('Kjøre "' + name + '" nå, utenom vanlig tidsplan?')) return;
   post('/api/trigger-workflow', {{workflow: name}});
 }}
+function applySinceFilter() {{
+  const val = document.getElementById('since-input').value;
+  window.location.href = '/?since=' + (val || 'all');
+}}
+function showAllData() {{ window.location.href = '/?since=all'; }}
 </script>
 </body></html>"""
 
 
-def build_dashboard_html() -> str:
-    """Hent ALT fra Supabase + lokal fil, aggreger, render. Kalles på hver
-    GET / – alltid ferske tall, ingen egen cache-logikk å holde styr på."""
+def build_dashboard_html(since: str | None) -> str:
+    """Hent ALT fra Supabase + lokal fil, filtrer på dato, aggreger, render.
+    Kalles på hver GET / – alltid ferske tall, ingen egen cache-logikk å
+    holde styr på.
+
+    `since`: 'YYYY-MM-DD' -> vis kun runder/aktivitet/påmeldinger FRA OG MED
+    den datoen (ren VISNING, se filter_since() – sletter ingenting). None ->
+    vis alt, uansett alder (brukes av "Vis alt"-knappen)."""
     users = user_store.list_users_admin()
-    round_states = user_store.get_all_round_states()
-    signups = user_store.list_pending_signups_admin()
-    attempts = central_registry.fetch_attempts() if central_registry.is_configured() else []
+    # user_round_state har `updated_at`, IKKE `created_at` (se
+    # supabase_multiuser_schema.sql) - feil feltnavn her ville stille
+    # filtrert bort ALLE runder uansett dato, fanget av test_filter_since.
+    round_states = filter_since(user_store.get_all_round_states(), since, field="updated_at")
+    signups = filter_since(user_store.list_pending_signups_admin(), since)
+    attempts = filter_since(
+        central_registry.fetch_attempts() if central_registry.is_configured() else [], since
+    )
     foreign_entries = foreign_course_registry.load_db()
 
     user_rows = aggregate_user_rounds(round_states, users)
@@ -443,7 +494,7 @@ def build_dashboard_html() -> str:
     foreign_by_country = aggregate_foreign_courses(foreign_entries)
     recent = aggregate_recent_activity(attempts)
 
-    return render_html(user_rows, funnel, course_outcomes, foreign_by_country, recent)
+    return render_html(user_rows, funnel, course_outcomes, foreign_by_country, recent, since)
 
 
 # --- Lokal server -------------------------------------------------------------
@@ -460,9 +511,21 @@ class _Handler(http.server.BaseHTTPRequestHandler):
         self._send(200, "application/json", _json.dumps({"ok": ok, "message": message}).encode("utf-8"))
 
     def do_GET(self) -> None:  # noqa: N802 (BaseHTTPRequestHandler sin navnekonvensjon)
-        if self.path in ("/", "/index.html"):
+        parsed = urlparse(self.path)
+        if parsed.path in ("/", "/index.html"):
+            qs = parse_qs(parsed.query)
+            raw_since = qs.get("since", [None])[0]
+            if raw_since is None:
+                # Ingen ?since= i det hele tatt (første besøk) -> standard er
+                # "i dag", se chat 26. juli 2026 (mye reell test-/utviklings-
+                # data fra før lansering skal ikke se ut som produksjonstall).
+                since = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            elif raw_since == "all":
+                since = None
+            else:
+                since = raw_since
             try:
-                html = build_dashboard_html()
+                html = build_dashboard_html(since)
                 self._send(200, "text/html; charset=utf-8", html.encode("utf-8"))
             except Exception as e:
                 self._send(500, "text/plain; charset=utf-8", f"Feil ved bygging av dashbord: {e}".encode("utf-8"))

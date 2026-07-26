@@ -337,6 +337,22 @@ def test_aggregate_recent_activity():
     check("beholder rekkefølge (nyeste først, uendret)", recent[0]["id"], 0)
 
 
+def test_filter_since():
+    rows = [
+        {"id": "gammel", "created_at": "2026-07-01T10:00:00Z"},
+        {"id": "grense", "created_at": "2026-07-26T00:00:00Z"},
+        {"id": "ny", "created_at": "2026-07-27T09:30:00Z"},
+        {"id": "uten_dato"},
+    ]
+    check("since=None -> alt beholdes (inkl. rad uten dato)", len(ad.filter_since(rows, None)), 4)
+    filtered = ad.filter_since(rows, "2026-07-26")
+    ids = {r["id"] for r in filtered}
+    check("filtrerer bort gammel data", ids, {"grense", "ny"})
+    check("ugyldig dato-streng -> ingen filtrering (fail-safe)",
+          len(ad.filter_since(rows, "ikke-en-dato")), 4)
+    check("tom liste inn -> tom liste ut", ad.filter_since([], "2026-07-26"), [])
+
+
 def main():
     for fn in [test_norm, test_colors, test_n_holes, test_datetime,
                test_gb_error, test_course_scoring, test_holes_decision,
@@ -346,7 +362,7 @@ def main():
                test_process_signup_missing_fields, test_process_signup_max_attempts,
                test_aggregate_user_rounds, test_aggregate_signup_funnel,
                test_aggregate_foreign_courses, test_render_html_no_crash,
-               test_build_alerts, test_aggregate_recent_activity]:
+               test_build_alerts, test_aggregate_recent_activity, test_filter_since]:
         fn()
     print(f"\n{'='*40}\n{_passed} bestått, {_failed} feilet")
     sys.exit(1 if _failed else 0)
